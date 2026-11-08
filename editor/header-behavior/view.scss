@@ -1,0 +1,37 @@
+/**
+ * Header behavior — front end.
+ *
+ * The options are set on the header's root Group, but the element that has
+ * to stick is the template-part wrapper (<header>), a direct child of
+ * .wp-site-blocks — sticky only works there. `:has()` reaches it from the
+ * Group.
+ */
+
+$sticky: ".wp-site-blocks > :has(> .supe-header-sticky)";
+$hides: ".wp-site-blocks > :has(> .supe-header-hide-on-scroll)";
+
+#{$sticky} {
+    position: sticky;
+    top: var(--wp-admin--admin-bar--height, 0px);
+    z-index: 100;
+    // Content scrolls underneath, so the header needs a background.
+    background-color: var(--wp--preset--color--base, #fff);
+
+    // The admin bar scrolls away on small screens.
+    @media (max-width: 600px) {
+        top: 0;
+    }
+}
+
+#{$hides} {
+    transition: transform 0.3s ease;
+
+    @media (prefers-reduced-motion: reduce) {
+        transition: none;
+    }
+}
+
+// Stay visible while anything inside has keyboard focus.
+.wp-site-blocks > .is-header-hidden:not(:focus-within) {
+    transform: translateY(-100%);
+}

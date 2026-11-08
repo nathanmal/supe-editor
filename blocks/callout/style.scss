@@ -1,0 +1,30 @@
+.supe-callout {
+    border-left: 4px solid var(--supe-callout-accent, #1e88e5);
+    background: var(--supe-callout-bg, #e8f2fc);
+    padding: 1em 1.25em;
+    border-radius: 4px;
+
+    &__content {
+        margin: 0;
+    }
+
+    &.is-variant-info {
+        --supe-callout-accent: #1e88e5;
+        --supe-callout-bg: #e8f2fc;
+    }
+
+    &.is-variant-success {
+        --supe-callout-accent: #2e7d32;
+        --supe-callout-bg: #e8f5e9;
+    }
+
+    &.is-variant-warning {
+        --supe-callout-accent: #ed6c02;
+        --supe-callout-bg: #fff4e5;
+    }
+
+    &.is-variant-danger {
+        --supe-callout-accent: #d32f2f;
+        --supe-callout-bg: #fdecea;
+    }
+}

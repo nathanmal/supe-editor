@@ -1,0 +1,20 @@
+{
+    "name": "spacing",
+    "title": "Responsive spacing",
+    "responsive": true,
+    "properties": {
+        "padding": {
+            "css": "padding",
+            "sides": true,
+            "var": "p",
+            "type": "spacing"
+        },
+        "margin": {
+            "css": "margin",
+            "sides": true,
+            "var": "m",
+            "type": "margin"
+        }
+    },
+    "coreBlocks": []
+}
