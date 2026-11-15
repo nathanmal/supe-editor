@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Supe\Editor\Responsive;
+namespace Supe\Editor\Supports\Responsive;
 
 /**
  * Breakpoints

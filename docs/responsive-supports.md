@@ -29,7 +29,7 @@ Phase 1 is a prerequisite for the [Slides block](slides.md).
 | Values | Theme spacing **presets by default**, with optional custom `px` / `rem` / `%` |
 | Breakpoints | Site-wide setting with defaults (`tablet: 1024`, `mobile: 600`) |
 | Core spacing | Eventually replaced by this support via a bridge (hide core controls, migrate values) |
-| Code layout | One self-contained folder per support under `supports/`; shared framework in `src/` + `supports/_framework/` |
+| Code layout | One self-contained folder per support under `supports/`; shared framework in `src/Supports/` + `supports/_framework/`; controls reusable outside supports in `components/` |
 | PHP loading | Support files **return** an anonymous-class instance, loaded by a registry — no autoloading for `supports/` |
 
 ---
@@ -250,21 +250,22 @@ only once the support is stable.
 ## Directory Layout
 
 ```
+components/                      ← shared editor components (@supe-editor/components)
+  responsive/
+    index.js                     ← exports the pieces below
+    ResponsiveControl.js         ← render-prop wrapper: viewport tabs, inherited value, reset
+    ViewportSwitcher.js
+    use-viewport.js              ← device-preview sync (`core/editor` by name, local state fallback)
+    utils.js                     ← inheritedValue / setViewportValue / hasOwnValue
+    test/utils.test.js           ← Jest (`npm run test:js`)
+  controls/
+    SpacingSizeControl.js        ← phase 2
 blocks/                          ← unchanged
 supports/
   index.js                       ← webpack entry: imports each support's index.js (explicit list)
-  _framework/                    ← shared JS
+  _framework/                    ← supports-only JS (phase 2)
     register-support.js          ← attribute / inspector / preview filters for any support
-    responsive/
-      index.js                   ← exports the pieces below
-      ResponsiveControl.js       ← render-prop wrapper: viewport tabs, inherited value, reset
-      ViewportSwitcher.js
-      use-viewport.js            ← device-preview sync (`core/editor` by name, local state fallback)
-      utils.js                   ← inheritedValue / setViewportValue / hasOwnValue
-      test/utils.test.js         ← Jest (`npm run test:js`)
-      to-css-vars.js             ← phase 2: mirrors the PHP Renderer's variable output
-    controls/
-      SpacingSizeControl.js
+    to-css-vars.js               ← mirrors the PHP Renderer's variable output
   spacing/
     support.json                 ← name, properties, var prefixes, coreBlocks
     support.php                  ← returns the support object
@@ -279,17 +280,17 @@ src/
     AbstractSupport.php
     AbstractResponsiveSupport.php
     Renderer.php                 ← single render_block pass
-  Responsive/
-    Breakpoints.php              ← option, defaults, validation
-    StyleGenerator.php           ← media-query CSS from all supports + responsive variables
-    Viewport.php                 ← enum: desktop / tablet / mobile
-    ValueSanitizer.php           ← preset refs, px/rem/%, shared
-  Services/
-    EditorAssets.php             ← enqueues build/supports/index.js
+    Responsive/
+      Breakpoints.php            ← option, defaults, validation
+      StyleGenerator.php         ← media-query CSS from all supports + responsive variables
+      Viewport.php               ← enum: desktop / tablet / mobile
+      ValueSanitizer.php         ← preset refs, px/rem/%, shared
+  Editor/
+    EditorAssets.php             ← (or a sibling) enqueues build/supports/index.js
   Admin/
     BlocksPage.php
     ResponsivePage.php
-tests/Unit/Supports/…, tests/Unit/Responsive/…
+tests/Unit/Supports/…, tests/Unit/Supports/Responsive/…
 ```
 
 ### `support.json` — shared by JS and PHP

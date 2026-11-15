@@ -7,15 +7,15 @@ namespace Supe\Editor;
 use Composer\InstalledVersions;
 use Supe\Core\Support\AbstractModule;
 use Supe\Editor\Admin\BlocksPage;
-use Supe\Editor\Responsive\Breakpoints;
-use Supe\Editor\Responsive\StyleGenerator;
-use Supe\Editor\Responsive\ValueSanitizer;
-use Supe\Editor\Services\BlockCategory;
-use Supe\Editor\Services\BlockRegistrar;
-use Supe\Editor\Services\EditorAssets;
-use Supe\Editor\Services\HeaderBehavior;
-use Supe\Editor\Services\PageTemplateMode;
+use Supe\Editor\Blocks\BlockCategory;
+use Supe\Editor\Blocks\BlockRegistrar;
+use Supe\Editor\Editor\EditorAssets;
+use Supe\Editor\Editor\HeaderBehavior;
+use Supe\Editor\Editor\PageTemplateMode;
 use Supe\Editor\Supports\Renderer;
+use Supe\Editor\Supports\Responsive\Breakpoints;
+use Supe\Editor\Supports\Responsive\StyleGenerator;
+use Supe\Editor\Supports\Responsive\ValueSanitizer;
 use Supe\Editor\Supports\SupportRegistry;
 
 /**
@@ -29,8 +29,11 @@ use Supe\Editor\Supports\SupportRegistry;
  *  - A shared "Supe" block category
  *  - Custom block supports (supports/{name}/) with responsive, per-viewport
  *    values and site-wide breakpoints
+ *  - Shared editor components (components/), one script used by blocks,
+ *    supports and editor modifications (SharedComponents)
  *  - Editor modifications that aren't blocks (editor/, e.g. the page title
- *    prompt), built to build/editor/ and enqueued by EditorAssets
+ *    prompt) plus editor UI and canvas styles, built to build/editor/ and
+ *    enqueued by EditorAssets
  *  - Header behavior: sticky / hide-on-scroll header, set on the header and
  *    overridable per page (HeaderBehavior)
  *  - Template-locked page editing for themes that declare
@@ -56,6 +59,7 @@ final class Module extends AbstractModule {
 
         $this->mapSymlinkedInstall();
 
+        $this->singleton( 'supe.editor.components',  fn( $c ) => new SharedComponents( SUPE_EDITOR_DIR . 'build/', SUPE_EDITOR_DIR . 'bootstrap.php' ) );
         $this->singleton( 'supe.editor.category',    fn( $c ) => new BlockCategory() );
         $this->singleton( 'supe.editor.registrar',   fn( $c ) => new BlockRegistrar( SUPE_EDITOR_DIR . 'build/' ) );
         $this->singleton( 'supe.editor.breakpoints', fn( $c ) => new Breakpoints() );
@@ -67,6 +71,7 @@ final class Module extends AbstractModule {
         $this->singleton( 'supe.editor.header',      fn( $c ) => new HeaderBehavior( SUPE_EDITOR_DIR . 'build/', SUPE_EDITOR_DIR . 'bootstrap.php' ) );
         $this->singleton( 'supe.editor.page_mode',   fn( $c ) => new PageTemplateMode() );
 
+        $this->make( 'supe.editor.components' )->register();
         $this->make( 'supe.editor.category' )->register();
         $this->make( 'supe.editor.registrar' )->register();
         $this->make( 'supe.editor.breakpoints' )->register();

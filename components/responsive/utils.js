@@ -5,7 +5,7 @@
  *   { desktop: { top: '2rem' }, mobile: { top: '1rem' } }
  */
 
-/** Viewports in cascade order, matching PHP's Supe\Editor\Responsive\Viewport. */
+/** Viewports in cascade order, matching PHP's Supe\Editor\Supports\Responsive\Viewport. */
 export const VIEWPORTS = [ 'desktop', 'tablet', 'mobile' ];
 
 function isPlainObject( value ) {

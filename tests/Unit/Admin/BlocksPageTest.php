@@ -2,11 +2,11 @@
 
 declare(strict_types=1);
 
-namespace Supe\Editor\Tests\Unit;
+namespace Supe\Editor\Tests\Unit\Admin;
 
 use Brain\Monkey\Functions;
 use Supe\Editor\Admin\BlocksPage;
-use Supe\Editor\Services\BlockRegistrar;
+use Supe\Editor\Blocks\BlockRegistrar;
 use Supe\Core\Support\Container;
 use Yoast\WPTestUtils\BrainMonkey\TestCase;
 

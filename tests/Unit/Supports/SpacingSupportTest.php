@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Supe\Editor\Tests\Unit\Supports;
 
-use Supe\Editor\Responsive\ValueSanitizer;
+use Supe\Editor\Supports\Responsive\ValueSanitizer;
 use Supe\Editor\Supports\AbstractSupport;
 use Yoast\WPTestUtils\BrainMonkey\TestCase;
 

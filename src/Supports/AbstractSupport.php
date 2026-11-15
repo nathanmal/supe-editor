@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace Supe\Editor\Supports;
 
-use Supe\Editor\Responsive\Viewport;
-use Supe\Editor\Responsive\ValueSanitizer;
+use Supe\Editor\Supports\Responsive\Viewport;
+use Supe\Editor\Supports\Responsive\ValueSanitizer;
 
 /**
  * AbstractSupport

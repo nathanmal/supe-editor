@@ -7,22 +7,25 @@
         "build": "wp-scripts build --webpack-src-dir=blocks --blocks-manifest",
         "start": "wp-scripts start --webpack-src-dir=blocks --blocks-manifest",
         "format": "wp-scripts format",
-        "lint:js": "wp-scripts lint-js blocks supports editor",
+        "lint:js": "wp-scripts lint-js",
         "lint:css": "wp-scripts lint-style \"blocks/**/*.scss\" \"editor/**/*.scss\"",
-        "test:js": "wp-scripts test-unit-js blocks supports editor",
+        "test:js": "wp-scripts test-unit-js",
         "packages-update": "wp-scripts packages-update"
     },
     "devDependencies": {
+        "@supe-editor/components": "file:components",
         "@wordpress/block-editor": "^20.0.0",
         "@wordpress/blocks": "^17.1.0",
         "@wordpress/components": "^44.0.0",
         "@wordpress/compose": "^9.1.0",
         "@wordpress/data": "^11.1.0",
+        "@wordpress/dependency-extraction-webpack-plugin": "^6.57.0",
         "@wordpress/editor": "^16.1.0",
         "@wordpress/element": "^10.1.0",
         "@wordpress/hooks": "^5.1.0",
         "@wordpress/i18n": "^7.1.0",
         "@wordpress/plugins": "^8.1.0",
+        "@wordpress/prettier-config": "^4.57.0",
         "@wordpress/scripts": "^34.2.0",
         "@wordpress/stylelint-config": "^24.3.0"
     }

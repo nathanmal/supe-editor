@@ -321,7 +321,7 @@ blocks/slides/engine/
   - Allowed for **anyone with `upload_files`** (filterable).
   - Sanitized **on upload** with `enshrined/svg-sanitize` (Composer) and
     **again on output** (defense in depth); sanitized markup cached.
-  - Lives in `src/Services/SvgUploads.php` (mime type + upload sanitizing)
+  - Lives in `src/Editor/SvgUploads.php` (mime type + upload sanitizing)
     since it's site-wide, not slider-specific.
 - Icons render **inline** so `currentColor` follows color controls.
 
@@ -382,7 +382,7 @@ blocks/
   image-slide/       block.json, index.js, edit.js, render.php, style.scss
 src/
   Blocks/Slides/     ← shared PHP if render.php files grow: Config (validation), Icons, PostItems
-  Services/SvgUploads.php
+  Editor/SvgUploads.php
 ```
 
 `BlockRegistrar` registers every block from the manifest — no PHP

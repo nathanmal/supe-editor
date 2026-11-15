@@ -2,10 +2,10 @@
 
 declare(strict_types=1);
 
-namespace Supe\Editor\Tests\Unit;
+namespace Supe\Editor\Tests\Unit\Blocks;
 
 use Brain\Monkey\Functions;
-use Supe\Editor\Services\BlockCategory;
+use Supe\Editor\Blocks\BlockCategory;
 use Yoast\WPTestUtils\BrainMonkey\TestCase;
 
 final class BlockCategoryTest extends TestCase {

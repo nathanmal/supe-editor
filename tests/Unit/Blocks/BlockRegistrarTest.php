@@ -2,10 +2,10 @@
 
 declare(strict_types=1);
 
-namespace Supe\Editor\Tests\Unit;
+namespace Supe\Editor\Tests\Unit\Blocks;
 
 use Brain\Monkey\Functions;
-use Supe\Editor\Services\BlockRegistrar;
+use Supe\Editor\Blocks\BlockRegistrar;
 use Yoast\WPTestUtils\BrainMonkey\TestCase;
 
 final class BlockRegistrarTest extends TestCase {

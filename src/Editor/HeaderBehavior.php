@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Supe\Editor\Services;
+namespace Supe\Editor\Editor;
 
 use WP_HTML_Tag_Processor;
 

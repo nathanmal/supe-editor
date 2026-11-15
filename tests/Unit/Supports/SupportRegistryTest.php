@@ -5,9 +5,9 @@ declare(strict_types=1);
 namespace Supe\Editor\Tests\Unit\Supports;
 
 use Brain\Monkey\Functions;
-use Supe\Editor\Responsive\Breakpoints;
-use Supe\Editor\Responsive\StyleGenerator;
-use Supe\Editor\Responsive\ValueSanitizer;
+use Supe\Editor\Supports\Responsive\Breakpoints;
+use Supe\Editor\Supports\Responsive\StyleGenerator;
+use Supe\Editor\Supports\Responsive\ValueSanitizer;
 use Supe\Editor\Supports\AbstractResponsiveSupport;
 use Supe\Editor\Supports\SupportRegistry;
 use Yoast\WPTestUtils\BrainMonkey\TestCase;

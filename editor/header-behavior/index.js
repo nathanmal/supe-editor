@@ -5,7 +5,7 @@
  *   header's root Group (the site-wide default).
  * - Adds a "Header" document panel for the per-page override.
  *
- * Server side and front end: Services\HeaderBehavior, ./view.js, ./view.scss.
+ * Server side and front end: Editor\HeaderBehavior, ./view.js, ./view.scss.
  */
 import { addFilter } from '@wordpress/hooks';
 import { createHigherOrderComponent } from '@wordpress/compose';

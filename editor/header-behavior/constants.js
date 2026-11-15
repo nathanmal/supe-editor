@@ -1,4 +1,4 @@
-// Must match Services\HeaderBehavior.
+// Must match Editor\HeaderBehavior.
 export const META_KEY = '_supe_header_behavior';
 
 export const ATTRIBUTES = {

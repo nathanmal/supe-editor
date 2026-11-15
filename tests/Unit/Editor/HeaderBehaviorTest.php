@@ -2,11 +2,11 @@
 
 declare(strict_types=1);
 
-namespace Supe\Editor\Tests\Unit;
+namespace Supe\Editor\Tests\Unit\Editor;
 
 use Brain\Monkey\Filters;
 use Brain\Monkey\Functions;
-use Supe\Editor\Services\HeaderBehavior;
+use Supe\Editor\Editor\HeaderBehavior;
 use Yoast\WPTestUtils\BrainMonkey\TestCase;
 
 /**

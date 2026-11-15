@@ -19,7 +19,7 @@ blocks, block supports, editor UI and editor settings — while
 ### Blocks
 
 - Auto-discovery and registration of every compiled block in `build/`
-  (`Services\BlockRegistrar`, from `build/blocks-manifest.php`)
+  (`Blocks\BlockRegistrar`, from `build/blocks-manifest.php`)
 - A shared `"supe"` block category (skipped if something else already
   registered it)
 - **Callout** (`supe/callout`) — working example of the full
@@ -28,17 +28,31 @@ blocks, block supports, editor UI and editor settings — while
 - A read-only **Blocks** admin page under the shared Supe menu listing every
   registered block (`Admin\BlocksPage`)
 
+### Shared components
+
+`components/` holds editor components used by blocks, supports and editor
+modifications alike (e.g. `ResponsiveControl`). It's built once as the
+`supe-editor-components` script (`window.supeEditor.components`, registered by
+`SharedComponents`); everything else imports it as `@supe-editor/components`,
+and webpack turns that import into a script dependency instead of bundling a
+copy — the same way `@wordpress/*` packages work.
+
 ### Editor modifications
 
 Built from `editor/` into one bundle (`build/editor/index.js`), enqueued in
-every block editor by `Services\EditorAssets`.
+every block editor by `Editor\EditorAssets`. Styles:
+
+- **Editor UI** (sidebars, panels, dialogs): import a stylesheet from
+  `editor/index.js` → `build/editor/index.css`, loaded with the bundle.
+- **Editor canvas** (the content iframe): `editor/canvas.scss` →
+  `build/editor/canvas.css`, loaded in the editor only.
 
 - **Page title prompt** (`editor/page-title-prompt/`) — a "Name this page"
   dialog when an untitled page opens with "Show template" on (the template has
   no Post Title block, so there's nowhere on the canvas to type one). Shows once
   per load, after any other dialog (welcome guide, "Choose a pattern") closes;
   sets the title with `editPost()`.
-- **Header behavior** (`Services\HeaderBehavior`, `editor/header-behavior/`) —
+- **Header behavior** (`Editor\HeaderBehavior`, `editor/header-behavior/`) —
   sticky / hide-on-scroll site header:
   - Default: "Header behavior" panel on the header template part's root Group
     (Sticky, then Hide on scroll).
@@ -47,7 +61,7 @@ every block editor by `Services\EditorAssets`.
   - Front end: CSS/JS from `build/header-behavior/view.*`, loaded only on pages
     where the header is sticky / hides. Stays visible while anything in it has
     keyboard focus; no animation with reduced motion.
-- **Template-locked page editing** (`Services\PageTemplateMode`) — pages open
+- **Template-locked page editing** (`Editor\PageTemplateMode`) — pages open
   with "Show template" on when the active theme declares
   `add_theme_support( 'supe-blank-page-template' )`.
 
@@ -83,7 +97,7 @@ Header behavior expects a block theme header: a template part rendered as
 | Post meta | `_supe_header_behavior` | `''` (use header default), `static`, `sticky`, `hide-on-scroll`. REST-exposed, `edit_post` capability. |
 | Block attributes | `supeSticky`, `supeHideOnScroll` | Added to `core/group` (server and client). |
 | CSS classes | `supe-header-sticky`, `supe-header-hide-on-scroll`, `is-header-hidden` | Root Group / `<header>` wrapper. |
-| Script / style handles | `supe-editor` (editor bundle), `supe-header-behavior` (front end), `supe-responsive` (generated responsive CSS) | |
+| Script / style handles | `supe-editor` (editor bundle + UI styles), `supe-editor-canvas` (canvas styles), `supe-editor-components` (shared components), `supe-header-behavior` (front end), `supe-responsive` (generated responsive CSS) | |
 | Theme support | `supe-blank-page-template` | See above. |
 | Option | `supe_editor_breakpoints` | Tablet / mobile max widths for responsive supports. |
 
@@ -106,29 +120,34 @@ npm run build
 
 ```
 blocks/{name}/block.json, index.js, edit.js, save.js   ← you write this
-editor/index.js (+ editor/{feature}/...)
+components/index.js                                    ← shared components
+editor/index.js (+ editor/{feature}/..., editor/canvas.scss)
                     │
               npm run build   (wp-scripts + webpack.config.js)
                     ▼
 build/{name}/block.json, index.js, index.css, ...       ← compiled blocks
 build/blocks-manifest.php                              ← every block.json, as one PHP array
-build/editor/index.js + index.asset.php                ← editor bundle
+build/components/index.js + index.asset.php            ← shared components
+build/editor/index.{js,css}, canvas.css + .asset.php   ← editor bundle, UI + canvas styles
 build/header-behavior/view.{js,css} + view.asset.php   ← feature front end
                     │
         supe/before_boot → registry->register(Module::class)
                     │
         Module::boot() → services' register()
                     │
-        BlockRegistrar:  wp_register_block_types_from_metadata_collection(...)
-        EditorAssets:    enqueue build/editor/index.js on enqueue_block_editor_assets
-        HeaderBehavior:  attributes, meta, render filters, front-end assets
-        PageTemplateMode, Responsive\*, Supports\*, Admin\BlocksPage
+        SharedComponents:        register supe-editor-components on init
+        Blocks\BlockRegistrar:   wp_register_block_types_from_metadata_collection(...)
+        Editor\EditorAssets:     editor bundle + UI styles; canvas styles
+        Editor\HeaderBehavior:   attributes, meta, render filters, front-end assets
+        Editor\PageTemplateMode, Supports\* (+ Supports\Responsive\*), Admin\BlocksPage
 ```
 
 Blocks are built with `--webpack-src-dir=blocks --blocks-manifest`, which only
-discovers directories containing a `block.json`. Everything else is listed in
-`EXTRA_ENTRIES` in `webpack.config.js`; each entry gets its own
-`.asset.php` with dependencies and a version hash.
+discovers directories containing a `block.json`. Everything else is found by
+convention in `webpack.config.js` (`components/index.js`, `editor/index.js`,
+`editor/canvas.scss`, `editor/{name}/view.js`, `supports/index.js`) — an entry
+exists once its source file does, and each gets its own `.asset.php` with
+dependencies and a version hash.
 
 ---
 
@@ -149,10 +168,11 @@ For a dynamic (server-rendered) block, add a `render.php` next to
 
 1. Create `editor/my-change/index.js` and import it from `editor/index.js`.
 2. If it needs PHP (attributes, meta, render filters, assets), add
-   `src/Services/MyChange.php` with a `register()` method, bind it in
+   `src/Editor/MyChange.php` with a `register()` method, bind it in
    `Module::boot()`, and add a Unit test.
-3. If it needs its own front-end script/style, add an entry to
-   `EXTRA_ENTRIES` in `webpack.config.js` and enqueue it only where it's used.
+3. If it needs its own front-end script/style, add `editor/my-change/view.js`
+   (it's built to `build/my-change/view.*` automatically) and enqueue it only
+   where it's used.
 4. Run `npm run build`.
 
 ---
@@ -163,7 +183,7 @@ For a dynamic (server-rendered) block, add a `render.php` next to
 |---|---|
 | `npm run build` | Production build: blocks, editor bundle, feature front-end entries → `build/` |
 | `npm run start` | Watch mode for development |
-| `npm run lint:js` | Lint `blocks/`, `supports/`, `editor/` |
+| `npm run lint:js` | Lint all project JS (`build/`, `node_modules/`, `vendor/` ignored) |
 | `npm run lint:css` | Lint SCSS in `blocks/` and `editor/` (`.stylelintrc.json`, 4 spaces) |
 | `npm run test:js` | Jest unit tests |
 | `npm run format` | Format source with `wp-scripts format` (4 spaces, `.prettierrc.js`) |

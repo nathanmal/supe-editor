@@ -2,11 +2,11 @@
 
 declare(strict_types=1);
 
-namespace Supe\Editor\Tests\Unit\Responsive;
+namespace Supe\Editor\Tests\Unit\Supports\Responsive;
 
 use Brain\Monkey\Functions;
-use Supe\Editor\Responsive\Breakpoints;
-use Supe\Editor\Responsive\Viewport;
+use Supe\Editor\Supports\Responsive\Breakpoints;
+use Supe\Editor\Supports\Responsive\Viewport;
 use Yoast\WPTestUtils\BrainMonkey\TestCase;
 
 final class BreakpointsTest extends TestCase {

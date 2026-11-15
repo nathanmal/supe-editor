@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Supe\Editor\Services;
+namespace Supe\Editor\Blocks;
 
 /**
  * BlockCategory

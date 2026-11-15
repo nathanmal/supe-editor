@@ -9,7 +9,7 @@ The package has three focus areas. Suggested order: **housekeeping → supports 
 - [x] Git repository.
 - [x] Fix `lint:css` (stylelint config with 4-space indentation).
 - [x] Feature tests runnable (`tests/wp-tests-config.php` + test database).
-- [ ] Reorganize by focus area (PHP namespaces, shared JS components, editor UI vs canvas styles, generated build entries).
+- [x] Reorganize by focus area (PHP namespaces, shared JS components, editor UI vs canvas styles, generated build entries).
 
 ## Headless contract
 
@@ -24,7 +24,7 @@ Next.js never runs WordPress's PHP render step, so it gets none of the classes, 
 
 Custom functions and add-ons, styling of the editor UI itself, and improvements to how pages look and behave in the editor. Infrastructure in place (`editor/` bundle + `EditorAssets`); shipped so far: page title prompt, header behavior (sticky / hide on scroll), template-locked pages for `supe-blank-page-template` themes.
 
-- [ ] Editor UI styles (sidebars, panels — `enqueue_block_editor_assets`) and canvas styles (inside the iframe — `enqueue_block_assets`), kept in separate files.
+- [ ] Editor UI styles and canvas styles — plumbing in place (`editor/index.js` stylesheet import / `editor/canvas.scss`, loaded by `EditorAssets`); no styles written yet.
 - [ ] Settings screen for the site-wide breakpoints (only a REST setting today).
 - [ ] Curation: hide core blocks, features, block variations and styles (`allowed_block_types_all`, `block_editor_settings_all`), possibly per role.
 - [ ] Pre-publish checks: missing alt text, skipped heading levels, empty page title.

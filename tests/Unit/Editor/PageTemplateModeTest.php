@@ -2,10 +2,10 @@
 
 declare(strict_types=1);
 
-namespace Supe\Editor\Tests\Unit;
+namespace Supe\Editor\Tests\Unit\Editor;
 
 use Brain\Monkey\Functions;
-use Supe\Editor\Services\PageTemplateMode;
+use Supe\Editor\Editor\PageTemplateMode;
 use Yoast\WPTestUtils\BrainMonkey\TestCase;
 
 final class PageTemplateModeTest extends TestCase {

@@ -24,30 +24,39 @@ Before non-trivial work, read this package's `PROGRESS.md` (current state, open 
 
 ## Layout
 
+Organized by the package's three areas — editor customization, supports, blocks — with PHP folders mirroring the source folders (`src/Editor` ↔ `editor/`, `src/Supports` ↔ `supports/`, `src/Blocks` ↔ `blocks/`).
+
 ```
 src/                     PHP (Supe\Editor\*), one class per file
   Module.php             binds services in the container and registers them (boot())
-  Services/              one feature per class, each with register()
-    BlockRegistrar, BlockCategory, EditorAssets, HeaderBehavior, PageTemplateMode
-  Responsive/, Supports/ responsive supports framework (phase 1, server side)
+  SharedComponents.php   registers the shared components script
+  Blocks/                BlockRegistrar, BlockCategory
+  Editor/                EditorAssets, HeaderBehavior, PageTemplateMode
+  Supports/              SupportRegistry, Renderer, Abstract*Support
+    Responsive/          Breakpoints, StyleGenerator, ValueSanitizer, Viewport
   Admin/BlocksPage.php   "Blocks" page under the shared Supe admin menu
+components/              shared editor components (@supe-editor/components) → build/components/
+  responsive/            ResponsiveControl, ViewportSwitcher, useViewport, utils (+ Jest)
 blocks/{name}/           block source (block.json, index.js, edit.js, save.js, *.scss)
-supports/                block supports: {name}/support.json + support.php, _framework/ (JS)
-editor/                  editor modifications bundle → build/editor/index.js
-  index.js               imports each modification
+supports/{name}/         block supports: support.json + support.php
+editor/                  editor modifications bundle → build/editor/
+  index.js               imports each modification (+ any editor UI stylesheet)
+  canvas.scss            styles inside the editor canvas (create when needed)
   page-title-prompt/     "Name this page" dialog
   header-behavior/       Group panel, document panel, front-end view.js + view.scss
-webpack.config.js        wp-scripts default + EXTRA_ENTRIES (editor/index, header-behavior/view)
+webpack.config.js        wp-scripts default + entries found by convention (see its header)
 build/                   compiled output (gitignored — run `npm run build`)
-tests/Unit/, tests/Feature/
+tests/Unit/{Blocks,Editor,Supports,Admin}/, tests/Feature/   mirror src/
 docs/                    feature plans
 ```
 
 ## Where new things go
 
 - **New block:** `blocks/{name}/` with `"name": "supe/{name}"`, `"category": "supe"`. No PHP needed — `BlockRegistrar` registers everything in `build/blocks-manifest.php`. (`Container` is `supe-container/container` for historical reasons; don't rename it — saved content references the name.)
-- **New editor modification (UI/behavior):** `editor/{name}/index.js`, imported from `editor/index.js`. If it needs PHP (attributes, meta, render filters, assets), add `src/Services/{Name}.php` with `register()`, bind it in `Module::boot()` (`supe.editor.{name}` container id), and add a Unit test.
-- **New front-end asset for a feature:** add an entry to `EXTRA_ENTRIES` in `webpack.config.js` (e.g. `'{feature}/view'`), register it from the generated `.asset.php` in the service, and enqueue it only where it's used (see `HeaderBehavior::apply()`).
+- **New editor modification (UI/behavior):** `editor/{name}/index.js`, imported from `editor/index.js`. If it needs PHP (attributes, meta, render filters, assets), add `src/Editor/{Name}.php` with `register()`, bind it in `Module::boot()` (`supe.editor.{name}` container id), and add a Unit test in `tests/Unit/Editor/`.
+- **Editor styling:** editor UI (sidebars, panels, dialogs) → a stylesheet imported from `editor/index.js` (`build/editor/index.css`); the content canvas (iframe) → `editor/canvas.scss` (`build/editor/canvas.css`). Both are loaded by `EditorAssets`, only in the editor.
+- **New front-end asset for a feature:** `editor/{feature}/view.js` (+ `view.scss` imported from it) is built to `build/{feature}/view.*` automatically; register it from the generated `.asset.php` in the service and enqueue it only where it's used (see `HeaderBehavior::apply()`).
+- **Shared component** (used by more than one of blocks / supports / editor): `components/{group}/`, exported from `components/index.js`, imported as `@supe-editor/components` — never by relative path from outside `components/`, or it gets bundled twice. A new `@wordpress/*` import inside `components/` also goes in `components/package.json` `peerDependencies`.
 - **New block support:** follow `docs/responsive-supports.md` (`supports/{name}/support.json` + `support.php`).
 
 ## Conventions specific to this package
@@ -61,11 +70,11 @@ docs/                    feature plans
 ## Commands
 
 ```bash
-npm run build          # blocks + editor bundle + header-behavior view
+npm run build          # blocks + convention entries (components, editor, views)
 npm run start          # watch
-npm run lint:js        # blocks, supports, editor — should be clean
+npm run lint:js        # all project JS — should be clean
 npm run lint:css       # blocks + editor SCSS — should be clean
-npm run test:js        # Jest (supports/_framework)
+npm run test:js        # Jest
 composer test:unit     # Brain Monkey, no WordPress — should be all green
 composer test:feature  # real WordPress: ~/wordpress-core + DB supe_phpunit (tests/wp-tests-config.php, gitignored)
 ```

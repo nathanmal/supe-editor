@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Supe\Editor\Admin;
 
-use Supe\Editor\Services\BlockRegistrar;
+use Supe\Editor\Blocks\BlockRegistrar;
 use Supe\Core\Admin\DashboardPage;
 use Supe\Core\Support\AbstractAdminPage;
 

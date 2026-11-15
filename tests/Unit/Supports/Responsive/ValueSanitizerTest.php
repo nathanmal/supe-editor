@@ -2,9 +2,9 @@
 
 declare(strict_types=1);
 
-namespace Supe\Editor\Tests\Unit\Responsive;
+namespace Supe\Editor\Tests\Unit\Supports\Responsive;
 
-use Supe\Editor\Responsive\ValueSanitizer;
+use Supe\Editor\Supports\Responsive\ValueSanitizer;
 use Yoast\WPTestUtils\BrainMonkey\TestCase;
 
 final class ValueSanitizerTest extends TestCase {

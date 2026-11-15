@@ -1,6 +1,6 @@
 /**
  * Header behavior — front end. Built to build/header-behavior/view.{js,css}
- * and enqueued by Services\HeaderBehavior only where the header is sticky
+ * and enqueued by Editor\HeaderBehavior only where the header is sticky
  * (CSS) or hides on scroll (CSS + this script).
  *
  * Hides the sticky header while scrolling down and shows it again when

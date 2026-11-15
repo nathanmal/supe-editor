@@ -2,23 +2,24 @@
 
 declare(strict_types=1);
 
-namespace Supe\Editor\Services;
+namespace Supe\Editor;
 
 /**
- * EditorAssets
+ * SharedComponents
  *
- * Enqueues the editor bundle (build/editor/index.js, built from editor/ via
- * webpack.config.js) in every block editor. The bundle holds editor
- * modifications that aren't blocks or block supports — e.g. the page title
- * prompt. Dependencies and version come from the generated index.asset.php;
- * nothing is enqueued until `npm run build` has produced it.
+ * Registers build/components/index.js (built from components/) as the
+ * `supe-editor-components` script, exposing window.supeEditor.components.
+ * Blocks, supports and editor modifications import it as
+ * `@supe-editor/components`; webpack.config.js turns that import into a
+ * dependency on this handle, so every bundle shares one copy. Registered
+ * only: WordPress loads it when something that depends on it is enqueued.
  */
-class EditorAssets {
+class SharedComponents {
 
-    public const HANDLE = 'supe-editor';
+    public const HANDLE = 'supe-editor-components';
 
-    private const SCRIPT = 'editor/index.js';
-    private const ASSET  = 'editor/index.asset.php';
+    private const SCRIPT = 'components/index.js';
+    private const ASSET  = 'components/index.asset.php';
 
     /**
      * @param string $buildDir   Absolute path to build/, with a trailing slash.
@@ -30,10 +31,10 @@ class EditorAssets {
     ) {}
 
     public function register(): void {
-        add_action( 'enqueue_block_editor_assets', [ $this, 'enqueue' ] );
+        add_action( 'init', [ $this, 'registerScript' ] );
     }
 
-    public function enqueue(): void {
+    public function registerScript(): void {
         $assetFile = $this->buildDir . self::ASSET;
 
         if ( ! is_readable( $assetFile ) ) {
@@ -42,7 +43,7 @@ class EditorAssets {
 
         $asset = require $assetFile;
 
-        wp_enqueue_script(
+        wp_register_script(
             self::HANDLE,
             plugins_url( 'build/' . self::SCRIPT, $this->pluginFile ),
             $asset['dependencies'] ?? [],
