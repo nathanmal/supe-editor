@@ -19,6 +19,12 @@ use Supe\Editor\Supports\Responsive\ValueSanitizer;
  * core blocks listed in a support's `coreBlocks` are opted in here. Every
  * block using any support gets the shared `supe` object attribute that
  * holds all support values, keyed by support name.
+ *
+ * A block never has both a support and the core feature it replaces
+ * (support.json `replaces`): blocks that opt in themselves get the core
+ * feature turned off. Core blocks opted in through `coreBlocks` keep it —
+ * their saved markup depends on it — until the support's bridge hides its
+ * controls and migrates their values.
  */
 final class SupportRegistry {
 
@@ -91,7 +97,13 @@ final class SupportRegistry {
             $args['supports'][ self::ATTRIBUTE ] = [];
         }
 
+        $ownSupports = array_keys( array_filter( $args['supports'][ self::ATTRIBUTE ] ) );
+
         foreach ( $this->supports as $name => $support ) {
+            if ( in_array( $name, $ownSupports, true ) ) {
+                $args['supports'] = self::withoutReplacedCoreSupports( $args['supports'], $support );
+            }
+
             if ( in_array( $blockName, $support->coreBlocks(), true ) && ! isset( $args['supports'][ self::ATTRIBUTE ][ $name ] ) ) {
                 $args['supports'][ self::ATTRIBUTE ][ $name ] = true;
             }
@@ -108,6 +120,32 @@ final class SupportRegistry {
         }
 
         return $args;
+    }
+
+    /**
+     * A block's supports with the core features a support replaces turned
+     * off, e.g. `spacing.padding` and `spacing.margin` set to false while
+     * `spacing.blockGap` stays.
+     *
+     * @param  array<string, mixed> $supports
+     * @return array<string, mixed>
+     */
+    private static function withoutReplacedCoreSupports( array $supports, AbstractSupport $support ): array {
+        foreach ( $support->replacedCoreSupports() as $feature => $keys ) {
+            if ( empty( $supports[ $feature ] ) ) {
+                continue;
+            }
+
+            $current = is_array( $supports[ $feature ] ) ? $supports[ $feature ] : [];
+
+            foreach ( $keys as $key ) {
+                $current[ $key ] = false;
+            }
+
+            $supports[ $feature ] = $current;
+        }
+
+        return $supports;
     }
 
     private function loadSupport( string $name ): ?AbstractSupport {

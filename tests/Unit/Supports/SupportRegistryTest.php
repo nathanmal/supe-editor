@@ -30,6 +30,7 @@ final class SupportRegistryTest extends TestCase {
         $this->writeSupport( 'gap', [
             'name'       => 'gap',
             'properties' => [ 'gap' => [ 'css' => 'gap', 'var' => 'g', 'type' => 'spacing' ] ],
+            'replaces'   => [ 'spacing' => [ 'blockGap' ] ],
             'coreBlocks' => [ 'core/group' ],
         ], '<?php return new class extends \Supe\Editor\Supports\AbstractResponsiveSupport {};' );
         $this->writeSupport( 'mismatched', [ 'name' => 'other' ], '<?php return new stdClass();' );
@@ -91,6 +92,29 @@ final class SupportRegistryTest extends TestCase {
         $args = $this->loadedRegistry()->addToBlockType( [ 'supports' => [ 'supe' => [ 'spacing' => true ] ] ], 'supe/callout' );
 
         self::assertSame( [ 'type' => 'object' ], $args['attributes']['supe'] );
+    }
+
+    public function test_turns_off_the_core_features_a_support_replaces_on_blocks_that_opt_in(): void {
+        $args = $this->loadedRegistry()->addToBlockType(
+            [ 'supports' => [ 'supe' => [ 'gap' => true ], 'spacing' => [ 'blockGap' => true, 'padding' => true ] ] ],
+            'supe/box'
+        );
+
+        self::assertSame( [ 'blockGap' => false, 'padding' => true ], $args['supports']['spacing'] );
+    }
+
+    public function test_leaves_core_features_alone_on_blocks_without_them(): void {
+        $args = $this->loadedRegistry()->addToBlockType( [ 'supports' => [ 'supe' => [ 'gap' => true ] ] ], 'supe/box' );
+
+        self::assertArrayNotHasKey( 'spacing', $args['supports'] );
+    }
+
+    public function test_core_blocks_opted_in_through_core_blocks_keep_the_core_feature(): void {
+        // Their saved markup depends on it; the support's bridge handles them.
+        $args = $this->loadedRegistry()->addToBlockType( [ 'supports' => [ 'spacing' => [ 'blockGap' => true ] ] ], 'core/group' );
+
+        self::assertSame( [ 'blockGap' => true ], $args['supports']['spacing'] );
+        self::assertSame( [ 'gap' => true ], $args['supports']['supe'] );
     }
 
     public function test_respects_a_block_opting_out_of_a_core_support(): void {

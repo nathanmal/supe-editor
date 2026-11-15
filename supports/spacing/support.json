@@ -17,5 +17,8 @@
             "type": "margin"
         }
     },
+    "replaces": {
+        "spacing": [ "padding", "margin" ]
+    },
     "coreBlocks": []
 }

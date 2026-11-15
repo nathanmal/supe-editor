@@ -2,8 +2,9 @@
  * Editor wiring shared by every support, registered once:
  *
  *  - `blocks.registerBlockType` — opts in the core blocks a support lists in
- *    `coreBlocks` and adds the `supe` attribute (PHP does the same on the
- *    server, see SupportRegistry).
+ *    `coreBlocks`, turns off the core features a support replaces on blocks
+ *    that opt in themselves, and adds the `supe` attribute (PHP does the same
+ *    on the server, see SupportRegistry).
  *  - `editor.BlockEdit` — each enabled support's panel in the Styles tab.
  *  - `editor.BlockListBlock` — the support's classes and CSS variables on the
  *    canvas, rendered by the same code as headless front ends (render.js);
@@ -16,6 +17,7 @@ import { addFilter } from '@wordpress/hooks';
 import { getBlockType } from '@wordpress/blocks';
 import { createHigherOrderComponent } from '@wordpress/compose';
 import { InspectorControls } from '@wordpress/block-editor';
+import { withoutReplacedCoreSupports } from './core-supports';
 import { supportOutput } from './render';
 import { VERSION_KEY, supportVersion, upgrade } from './upgrade';
 
@@ -75,6 +77,12 @@ function toStored( metadata, next ) {
 
 function withSupportsAttribute( settings, name ) {
     let { supports: blockSupports = {} } = settings;
+
+    // Supports the block opts into itself replace their core features;
+    // core blocks opted in below keep them until a bridge migrates them.
+    for ( const [ , { metadata } ] of enabledSupports( blockSupports ) ) {
+        blockSupports = withoutReplacedCoreSupports( blockSupports, metadata );
+    }
 
     for ( const [ supportName, { metadata } ] of supports ) {
         if (

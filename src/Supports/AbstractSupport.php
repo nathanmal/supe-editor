@@ -119,6 +119,32 @@ abstract class AbstractSupport {
     }
 
     /**
+     * Core block supports this support replaces, from support.json
+     * `replaces`, e.g. `[ 'spacing' => [ 'padding', 'margin' ] ]`. Blocks
+     * that opt in themselves get these turned off, so the two never style
+     * the same property.
+     *
+     * @return array<string, list<string>>
+     */
+    public function replacedCoreSupports(): array {
+        $replaced = [];
+
+        foreach ( (array) ( $this->metadata['replaces'] ?? [] ) as $feature => $keys ) {
+            if ( ! is_string( $feature ) || ! is_array( $keys ) ) {
+                continue;
+            }
+
+            $keys = array_values( array_filter( $keys, 'is_string' ) );
+
+            if ( [] !== $keys ) {
+                $replaced[ $feature ] = $keys;
+            }
+        }
+
+        return $replaced;
+    }
+
+    /**
      * Core blocks this support is added to automatically.
      *
      * @return list<string>

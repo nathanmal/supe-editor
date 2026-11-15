@@ -35,7 +35,7 @@ Phase 1 is a prerequisite for the [Slides block](slides.md).
 | Rule priority | Generated rules are `!important`, so a block's own value wins like core's inline styles do |
 | Versioning | Each support versions its **stored value shape** (`support.json` `version`, stored as `v`); readers upgrade older values |
 | JS/PHP parity | `support.json` is rendered by PHP **and** a portable JS module (editor preview, headless front ends); shared fixtures keep them identical |
-| `supe/*` blocks | Opting in drops core `supports.spacing` from block.json (no legacy content to protect) |
+| Own blocks | Opting in turns core padding/margin off automatically (support.json `replaces`, enforced in PHP and JS) — block.json doesn't need to remember |
 | Core blocks | Opt in **together with** the bridge — core's padding/margin controls hidden and existing values migrated — never alongside core's controls |
 
 ---
@@ -225,8 +225,11 @@ the two implementations can't drift apart unnoticed. Responsive variables
 In `supports/_framework/register-support.js`; each support calls
 `registerSupport( metadata, { Panel, migrations } )` from its `index.js`.
 
-- `blocks.registerBlockType` — opts in the `coreBlocks` from support.json and
-  adds the `supe` attribute to blocks that opt in.
+- `blocks.registerBlockType` — opts in the `coreBlocks` from support.json,
+  turns off the core features listed in `replaces` on blocks that opt in
+  themselves (`core-supports.js`, twin of
+  `SupportRegistry::withoutReplacedCoreSupports()`), and adds the `supe`
+  attribute to blocks that opt in.
 - `editor.BlockEdit` — injects each support's panel into `InspectorControls`
   (`group="styles"`), handing it the value upgraded to the current shape;
   changes are stored with the current `v`, and an empty value drops its key.
@@ -374,6 +377,7 @@ imports it; PHP reads it with `wp_json_file_decode()`.
     "padding": { "css": "padding", "sides": true, "var": "p" },
     "margin":  { "css": "margin",  "sides": true, "var": "m" }
   },
+  "replaces": { "spacing": [ "padding", "margin" ] },
   "coreBlocks": [ "core/group", "core/columns", "core/column", "core/cover" ]
 }
 ```

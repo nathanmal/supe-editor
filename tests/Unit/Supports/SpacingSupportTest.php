@@ -55,6 +55,10 @@ final class SpacingSupportTest extends TestCase {
         self::assertSame( $css, $styles->css() );
     }
 
+    public function test_replaces_core_padding_and_margin(): void {
+        self::assertSame( [ 'spacing' => [ 'padding', 'margin' ] ], $this->support->replacedCoreSupports() );
+    }
+
     public function test_is_at_version_1(): void {
         self::assertSame( 1, $this->support->version() );
     }
