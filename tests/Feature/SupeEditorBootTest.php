@@ -5,13 +5,14 @@ declare(strict_types=1);
 namespace Supe\Editor\Tests\Feature;
 
 use Supe\Core\Core;
+use Supe\Editor\Module;
 use Yoast\WPTestUtils\WPIntegration\TestCase;
 
 final class SupeEditorBootTest extends TestCase {
 
     public function test_module_registers_and_boots_inside_real_wordpress(): void {
         self::assertTrue(
-            Core::getInstance()->getRegistry()->isLoaded( 'nathanmal/supe-editor' )
+            Core::getInstance()->getRegistry()->isLoaded( Module::id() )
         );
     }
 

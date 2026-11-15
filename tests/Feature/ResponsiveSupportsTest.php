@@ -11,7 +11,7 @@ final class ResponsiveSupportsTest extends TestCase {
 
     private const BLOCK = 'supe-test/box';
 
-    protected function set_up(): void {
+    public function set_up(): void {
         parent::set_up();
 
         register_block_type( self::BLOCK, [
@@ -20,7 +20,7 @@ final class ResponsiveSupportsTest extends TestCase {
         ] );
     }
 
-    protected function tear_down(): void {
+    public function tear_down(): void {
         unregister_block_type( self::BLOCK );
 
         parent::tear_down();

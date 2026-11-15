@@ -24,7 +24,7 @@ blocks, block supports, editor UI and editor settings — while
   registered it)
 - **Callout** (`supe/callout`) — working example of the full
   source → build → register pipeline
-- **Container** (`supe/container`)
+- **Container** (`supe-container/container` — predates the `supe/` naming; kept so saved content keeps working)
 - A read-only **Blocks** admin page under the shared Supe menu listing every
   registered block (`Admin\BlocksPage`)
 
@@ -164,7 +164,7 @@ For a dynamic (server-rendered) block, add a `render.php` next to
 | `npm run build` | Production build: blocks, editor bundle, feature front-end entries → `build/` |
 | `npm run start` | Watch mode for development |
 | `npm run lint:js` | Lint `blocks/`, `supports/`, `editor/` |
-| `npm run lint:css` | Lint SCSS in `blocks/` and `editor/` (known issue: stylelint still expects tabs) |
+| `npm run lint:css` | Lint SCSS in `blocks/` and `editor/` (`.stylelintrc.json`, 4 spaces) |
 | `npm run test:js` | Jest unit tests |
 | `npm run format` | Format source with `wp-scripts format` (4 spaces, `.prettierrc.js`) |
 
@@ -175,7 +175,7 @@ For a dynamic (server-rendered) block, add a `render.php` next to
 ```bash
 composer install
 composer test:unit      # Brain Monkey, no WordPress needed
-composer test:feature   # boots real WordPress — needs one-time setup, see supe-core's README
+composer test:feature   # boots real WordPress — one-time setup in ../supe/TESTING.md
 npm run test:js         # Jest
 ```
 

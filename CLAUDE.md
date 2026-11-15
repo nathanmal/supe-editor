@@ -45,7 +45,7 @@ docs/                    feature plans
 
 ## Where new things go
 
-- **New block:** `blocks/{name}/` with `"name": "supe/{name}"`, `"category": "supe"`. No PHP needed — `BlockRegistrar` registers everything in `build/blocks-manifest.php`.
+- **New block:** `blocks/{name}/` with `"name": "supe/{name}"`, `"category": "supe"`. No PHP needed — `BlockRegistrar` registers everything in `build/blocks-manifest.php`. (`Container` is `supe-container/container` for historical reasons; don't rename it — saved content references the name.)
 - **New editor modification (UI/behavior):** `editor/{name}/index.js`, imported from `editor/index.js`. If it needs PHP (attributes, meta, render filters, assets), add `src/Services/{Name}.php` with `register()`, bind it in `Module::boot()` (`supe.editor.{name}` container id), and add a Unit test.
 - **New front-end asset for a feature:** add an entry to `EXTRA_ENTRIES` in `webpack.config.js` (e.g. `'{feature}/view'`), register it from the generated `.asset.php` in the service, and enqueue it only where it's used (see `HeaderBehavior::apply()`).
 - **New block support:** follow `docs/responsive-supports.md` (`supports/{name}/support.json` + `support.php`).
@@ -54,7 +54,8 @@ docs/                    feature plans
 
 - PHP: `declare(strict_types=1);`, PHP 8.1, 4 spaces, camelCase methods, `[ ... ]` arrays. WordPress passes some callback arguments loosely typed (e.g. meta `auth_callback` post IDs) — accept `mixed` and cast instead of type-hinting `int`.
 - Keep decisions testable without WordPress: put logic in pure methods (e.g. `HeaderBehavior::resolve()`) and leave `WP_HTML_Tag_Processor` / markup application to Feature or manual tests (same split as `Supports\Renderer`).
-- JS: ES modules + JSX, 4 spaces (`.prettierrc.js`), `npx wp-scripts format editor` after edits. **Every imported `@wordpress/*` package must be a devDependency** (lint `import/no-extraneous-dependencies`); they stay webpack externals.
+- Tidy but readable: no trailing whitespace or whitespace-only lines, braces on the declaration line, aligned `=` / `=>` where neighbouring lines align, sorted `use` imports.
+- JS: ES modules + JSX, 4 spaces (`.prettierrc.js`), `npx wp-scripts format <dir>` after edits. **Every imported `@wordpress/*` package must be a devDependency** (lint `import/no-extraneous-dependencies`); they stay webpack externals.
 - Names: text domain `supe-editor`; PHP hooks `supe/editor/...` (e.g. `supe/editor/header_behavior/post_types`); JS hook namespaces `supe-editor/...`; script/style handles `supe-...`; meta keys `_supe_...`; block attributes `supe...` (camelCase).
 
 ## Commands
@@ -63,10 +64,10 @@ docs/                    feature plans
 npm run build          # blocks + editor bundle + header-behavior view
 npm run start          # watch
 npm run lint:js        # blocks, supports, editor — should be clean
-npm run lint:css       # known issue: indentation errors on every SCSS file (see PROGRESS "open")
+npm run lint:css       # blocks + editor SCSS — should be clean
 npm run test:js        # Jest (supports/_framework)
 composer test:unit     # Brain Monkey, no WordPress — should be all green
-composer test:feature  # needs tests/wp-tests-config.php (not set up yet)
+composer test:feature  # real WordPress: ~/wordpress-core + DB supe_phpunit (tests/wp-tests-config.php, gitignored)
 ```
 
 ## Local development
@@ -77,5 +78,6 @@ composer test:feature  # needs tests/wp-tests-config.php (not set up yet)
   - `wp-config.php` dev settings: `WP_ENVIRONMENT_TYPE` local, `WP_DEVELOPMENT_MODE` all, `SCRIPT_DEBUG` true, `WP_DEBUG` true with `WP_DEBUG_DISPLAY` false. **PHP notices only go to `/Users/nathan/www/vhosts/supe.test/debug.log`** — check it after changes.
   - Asset URLs resolve through the Composer install path (`/wp-content/plugins/supe/vendor/nathanmal/supe-editor/build/...`) thanks to `Module::mapSymlinkedInstall()`.
   - `?page_id=` URLs redirect to pretty permalinks — follow redirects (`curl -L`) when testing.
+  - Its database is `supe_test` — **never** point Feature tests at it. They use `supe_phpunit` with WordPress core in `~/wordpress-core` (7.1.4, no wp-content).
 - **Secondary site: `3ofcupsevents.test`** (`~/www/vhosts/3ofcupsevents.test/httpdocs`) — runs `supe-theme` without the `supe` plugin today; useful to confirm the theme works without this package.
 - **Editor testing:** both sites have an administrator `claude` created for Claude to sign in via `wp-login.php` with Playwright. Set a fresh password each session (`wp user update claude --user_pass=... --skip-email`) and keep it out of the repo. Never sign in as `nathanmal`. New editor users see the welcome guides (post editor, Site Editor) first.
