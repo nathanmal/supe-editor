@@ -68,7 +68,7 @@ final class Renderer {
                 continue;
             }
 
-            $output  = $support->render( $value[ $name ] );
+            $output  = $support->output( $value[ $name ] );
             $classes = array_merge( $classes, $output['classes'] );
             $styles  = array_merge( $styles, $output['styles'] );
         }

@@ -5,6 +5,7 @@
     "description": "Shared editor components for supe-editor blocks, supports and editor modifications. Linked into node_modules so lint and Jest resolve it; webpack treats it as an external.",
     "main": "index.js",
     "peerDependencies": {
+        "@wordpress/block-editor": "*",
         "@wordpress/components": "*",
         "@wordpress/data": "*",
         "@wordpress/element": "*",

@@ -15,10 +15,14 @@ final class StyleGeneratorTest extends TestCase {
 
     private StyleGenerator $styles;
 
+    /** Whether the handle is registered in the (fake) current WP_Styles. */
+    private bool $registered = false;
+
     protected function set_up(): void {
         parent::set_up();
 
         Functions\when( 'get_option' )->justReturn( [ 'tablet' => 900, 'mobile' => 480 ] );
+        Functions\when( 'wp_style_is' )->alias( fn(): bool => $this->registered );
 
         $this->styles = new StyleGenerator( new Breakpoints(), new ValueSanitizer() );
     }
@@ -54,9 +58,9 @@ final class StyleGeneratorTest extends TestCase {
     }
 
     public function test_variable_styles_write_unset_viewports_as_initial_and_enqueue(): void {
-        Functions\expect( 'wp_register_style' )->once();
+        Functions\expect( 'wp_register_style' )->once()->andReturnUsing( fn(): bool => $this->registered = true );
         Functions\expect( 'wp_add_inline_style' )->once();
-        Functions\expect( 'wp_enqueue_style' )->once()->with( StyleGenerator::HANDLE );
+        Functions\expect( 'wp_enqueue_style' )->twice()->with( StyleGenerator::HANDLE );
 
         $this->styles->registerVariables( '.wp-block-x', [ 'x-per-view' => [ 'type' => 'int', 'min' => 1, 'max' => 12 ] ] );
 
@@ -65,7 +69,7 @@ final class StyleGeneratorTest extends TestCase {
             $this->styles->variableStyles( 'x-per-view', [ 'desktop' => 3, 'tablet' => 99, 'mobile' => '1' ] )
         );
 
-        // Enqueues once per request.
+        // Registered once per request.
         $this->styles->variableStyles( 'x-per-view', [ 'desktop' => 2 ] );
     }
 
@@ -87,6 +91,21 @@ final class StyleGeneratorTest extends TestCase {
     public function test_enqueue_does_nothing_without_css(): void {
         Functions\expect( 'wp_enqueue_style' )->never();
 
+        $this->styles->enqueue();
+    }
+
+    public function test_registers_once_per_wp_styles_instance_and_enqueues_on_every_call(): void {
+        Functions\expect( 'wp_register_style' )->twice()->andReturnUsing( fn(): bool => $this->registered = true );
+        Functions\expect( 'wp_add_inline_style' )->twice();
+        Functions\expect( 'wp_enqueue_style' )->times( 3 )->with( StyleGenerator::HANDLE );
+
+        $this->styles->addSupport( $this->supportWithRules( [ 'desktop' => [ '.a{x:1}' ] ] ) );
+        $this->styles->enqueue();
+        $this->styles->enqueue();
+
+        // The editor collects the canvas iframe's styles in a fresh WP_Styles
+        // that doesn't have registrations made in an earlier temporary one.
+        $this->registered = false;
         $this->styles->enqueue();
     }
 

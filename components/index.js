@@ -5,4 +5,5 @@
  * dependency instead of bundling a copy, the same way `@wordpress/*`
  * packages work. See webpack.config.js and Supe\Editor\SharedComponents.
  */
+export * from './controls';
 export * from './responsive';

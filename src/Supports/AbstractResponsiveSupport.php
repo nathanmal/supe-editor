@@ -21,6 +21,11 @@ use Supe\Editor\Supports\Responsive\Viewport;
  * viewport never resets the property — it cascades from the next larger
  * viewport, or leaves theme/core styles alone.
  *
+ * Rules are `!important`: a value set on one block should win the way
+ * core's inline styles do (e.g. over core's `:root :where(.is-layout-flow) >
+ * :last-child` margin reset). Among themselves the rules stay equal, so the
+ * later media queries still override desktop.
+ *
  * Property metadata: `css` (CSS property), `var` (short name used in
  * generated names), `sides` (top/right/bottom/left values), `type`
  * (ValueSanitizer type).
@@ -83,7 +88,7 @@ abstract class AbstractResponsiveSupport extends AbstractSupport {
                 foreach ( Viewport::cases() as $viewport ) {
                     $name = $this->generatedName( $config, $side, $viewport );
 
-                    $rules[ $viewport->value ][] = sprintf( '.has-%1$s{%2$s:var(--%1$s)}', $name, $cssProperty );
+                    $rules[ $viewport->value ][] = sprintf( '.has-%1$s{%2$s:var(--%1$s)!important}', $name, $cssProperty );
                 }
             }
         }

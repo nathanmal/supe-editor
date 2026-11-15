@@ -1,6 +1,7 @@
 {
     "name": "spacing",
     "title": "Responsive spacing",
+    "version": 1,
     "responsive": true,
     "properties": {
         "padding": {

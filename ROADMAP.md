@@ -15,10 +15,10 @@ The package has three focus areas. Suggested order: **housekeeping → supports 
 
 Next.js never runs WordPress's PHP render step, so it gets none of the classes, CSS variables or stylesheet added server side. Settle this before building serious blocks:
 
-- [ ] Document how the `supe` attribute's values become classes and CSS variables, readable from data (`support.json`), not only from PHP.
+- [x] Render `support.json` from data in PHP **and** portable JS (`supports/_framework/`), kept identical by shared fixtures (`tests/fixtures/`). Responsive variables still PHP-only.
 - [ ] REST access to breakpoints and to parsed blocks (core has no parsed-blocks endpoint).
 - [ ] Decide whether server-rendered blocks (e.g. Slides) also get a React counterpart.
-- [ ] Version the `supe` attribute so its shape can change without breaking saved content on either side.
+- [x] Version stored values per support (`v`, upgraded on read via matching PHP/JS migrations).
 
 ## 1. Editor customization
 
@@ -34,14 +34,14 @@ Custom functions and add-ons, styling of the editor UI itself, and improvements 
 
 ## 2. Custom & responsive supports
 
-The editor has little responsive support beyond core's `clamp()` fluid values; these add per-viewport overrides where they're needed. Planned in `docs/responsive-supports.md`; phase 1 (server side) done, spacing support defined.
+The editor has little responsive support beyond core's `clamp()` fluid values; these add per-viewport overrides where they're needed. Planned in `docs/responsive-supports.md`; phases 1–4 done (responsive spacing works end to end on Callout and Container), phase 5 (core blocks + core spacing bridge) next.
 
-- [ ] Phase 2: build + editor wiring (inspector panel, live canvas preview).
+- [x] Phases 2–4: editor wiring (Styles panel, live canvas preview), spacing controls, Callout + Container opted in.
 - [ ] Responsive visibility (hide on desktop / tablet / mobile).
 - [ ] Responsive typography (font size, line height per viewport; works alongside `clamp()`).
 - [ ] Responsive layout (flex direction / stacking, grid columns, order, alignment, gap).
 - [ ] Keep the editor's device preview widths (~780 / 360px) consistent with the site breakpoints.
-- [ ] Opt core blocks in, and eventually replace core `supports.spacing`.
+- [ ] Opt core blocks in together with the core spacing bridge (core padding/margin hidden and migrated) — a block never has both.
 - [ ] Possibly move header behavior into the supports framework (it's attributes + render-time markup on `core/group`).
 
 ## 3. Custom blocks

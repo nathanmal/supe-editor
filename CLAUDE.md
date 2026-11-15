@@ -32,13 +32,17 @@ src/                     PHP (Supe\Editor\*), one class per file
   SharedComponents.php   registers the shared components script
   Blocks/                BlockRegistrar, BlockCategory
   Editor/                EditorAssets, HeaderBehavior, PageTemplateMode
-  Supports/              SupportRegistry, Renderer, Abstract*Support
+  Supports/              SupportRegistry, Renderer, Abstract*Support, SupportAssets
     Responsive/          Breakpoints, StyleGenerator, ValueSanitizer, Viewport
   Admin/BlocksPage.php   "Blocks" page under the shared Supe admin menu
 components/              shared editor components (@supe-editor/components) → build/components/
   responsive/            ResponsiveControl, ViewportSwitcher, useViewport, utils (+ Jest)
+  controls/              SpacingSizeControl (wraps core's experimental spacing control)
 blocks/{name}/           block source (block.json, index.js, edit.js, save.js, *.scss)
-supports/{name}/         block supports: support.json + support.php
+supports/                block supports → build/supports/index.js
+  index.js               imports each support
+  _framework/            register-support.js (editor filters); sanitize/upgrade/render.js (portable, no WP imports)
+  {name}/                support.json + support.php (PHP), index.js + Panel.js (editor)
 editor/                  editor modifications bundle → build/editor/
   index.js               imports each modification (+ any editor UI stylesheet)
   canvas.scss            styles inside the editor canvas (create when needed)
@@ -47,6 +51,7 @@ editor/                  editor modifications bundle → build/editor/
 webpack.config.js        wp-scripts default + entries found by convention (see its header)
 build/                   compiled output (gitignored — run `npm run build`)
 tests/Unit/{Blocks,Editor,Supports,Admin}/, tests/Feature/   mirror src/
+tests/fixtures/          cases shared by PHPUnit and Jest (PHP/JS parity)
 docs/                    feature plans
 ```
 
@@ -57,7 +62,8 @@ docs/                    feature plans
 - **Editor styling:** editor UI (sidebars, panels, dialogs) → a stylesheet imported from `editor/index.js` (`build/editor/index.css`); the content canvas (iframe) → `editor/canvas.scss` (`build/editor/canvas.css`). Both are loaded by `EditorAssets`, only in the editor.
 - **New front-end asset for a feature:** `editor/{feature}/view.js` (+ `view.scss` imported from it) is built to `build/{feature}/view.*` automatically; register it from the generated `.asset.php` in the service and enqueue it only where it's used (see `HeaderBehavior::apply()`).
 - **Shared component** (used by more than one of blocks / supports / editor): `components/{group}/`, exported from `components/index.js`, imported as `@supe-editor/components` — never by relative path from outside `components/`, or it gets bundled twice. A new `@wordpress/*` import inside `components/` also goes in `components/package.json` `peerDependencies`.
-- **New block support:** follow `docs/responsive-supports.md` (`supports/{name}/support.json` + `support.php`).
+- **New block support:** follow `docs/responsive-supports.md`: `supports/{name}/support.json` (with `"version": 1`) + `support.php`, `index.js` calling `registerSupport()`, a `Panel`, and an import in `supports/index.js` plus `SupportRegistry::SUPPORTS`. Add `tests/fixtures/supports/{name}.json` and run it from both PHPUnit and Jest — the PHP and the portable JS must render identically.
+- **Changing a support's stored shape:** bump `version` in support.json and add the same migration in PHP (`migrations()`) and JS (`registerSupport( …, { migrations } )`), with fixtures for old values. Additive optional keys don't need a bump.
 
 ## Conventions specific to this package
 
@@ -84,7 +90,7 @@ composer test:feature  # real WordPress: ~/wordpress-core + DB supe_phpunit (tes
 - **Main dev site: `supe.test`** — `/Users/nathan/www/vhosts/supe.test/httpdocs`, https://supe.test (WordPress 7.1.4). Run WP-CLI from that directory.
   - Symlinks: `wp-content/plugins/supe` → `~/Development/supe`, whose `vendor/nathanmal/supe-editor` → this directory (Composer path repo). PHP changes here are live immediately; JS/SCSS need `npm run build`.
   - Active theme `supe` → `~/Development/supe-theme`.
-  - `wp-config.php` dev settings: `WP_ENVIRONMENT_TYPE` local, `WP_DEVELOPMENT_MODE` all, `SCRIPT_DEBUG` true, `WP_DEBUG` true with `WP_DEBUG_DISPLAY` false. **PHP notices only go to `/Users/nathan/www/vhosts/supe.test/debug.log`** — check it after changes.
+  - `wp-config.php` dev settings: `WP_ENVIRONMENT_TYPE` local, `WP_DEVELOPMENT_MODE` all, `SCRIPT_DEBUG` true, `WP_DEBUG` true with `WP_DEBUG_DISPLAY` false. PHP notices from WP-CLI go to `/Users/nathan/www/vhosts/supe.test/debug.log`; from **web requests** they go to `/Applications/ServBay/logs/php/8.4/errors.log` (the FPM pool pins `error_log`) — check both after changes. FPM's opcache revalidates every 60s, so a PHP edit can take up to a minute to show in the browser.
   - Asset URLs resolve through the Composer install path (`/wp-content/plugins/supe/vendor/nathanmal/supe-editor/build/...`) thanks to `Module::mapSymlinkedInstall()`.
   - `?page_id=` URLs redirect to pretty permalinks — follow redirects (`curl -L`) when testing.
   - Its database is `supe_test` — **never** point Feature tests at it. They use `supe_phpunit` with WordPress core in `~/wordpress-core` (7.1.4, no wp-content).

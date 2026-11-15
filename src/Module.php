@@ -16,6 +16,7 @@ use Supe\Editor\Supports\Renderer;
 use Supe\Editor\Supports\Responsive\Breakpoints;
 use Supe\Editor\Supports\Responsive\StyleGenerator;
 use Supe\Editor\Supports\Responsive\ValueSanitizer;
+use Supe\Editor\Supports\SupportAssets;
 use Supe\Editor\Supports\SupportRegistry;
 
 /**
@@ -59,17 +60,18 @@ final class Module extends AbstractModule {
 
         $this->mapSymlinkedInstall();
 
-        $this->singleton( 'supe.editor.components',  fn( $c ) => new SharedComponents( SUPE_EDITOR_DIR . 'build/', SUPE_EDITOR_DIR . 'bootstrap.php' ) );
-        $this->singleton( 'supe.editor.category',    fn( $c ) => new BlockCategory() );
-        $this->singleton( 'supe.editor.registrar',   fn( $c ) => new BlockRegistrar( SUPE_EDITOR_DIR . 'build/' ) );
-        $this->singleton( 'supe.editor.breakpoints', fn( $c ) => new Breakpoints() );
-        $this->singleton( 'supe.editor.sanitizer',   fn( $c ) => new ValueSanitizer() );
-        $this->singleton( 'supe.editor.styles',      fn( $c ) => new StyleGenerator( $c->make( 'supe.editor.breakpoints' ), $c->make( 'supe.editor.sanitizer' ) ) );
-        $this->singleton( 'supe.editor.supports',    fn( $c ) => new SupportRegistry( SUPE_EDITOR_DIR . 'supports/', $c->make( 'supe.editor.sanitizer' ), $c->make( 'supe.editor.styles' ) ) );
-        $this->singleton( 'supe.editor.renderer',    fn( $c ) => new Renderer( $c->make( 'supe.editor.supports' ), $c->make( 'supe.editor.styles' ) ) );
-        $this->singleton( 'supe.editor.assets',      fn( $c ) => new EditorAssets( SUPE_EDITOR_DIR . 'build/', SUPE_EDITOR_DIR . 'bootstrap.php' ) );
-        $this->singleton( 'supe.editor.header',      fn( $c ) => new HeaderBehavior( SUPE_EDITOR_DIR . 'build/', SUPE_EDITOR_DIR . 'bootstrap.php' ) );
-        $this->singleton( 'supe.editor.page_mode',   fn( $c ) => new PageTemplateMode() );
+        $this->singleton( 'supe.editor.components',     fn( $c ) => new SharedComponents( SUPE_EDITOR_DIR . 'build/', SUPE_EDITOR_DIR . 'bootstrap.php' ) );
+        $this->singleton( 'supe.editor.category',       fn( $c ) => new BlockCategory() );
+        $this->singleton( 'supe.editor.registrar',      fn( $c ) => new BlockRegistrar( SUPE_EDITOR_DIR . 'build/' ) );
+        $this->singleton( 'supe.editor.breakpoints',    fn( $c ) => new Breakpoints() );
+        $this->singleton( 'supe.editor.sanitizer',      fn( $c ) => new ValueSanitizer() );
+        $this->singleton( 'supe.editor.styles',         fn( $c ) => new StyleGenerator( $c->make( 'supe.editor.breakpoints' ), $c->make( 'supe.editor.sanitizer' ) ) );
+        $this->singleton( 'supe.editor.supports',       fn( $c ) => new SupportRegistry( SUPE_EDITOR_DIR . 'supports/', $c->make( 'supe.editor.sanitizer' ), $c->make( 'supe.editor.styles' ) ) );
+        $this->singleton( 'supe.editor.renderer',       fn( $c ) => new Renderer( $c->make( 'supe.editor.supports' ), $c->make( 'supe.editor.styles' ) ) );
+        $this->singleton( 'supe.editor.support_assets', fn( $c ) => new SupportAssets( SUPE_EDITOR_DIR . 'build/', SUPE_EDITOR_DIR . 'bootstrap.php', $c->make( 'supe.editor.breakpoints' ) ) );
+        $this->singleton( 'supe.editor.assets',         fn( $c ) => new EditorAssets( SUPE_EDITOR_DIR . 'build/', SUPE_EDITOR_DIR . 'bootstrap.php' ) );
+        $this->singleton( 'supe.editor.header',         fn( $c ) => new HeaderBehavior( SUPE_EDITOR_DIR . 'build/', SUPE_EDITOR_DIR . 'bootstrap.php' ) );
+        $this->singleton( 'supe.editor.page_mode',      fn( $c ) => new PageTemplateMode() );
 
         $this->make( 'supe.editor.components' )->register();
         $this->make( 'supe.editor.category' )->register();
@@ -78,6 +80,7 @@ final class Module extends AbstractModule {
         $this->make( 'supe.editor.styles' )->register();
         $this->make( 'supe.editor.supports' )->register();
         $this->make( 'supe.editor.renderer' )->register();
+        $this->make( 'supe.editor.support_assets' )->register();
         $this->make( 'supe.editor.assets' )->register();
         $this->make( 'supe.editor.header' )->register();
         $this->make( 'supe.editor.page_mode' )->register();

@@ -1,10 +1,11 @@
 # Responsive Supports — Plan
 
-**Status:** Phase 1 done (2026-11-04) — PHP framework, spacing support
-(declarative, not yet opted into any block), responsive variables, and the
-JS `ResponsiveControl` (not yet in any build). Phases 2+ not started. Design
-decisions made on 2026-10-25; update this doc as phases land (and log them
-in `PROGRESS.md`).
+**Status:** Phases 1–4 done (2026-11-15) — PHP framework, responsive
+variables, editor wiring, the spacing panel, a portable JS renderer kept
+identical to the PHP by shared fixtures, stored-value versioning, and
+`supe/callout` + container opted in. Next: phase 5 (core blocks). Design
+decisions made on 2026-10-25 and 2026-11-14; update this doc as phases land
+(and log them in `PROGRESS.md`).
 
 Custom block supports (starting with padding/margin) that work on both
 `supe/*` blocks and core blocks, with per-viewport values: **desktop is the
@@ -26,11 +27,16 @@ Phase 1 is a prerequisite for the [Slides block](slides.md).
 | Markup | Added at **render time** in PHP (`render_block`), never in `save()` |
 | CSS | Inline CSS custom properties per block + one generated stylesheet of media queries |
 | Cascade | Desktop-first (`max-width` queries); mobile → tablet → desktop fallback |
-| Values | Theme spacing **presets by default**, with optional custom `px` / `rem` / `%` |
+| Values | Theme spacing **presets by default**, with optional custom values in the units core's control offers (`px`, `em`, `rem`, `%`, `vh`, `vw`) |
 | Breakpoints | Site-wide setting with defaults (`tablet: 1024`, `mobile: 600`) |
-| Core spacing | Eventually replaced by this support via a bridge (hide core controls, migrate values) |
+| Core spacing | **Never both on one block**: wherever responsive spacing is enabled, core padding/margin is off, so the two never collide and no CSS overrides are needed (2026-11-15) |
 | Code layout | One self-contained folder per support under `supports/`; shared framework in `src/Supports/` + `supports/_framework/`; controls reusable outside supports in `components/` |
 | PHP loading | Support files **return** an anonymous-class instance, loaded by a registry — no autoloading for `supports/` |
+| Rule priority | Generated rules are `!important`, so a block's own value wins like core's inline styles do |
+| Versioning | Each support versions its **stored value shape** (`support.json` `version`, stored as `v`); readers upgrade older values |
+| JS/PHP parity | `support.json` is rendered by PHP **and** a portable JS module (editor preview, headless front ends); shared fixtures keep them identical |
+| `supe/*` blocks | Opting in drops core `supports.spacing` from block.json (no legacy content to protect) |
+| Core blocks | Opt in **together with** the bridge — core's padding/margin controls hidden and existing values migrated — never alongside core's controls |
 
 ---
 
@@ -43,6 +49,7 @@ desktop is the base, tablet/mobile store only what they override:
 ```json
 "supe": {
   "spacing": {
+    "v": 1,
     "padding": {
       "desktop": { "top": "var:preset|spacing|40", "right": "2rem", "bottom": "var:preset|spacing|40", "left": "2rem" },
       "tablet":  { "top": "var:preset|spacing|30" },
@@ -95,9 +102,13 @@ mobile. `{var}` comes from `support.json` (`p`, `m`, …), `{side}` is
 - No `var()` fallback chains are needed: desktop-first `max-width` queries
   cascade by themselves. At mobile widths the tablet query also matches, so
   an unset mobile value inherits tablet's, then desktop's.
-- Rules are single-class selectors; a theme rule with higher specificity
-  (e.g. `.entry-content p { margin: … }`) can still win. Revisit if that
-  shows up in practice.
+- Rules are `!important` (e.g. `.has-supe-mb-t{margin-bottom:var(--supe-mb-t)!important}`).
+  As plain single-class rules they lost to core's layout rules — e.g.
+  `:root :where(.is-layout-flow) > :last-child { margin-block-end: 0 }` —
+  while core's own spacing wins with inline styles. A value set on one block
+  should behave the same. The rules are equally important among themselves,
+  so the later media queries still override desktop; a theme can only
+  override them with `!important` of its own.
 - Breakpoints are user-configurable and media queries can't read CSS
   variables, so this CSS is **generated in PHP** (`StyleGenerator`) from every
   registered support's `rules()`. It's a few dozen short rules (~1 KB for
@@ -106,6 +117,12 @@ mobile. `{var}` comes from `support.json` (`p`, `m`, …), `{side}` is
 - Enqueued inline (`wp_add_inline_style`) on `enqueue_block_assets`, so it also
   loads inside the editor iframe. On the front end, enqueue only once the
   `Renderer` sees a block using a responsive support.
+- The editor collects the iframe's styles in **temporary `WP_Styles`
+  instances** (`_wp_get_iframed_editor_assets()`), each starting from the
+  main instance's registrations and running `enqueue_block_assets` again. So
+  `StyleGenerator::enqueue()` asks `wp_style_is( …, 'registered' )` of the
+  current instance and enqueues on every call — remembering "already done"
+  in a flag kept the stylesheet out of the canvas (covered by a Feature test).
 
 ### Responsive Variables
 
@@ -161,18 +178,64 @@ sanitizer, but resolve into a single custom property the block's CSS consumes:
 | Changing output later | needs deprecations | free |
 | Conditional CSS loading | ❌ | ✅ |
 
+### Versioning stored values
+
+Saved content outlives code, so each support versions the **shape of its
+stored value** — not the package (whose version changes with any code
+change) and not the support's code.
+
+- `support.json` declares `"version": 1`; every stored value carries it as
+  `v` (written always, even for 1, so headless readers never guess). A value
+  without `v` reads as version 1.
+- Bump the version only when old values would be misread under a new shape
+  (renaming `padding`, reorganizing viewports). Adding an optional key needs
+  no bump.
+- Readers (PHP `Renderer`, the editor, headless front ends) **upgrade on
+  read**: `AbstractSupport::upgrade()` / `upgrade.js` run the support's
+  migrations — `[ 1 => fn( $value ) => …v2 shape… ]` in PHP, `{ 1: ( value )
+  => … }` in JS, identical — from the stored version to the current one. The
+  editor writes the current shape the next time the block's value is edited;
+  nothing is rewritten in bulk.
+- Values that can't be read (invalid `v`, a version newer than the code, a
+  missing migration) render nothing, and the editor hides the panel rather
+  than overwrite them.
+
+### Portable JS and shared fixtures
+
+The same `support.json` is rendered by PHP and by `supports/_framework/`'s
+portable modules — `sanitize.js` (ValueSanitizer), `upgrade.js`, and
+`render.js` (`supportOutput()`, `supportRules()`, `stylesheet()`). They
+import nothing from WordPress (a Jest test enforces it), so a headless
+front end can render blocks exactly as WordPress does: classes + inline
+variables per block, plus the stylesheet for the site's breakpoints.
+
+`tests/fixtures/` holds the cases both sides must agree on —
+`value-sanitizer.json` and `supports/{name}.json` (stored values with their
+expected classes/styles, including version edge cases, and the expected
+stylesheet for given breakpoints). PHPUnit and Jest both run every case, so
+the two implementations can't drift apart unnoticed. Responsive variables
+(`registerVariables()`) aren't ported yet — that comes with the Slides block.
+
 ---
 
 ## Editor
 
 ### Filters (registered once by the framework, for every support)
 
-- `blocks.registerBlockType` — adds the `supe` attribute to blocks that opt in.
+In `supports/_framework/register-support.js`; each support calls
+`registerSupport( metadata, { Panel, migrations } )` from its `index.js`.
+
+- `blocks.registerBlockType` — opts in the `coreBlocks` from support.json and
+  adds the `supe` attribute to blocks that opt in.
 - `editor.BlockEdit` — injects each support's panel into `InspectorControls`
-  (`group="styles"`).
-- `editor.BlockListBlock` — adds the same classes/variables to `wrapperProps`
-  so the canvas matches the front end. The editor's Tablet/Mobile preview is a
+  (`group="styles"`), handing it the value upgraded to the current shape;
+  changes are stored with the current `v`, and an empty value drops its key.
+- `editor.BlockListBlock` — adds the classes/variables from `render.js`, so
+  the canvas matches the front end. The editor's Tablet/Mobile preview is a
   resized iframe, so the generated media queries apply there too.
+- The script (`build/supports/index.js`, handle `supe-editor-supports`) is
+  enqueued by `Supports\SupportAssets`, which passes the breakpoints as
+  `window.supeEditor.settings`.
 
 ### `ResponsiveControl`
 
@@ -185,16 +248,25 @@ Wraps any control with:
   viewports that have overrides, and a per-viewport "reset to inherited".
 - Labels showing the configured breakpoints, e.g. "Tablet (≤1024px)" (passed to
   the editor script from PHP).
+- Several controls can share one switcher (`showSwitcher={ false }`,
+  `hideLabelFromVision`); the spacing panel shows one for padding and margin.
+  Controls that can't show inherited placeholders get a "Using the Desktop
+  value." note instead.
 
 ### `SpacingSizeControl` — presets first, custom optional
 
+- A thin wrapper (`components/controls/`) around core's
+  `__experimentalSpacingSizesControl`, so the UI matches core's dimensions
+  panel (preset slider, custom value toggle, linked/axial/per-side views) and
+  an API change only needs fixing in one file.
 - **Presets** are the theme's spacing scale (`theme.json`
   `settings.spacing.spacingSizes`, or WordPress's generated default scale).
   Stored as references (`var:preset|spacing|40`) so changing the theme scale
   updates every block.
-- Default UI is a slider over preset steps, with a **"Set custom size"**
-  toggle to a number + unit input limited to `px`, `rem`, `%` — the same
-  pattern as core's spacing control.
+- Custom values use the theme's `spacing.units` (supe-theme: `px`, `em`,
+  `rem`, `%`, `vh`, `vw`), so `ValueSanitizer` accepts exactly those.
+- Core's control chooses its view from the values it mounts with, so the
+  panel remounts it per viewport (`key={ viewport }`).
 - Optionally a site setting can disable custom values entirely.
 - Note: `%` padding/margin resolves against the container's **width**, even
   for top/bottom.
@@ -251,46 +323,42 @@ only once the support is stable.
 
 ```
 components/                      ← shared editor components (@supe-editor/components)
-  responsive/
-    index.js                     ← exports the pieces below
-    ResponsiveControl.js         ← render-prop wrapper: viewport tabs, inherited value, reset
-    ViewportSwitcher.js
-    use-viewport.js              ← device-preview sync (`core/editor` by name, local state fallback)
-    utils.js                     ← inheritedValue / setViewportValue / hasOwnValue
-    test/utils.test.js           ← Jest (`npm run test:js`)
-  controls/
-    SpacingSizeControl.js        ← phase 2
-blocks/                          ← unchanged
+  responsive/                    ← ResponsiveControl, ViewportSwitcher, useViewport, utils (+ Jest)
+  controls/SpacingSizeControl.js ← wraps core's spacing control
+blocks/                          ← supe/callout and container opt in via block.json
 supports/
   index.js                       ← webpack entry: imports each support's index.js (explicit list)
-  _framework/                    ← supports-only JS (phase 2)
+  _framework/
     register-support.js          ← attribute / inspector / preview filters for any support
-    to-css-vars.js               ← mirrors the PHP Renderer's variable output
+    settings.js                  ← window.supeEditor.settings (breakpoints)
+    sanitize.js, upgrade.js,     ← portable: no WordPress imports (headless)
+    render.js
+    test/                        ← Jest, driven by tests/fixtures/
   spacing/
-    support.json                 ← name, properties, var prefixes, coreBlocks
+    support.json                 ← name, version, properties, var prefixes, coreBlocks
     support.php                  ← returns the support object
-    bridge.php                   ← optional: core spacing bridge
-    index.js                     ← registerSupport( metadata, { Control, migrate } )
-    Control.js
-    migrate-core.js
+    index.js                     ← registerSupport( metadata, { Panel } )
+    Panel.js
+    bridge.php, migrate-core.js  ← phase 7: core spacing bridge
   visibility/                    ← future support, same shape
 src/
   Supports/
     SupportRegistry.php          ← loads supports, adds them to block types
-    AbstractSupport.php
+    AbstractSupport.php          ← version(), upgrade(), output()
     AbstractResponsiveSupport.php
     Renderer.php                 ← single render_block pass
+    SupportAssets.php            ← enqueues build/supports/index.js + settings
     Responsive/
       Breakpoints.php            ← option, defaults, validation
       StyleGenerator.php         ← media-query CSS from all supports + responsive variables
       Viewport.php               ← enum: desktop / tablet / mobile
-      ValueSanitizer.php         ← preset refs, px/rem/%, shared
-  Editor/
-    EditorAssets.php             ← (or a sibling) enqueues build/supports/index.js
+      ValueSanitizer.php         ← preset refs, custom units, shared
   Admin/
     BlocksPage.php
-    ResponsivePage.php
-tests/Unit/Supports/…, tests/Unit/Supports/Responsive/…
+    ResponsivePage.php           ← phase 6
+tests/
+  fixtures/                      ← shared by PHPUnit and Jest
+  Unit/Supports/…, Unit/Supports/Responsive/…, Feature/ResponsiveSupportsTest.php
 ```
 
 ### `support.json` — shared by JS and PHP
@@ -360,14 +428,10 @@ for now; switch to globbing `supports/*/support.json` if the count grows.
 
 ## Build
 
-- Add a `webpack.config.js` extending the `@wordpress/scripts` default config:
-  blocks keep their existing pipeline (`--webpack-src-dir=blocks
-  --blocks-manifest`), plus one extra entry `supports/index.js` →
-  `build/supports/index.js` + `index.asset.php`. (`--webpack-src-dir=blocks`
-  only discovers directories containing a `block.json`.)
-- `blocks-manifest.php` is generated only from `blocks/`, so the extra entry
-  doesn't affect `BlockRegistrar`.
-- Update `lint:js` / `lint:css` scripts to include `supports/`.
+- `webpack.config.js` builds `supports/index.js` → `build/supports/index.js`
+  + `index.asset.php` by convention, alongside the blocks pipeline.
+- Controls come from `@supe-editor/components` (one shared script), so the
+  supports bundle stays small and depends on `supe-editor-components`.
 
 ---
 
@@ -379,20 +443,28 @@ allowed:
 
 - Preset references: `var:preset|spacing|{slug}` with a slug matching
   `[a-z0-9-]+` → `var(--wp--preset--spacing--{slug})`.
-- Custom values: number + `px` | `rem` | `%`, or `0`. Margin additionally
-  allows negative numbers and `auto`.
+- Custom values: number + `px` | `em` | `rem` | `%` | `vh` | `vw`, or `0`.
+  Margin additionally allows negative numbers and `auto`.
+- The JS port (`sanitize.js`) applies the same rules, checked against the
+  same fixtures, so the editor preview never shows a value PHP would drop.
 - Anything else is dropped silently.
 
 ---
 
 ## Testing
 
-- **Unit** (Brain Monkey): `ValueSanitizer`, `Breakpoints` validation,
-  `StyleGenerator` output, `Renderer` class/variable output, each support's
-  `sanitize()`.
-- **Feature**: `render_block` output for a `supe/*` block and a core block;
-  support/attribute registration on core block types; stylesheet enqueued only
-  when used.
+- **Shared fixtures** (`tests/fixtures/`): sanitizer cases, each support's
+  render and stylesheet cases — run by PHPUnit and Jest.
+- **Unit** (Brain Monkey): `Breakpoints` validation, `StyleGenerator` output
+  and registration per `WP_Styles` instance, `Renderer`, upgrades
+  (`AbstractSupportTest`), `SupportAssets`.
+- **Jest**: the portable modules (from the fixtures), upgrades, the
+  no-WordPress-imports rule, responsive utils.
+- **Feature**: `render_block` output for a block and a core block;
+  attribute registration; the stylesheet reaching every editor canvas
+  collection.
+- **Manual** (Playwright on supe.test): panel in the Styles tab, device sync,
+  canvas styles per viewport, edits stored with `v`.
 
 ---
 
@@ -403,16 +475,20 @@ allowed:
    `Renderer`, `spacing/support.json` + `support.php`, plus a JS-side
    `ResponsiveControl` usable outside supports. Tests. **Blocks the Slides
    block** (`slides.md`).
-2. **Build + editor wiring** — `webpack.config.js`, `EditorAssets`,
-   `register-support.js` (attribute / panel / preview filters).
-3. **Controls** — `ResponsiveControl` with device-preview sync and inherited
-   placeholders; `SpacingSizeControl` with presets + custom values.
-4. **Supe blocks opt in** — `supe/callout`, container.
-5. **Core blocks opt in** — via `coreBlocks`, with core's own controls still
-   visible.
+2. ✅ **Build + editor wiring** — `supports/index.js`, `SupportAssets`,
+   `register-support.js` (attribute / panel / preview filters), portable
+   `render.js` / `sanitize.js` / `upgrade.js` with shared fixtures, stored
+   value versioning.
+3. ✅ **Controls** — `ResponsiveControl` with device-preview sync, breakpoint
+   labels and inherited notes; `SpacingSizeControl` wrapping core's control.
+4. ✅ **Supe blocks opt in** — `supe/callout` (core spacing removed),
+   container.
+5. **Core blocks opt in, with the core spacing bridge** — via `coreBlocks`
+   plus `bridge.php` + `migrate-core.js` (hide core padding/margin controls,
+   migrate existing values). One phase, so a core block never has both.
 6. **Settings page** — `ResponsivePage` for breakpoints, with the preview-width
    warning.
-7. **Core spacing bridge** — `bridge.php` + `migrate-core.js`.
+7. ~~Core spacing bridge~~ — merged into phase 5.
 8. **More supports** — gap, visibility, … using the same framework.
 
 ---
@@ -421,5 +497,5 @@ allowed:
 
 - Which core blocks go in `spacing`'s `coreBlocks` initially?
 - Site setting to disallow custom values (presets only) — needed now or later?
-- Should `supe/*` blocks that opt in also set `supports.spacing: false` from
-  the start (they have no legacy content to protect)?
+- ~~Should `supe/*` blocks that opt in also set `supports.spacing: false`?~~
+  Yes (2026-11-14): they drop core spacing when opting in.

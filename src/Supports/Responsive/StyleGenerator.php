@@ -13,7 +13,7 @@ use Supe\Editor\Supports\AbstractSupport;
  * site's breakpoints for the media queries (which is why it can't be a
  * static file):
  *
- *  - Supports' rules (e.g. `.has-supe-pt-m{padding-top:var(--supe-pt-m)}`).
+ *  - Supports' rules (e.g. `.has-supe-pt-m{padding-top:var(--supe-pt-m)!important}`).
  *  - Responsive variables a block registers for its own settings. Each
  *    resolves to one custom property the block's CSS consumes:
  *
@@ -35,8 +35,6 @@ final class StyleGenerator {
     private array $variables = [];
 
     private ?string $css = null;
-
-    private bool $enqueued = false;
 
     public function __construct(
         private readonly Breakpoints $breakpoints,
@@ -156,22 +154,27 @@ final class StyleGenerator {
         return $this->css = $css;
     }
 
+    /**
+     * Registers the stylesheet where it's missing and enqueues it on every
+     * call. The editor collects the canvas iframe's styles in temporary
+     * WP_Styles instances that start from the main instance's registrations
+     * and run `enqueue_block_assets` again, so whether the handle is
+     * registered has to be asked of the current instance, never remembered.
+     * Repeat enqueues are no-ops for WordPress.
+     */
     public function enqueue(): void {
-        if ( $this->enqueued ) {
-            return;
+        if ( ! wp_style_is( self::HANDLE, 'registered' ) ) {
+            $css = $this->css();
+
+            if ( '' === $css ) {
+                return;
+            }
+
+            wp_register_style( self::HANDLE, false, [], false );
+            wp_add_inline_style( self::HANDLE, $css );
         }
 
-        $css = $this->css();
-
-        if ( '' === $css ) {
-            return;
-        }
-
-        wp_register_style( self::HANDLE, false, [], false );
-        wp_add_inline_style( self::HANDLE, $css );
         wp_enqueue_style( self::HANDLE );
-
-        $this->enqueued = true;
     }
 
     /**

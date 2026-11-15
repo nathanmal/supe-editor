@@ -18,6 +18,9 @@ final class ValueSanitizer {
 
     private const NUMBER = '(?:\d+(?:\.\d+)?|\.\d+)';
 
+    /** Units a spacing value may use — the units core's spacing control offers. */
+    private const SPACING_UNITS = 'px|em|rem|%|vh|vw';
+
     /**
      * Sanitize by type name, or by an options array whose `type` key names
      * it (`['type' => 'int', 'min' => 1, 'max' => 12]`).
@@ -42,7 +45,8 @@ final class ValueSanitizer {
 
     /**
      * A theme spacing preset (`var:preset|spacing|40`, or its already-resolved
-     * `var(--wp--preset--spacing--40)` form), `0`, or a number in px, rem or %.
+     * `var(--wp--preset--spacing--40)` form), `0`, or a number in px, em, rem,
+     * %, vh or vw.
      */
     public function spacing( mixed $value, bool $allowNegative = false, bool $allowAuto = false ): ?string {
         $value = $this->normalize( $value );
@@ -67,7 +71,7 @@ final class ValueSanitizer {
             return '0';
         }
 
-        return preg_match( '/^' . $sign . self::NUMBER . '(?:px|rem|%)$/', $value ) ? $value : null;
+        return preg_match( '/^' . $sign . self::NUMBER . '(?:' . self::SPACING_UNITS . ')$/', $value ) ? $value : null;
     }
 
     /**
@@ -114,6 +118,11 @@ final class ValueSanitizer {
     }
 
     public function int( mixed $value, int $min = 0, int $max = PHP_INT_MAX ): ?string {
+        // filter_var() reads true as 1; the JS port (and any sane input) doesn't.
+        if ( is_bool( $value ) ) {
+            return null;
+        }
+
         if ( is_string( $value ) ) {
             $value = trim( $value );
         }

@@ -1,0 +1,189 @@
+{
+    "description": "Spacing support cases shared by PHPUnit (tests/Unit/Supports/SpacingSupportTest.php) and Jest (supports/_framework/test/render.test.js): what a stored `supe.spacing` value renders to, and the stylesheet for given breakpoints.",
+    "render": [
+        {
+            "label": "preset and custom values across viewports",
+            "value": {
+                "v": 1,
+                "padding": {
+                    "desktop": {
+                        "top": "var:preset|spacing|40",
+                        "left": "2rem"
+                    },
+                    "mobile": {
+                        "top": "1rem"
+                    }
+                },
+                "margin": {
+                    "tablet": {
+                        "bottom": "-1rem"
+                    }
+                }
+            },
+            "expected": {
+                "classes": [
+                    "has-supe-pt",
+                    "has-supe-pl",
+                    "has-supe-pt-m",
+                    "has-supe-mb-t"
+                ],
+                "styles": {
+                    "--supe-pt": "var(--wp--preset--spacing--40)",
+                    "--supe-pl": "2rem",
+                    "--supe-pt-m": "1rem",
+                    "--supe-mb-t": "-1rem"
+                }
+            }
+        },
+        {
+            "label": "all sides, margin auto and zero",
+            "value": {
+                "v": 1,
+                "margin": {
+                    "desktop": {
+                        "top": "0",
+                        "right": "auto",
+                        "bottom": "3em",
+                        "left": "auto"
+                    }
+                }
+            },
+            "expected": {
+                "classes": [
+                    "has-supe-mt",
+                    "has-supe-mr",
+                    "has-supe-mb",
+                    "has-supe-ml"
+                ],
+                "styles": {
+                    "--supe-mt": "0",
+                    "--supe-mr": "auto",
+                    "--supe-mb": "3em",
+                    "--supe-ml": "auto"
+                }
+            }
+        },
+        {
+            "label": "a value without a version is version 1",
+            "value": {
+                "padding": {
+                    "desktop": {
+                        "top": "1rem"
+                    }
+                }
+            },
+            "expected": {
+                "classes": [
+                    "has-supe-pt"
+                ],
+                "styles": {
+                    "--supe-pt": "1rem"
+                }
+            }
+        },
+        {
+            "label": "invalid values, unknown properties and sides are skipped",
+            "value": {
+                "v": 1,
+                "padding": {
+                    "desktop": {
+                        "top": "-1rem",
+                        "right": "red",
+                        "middle": "1rem"
+                    },
+                    "tablet": "1rem",
+                    "huge": {
+                        "top": "1rem"
+                    }
+                },
+                "margin": {
+                    "desktop": {
+                        "top": "1px;background:red"
+                    }
+                },
+                "border": {
+                    "desktop": {
+                        "top": "1px"
+                    }
+                }
+            },
+            "expected": {
+                "classes": [],
+                "styles": {}
+            }
+        },
+        {
+            "label": "a version newer than the code knows renders nothing",
+            "value": {
+                "v": 2,
+                "padding": {
+                    "desktop": {
+                        "top": "1rem"
+                    }
+                }
+            },
+            "expected": {
+                "classes": [],
+                "styles": {}
+            }
+        },
+        {
+            "label": "a non-integer version renders nothing",
+            "value": {
+                "v": "1",
+                "padding": {
+                    "desktop": {
+                        "top": "1rem"
+                    }
+                }
+            },
+            "expected": {
+                "classes": [],
+                "styles": {}
+            }
+        },
+        {
+            "label": "version 0 renders nothing",
+            "value": {
+                "v": 0,
+                "padding": {
+                    "desktop": {
+                        "top": "1rem"
+                    }
+                }
+            },
+            "expected": {
+                "classes": [],
+                "styles": {}
+            }
+        },
+        {
+            "label": "empty value",
+            "value": {
+                "v": 1
+            },
+            "expected": {
+                "classes": [],
+                "styles": {}
+            }
+        }
+    ],
+    "stylesheet": [
+        {
+            "label": "default breakpoints",
+            "breakpoints": {
+                "tablet": 1024,
+                "mobile": 600
+            },
+            "css": ".has-supe-pt{padding-top:var(--supe-pt)!important}.has-supe-pr{padding-right:var(--supe-pr)!important}.has-supe-pb{padding-bottom:var(--supe-pb)!important}.has-supe-pl{padding-left:var(--supe-pl)!important}.has-supe-mt{margin-top:var(--supe-mt)!important}.has-supe-mr{margin-right:var(--supe-mr)!important}.has-supe-mb{margin-bottom:var(--supe-mb)!important}.has-supe-ml{margin-left:var(--supe-ml)!important}@media (max-width:1024px){.has-supe-pt-t{padding-top:var(--supe-pt-t)!important}.has-supe-pr-t{padding-right:var(--supe-pr-t)!important}.has-supe-pb-t{padding-bottom:var(--supe-pb-t)!important}.has-supe-pl-t{padding-left:var(--supe-pl-t)!important}.has-supe-mt-t{margin-top:var(--supe-mt-t)!important}.has-supe-mr-t{margin-right:var(--supe-mr-t)!important}.has-supe-mb-t{margin-bottom:var(--supe-mb-t)!important}.has-supe-ml-t{margin-left:var(--supe-ml-t)!important}}@media (max-width:600px){.has-supe-pt-m{padding-top:var(--supe-pt-m)!important}.has-supe-pr-m{padding-right:var(--supe-pr-m)!important}.has-supe-pb-m{padding-bottom:var(--supe-pb-m)!important}.has-supe-pl-m{padding-left:var(--supe-pl-m)!important}.has-supe-mt-m{margin-top:var(--supe-mt-m)!important}.has-supe-mr-m{margin-right:var(--supe-mr-m)!important}.has-supe-mb-m{margin-bottom:var(--supe-mb-m)!important}.has-supe-ml-m{margin-left:var(--supe-ml-m)!important}}"
+        },
+        {
+            "label": "custom breakpoints",
+            "breakpoints": {
+                "tablet": 900,
+                "mobile": 480
+            },
+            "css": ".has-supe-pt{padding-top:var(--supe-pt)!important}.has-supe-pr{padding-right:var(--supe-pr)!important}.has-supe-pb{padding-bottom:var(--supe-pb)!important}.has-supe-pl{padding-left:var(--supe-pl)!important}.has-supe-mt{margin-top:var(--supe-mt)!important}.has-supe-mr{margin-right:var(--supe-mr)!important}.has-supe-mb{margin-bottom:var(--supe-mb)!important}.has-supe-ml{margin-left:var(--supe-ml)!important}@media (max-width:900px){.has-supe-pt-t{padding-top:var(--supe-pt-t)!important}.has-supe-pr-t{padding-right:var(--supe-pr-t)!important}.has-supe-pb-t{padding-bottom:var(--supe-pb-t)!important}.has-supe-pl-t{padding-left:var(--supe-pl-t)!important}.has-supe-mt-t{margin-top:var(--supe-mt-t)!important}.has-supe-mr-t{margin-right:var(--supe-mr-t)!important}.has-supe-mb-t{margin-bottom:var(--supe-mb-t)!important}.has-supe-ml-t{margin-left:var(--supe-ml-t)!important}}@media (max-width:480px){.has-supe-pt-m{padding-top:var(--supe-pt-m)!important}.has-supe-pr-m{padding-right:var(--supe-pr-m)!important}.has-supe-pb-m{padding-bottom:var(--supe-pb-m)!important}.has-supe-pl-m{padding-left:var(--supe-pl-m)!important}.has-supe-mt-m{margin-top:var(--supe-mt-m)!important}.has-supe-mr-m{margin-right:var(--supe-mr-m)!important}.has-supe-mb-m{margin-bottom:var(--supe-mb-m)!important}.has-supe-ml-m{margin-left:var(--supe-ml-m)!important}}"
+        }
+    ]
+}

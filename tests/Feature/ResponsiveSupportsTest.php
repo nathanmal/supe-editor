@@ -45,6 +45,24 @@ final class ResponsiveSupportsTest extends TestCase {
         self::assertTrue( wp_style_is( 'supe-responsive', 'enqueued' ) );
     }
 
+    /**
+     * The editor collects the canvas iframe's styles in temporary WP_Styles
+     * instances, running `enqueue_block_assets` again each time — the
+     * stylesheet has to make it into every collection.
+     */
+    public function test_the_stylesheet_reaches_every_editor_canvas_collection(): void {
+        set_current_screen( 'post' );
+
+        do_action( 'enqueue_block_assets' );
+        $first  = _wp_get_iframed_editor_assets();
+        $second = _wp_get_iframed_editor_assets();
+
+        self::assertStringContainsString( '.has-supe-pt{padding-top:var(--supe-pt)!important}', $first['styles'] );
+        self::assertStringContainsString( '.has-supe-pt{padding-top:var(--supe-pt)!important}', $second['styles'] );
+
+        set_current_screen( 'front' );
+    }
+
     public function test_leaves_blocks_without_the_support_untouched(): void {
         $html = render_block( $this->parsedBlock( 'core/separator', [
             'padding' => [ 'desktop' => [ 'top' => '1rem' ] ],

@@ -79,6 +79,20 @@ export function inheritedValue( value, viewport, { perKey = false } = {} ) {
 }
 
 /**
+ * The nearest larger viewport with a value — the one a viewport without its
+ * own value inherits from. Undefined on desktop, or when nothing is set.
+ *
+ * @param {Object|undefined} value
+ * @param {string}           viewport
+ * @return {string|undefined} Viewport name.
+ */
+export function inheritedFrom( value, viewport ) {
+    return VIEWPORTS.slice( 0, VIEWPORTS.indexOf( viewport ) )
+        .reverse()
+        .find( ( name ) => hasOwnValue( value, name ) );
+}
+
+/**
  * Responsive value with one viewport replaced. Empty values remove the
  * viewport, and a value left with no viewports becomes undefined so the
  * attribute isn't saved at all.

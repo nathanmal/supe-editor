@@ -58,7 +58,7 @@ final class SupportRegistryTest extends TestCase {
 
         self::assertInstanceOf( AbstractResponsiveSupport::class, $registry->get( 'gap' ) );
         self::assertSame( 'gap', $registry->get( 'gap' )->name() );
-        self::assertStringContainsString( '.has-supe-g{gap:var(--supe-g)}', $styles->css() );
+        self::assertStringContainsString( '.has-supe-g{gap:var(--supe-g)!important}', $styles->css() );
     }
 
     public function test_skips_misconfigured_supports(): void {

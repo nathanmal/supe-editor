@@ -1,5 +1,6 @@
 import {
     hasOwnValue,
+    inheritedFrom,
     inheritedValue,
     isEmptyValue,
     setViewportValue,
@@ -81,5 +82,18 @@ describe( 'hasOwnValue', () => {
         expect( hasOwnValue( value, 'desktop' ) ).toBe( true );
         expect( hasOwnValue( value, 'tablet' ) ).toBe( false );
         expect( hasOwnValue( value, 'mobile' ) ).toBe( false );
+    } );
+} );
+
+describe( 'inheritedFrom', () => {
+    it( 'names the nearest larger viewport with a value', () => {
+        const value = { desktop: 3, tablet: { top: '' } };
+
+        expect( inheritedFrom( value, 'mobile' ) ).toBe( 'desktop' );
+        expect( inheritedFrom( { ...value, tablet: 2 }, 'mobile' ) ).toBe(
+            'tablet'
+        );
+        expect( inheritedFrom( value, 'desktop' ) ).toBeUndefined();
+        expect( inheritedFrom( undefined, 'tablet' ) ).toBeUndefined();
     } );
 } );

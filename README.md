@@ -65,11 +65,27 @@ every block editor by `Editor\EditorAssets`. Styles:
   with "Show template" on when the active theme declares
   `add_theme_support( 'supe-blank-page-template' )`.
 
+### Responsive block supports
+
+Custom block supports with per-viewport values — desktop is the default,
+tablet and mobile override it at the site-wide breakpoints. See
+[`docs/responsive-supports.md`](docs/responsive-supports.md).
+
+- **Responsive spacing** (`supports/spacing/`) — padding and margin, with the
+  theme's spacing presets first and custom values in the theme's units. A
+  "Responsive spacing" panel in the block's Styles tab, with one device
+  switcher synced to the editor's preview. Used by Callout and Container
+  (`"supports": { "supe": { "spacing": true } }`).
+- Rendered at request time (classes + CSS variables on the block, one
+  generated stylesheet with the breakpoints' media queries) — saved markup
+  never changes.
+- Stored values are versioned (`v`) and upgraded on read.
+- `supports/_framework/{sanitize,upgrade,render}.js` render the same
+  `support.json` without WordPress, for headless front ends; shared fixtures
+  in `tests/fixtures/` keep them identical to the PHP.
+
 ### In progress / planned
 
-- **Responsive block supports** — phase 1 (server side: breakpoints, value
-  sanitizing, generated CSS, `supports/spacing/`) is done but not applied to any
-  block yet; editor wiring is phase 2. See [`docs/responsive-supports.md`](docs/responsive-supports.md).
 - **Slides block** (`supe/slides`) — the slider/slideshow block. See
   [`docs/slides.md`](docs/slides.md).
 
@@ -97,7 +113,9 @@ Header behavior expects a block theme header: a template part rendered as
 | Post meta | `_supe_header_behavior` | `''` (use header default), `static`, `sticky`, `hide-on-scroll`. REST-exposed, `edit_post` capability. |
 | Block attributes | `supeSticky`, `supeHideOnScroll` | Added to `core/group` (server and client). |
 | CSS classes | `supe-header-sticky`, `supe-header-hide-on-scroll`, `is-header-hidden` | Root Group / `<header>` wrapper. |
-| Script / style handles | `supe-editor` (editor bundle + UI styles), `supe-editor-canvas` (canvas styles), `supe-editor-components` (shared components), `supe-header-behavior` (front end), `supe-responsive` (generated responsive CSS) | |
+| Script / style handles | `supe-editor` (editor bundle + UI styles), `supe-editor-canvas` (canvas styles), `supe-editor-components` (shared components), `supe-editor-supports` (block supports editor script), `supe-header-behavior` (front end), `supe-responsive` (generated responsive CSS) | |
+| Block attribute | `supe` | Every support's value, keyed by support name, each with its shape version `v`. |
+| JS global | `window.supeEditor` | `.components` (shared components), `.settings.breakpoints` (supports script). |
 | Theme support | `supe-blank-page-template` | See above. |
 | Option | `supe_editor_breakpoints` | Tablet / mobile max widths for responsive supports. |
 

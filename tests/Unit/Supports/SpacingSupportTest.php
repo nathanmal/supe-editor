@@ -4,12 +4,18 @@ declare(strict_types=1);
 
 namespace Supe\Editor\Tests\Unit\Supports;
 
-use Supe\Editor\Supports\Responsive\ValueSanitizer;
+use Brain\Monkey\Functions;
 use Supe\Editor\Supports\AbstractSupport;
+use Supe\Editor\Supports\Responsive\Breakpoints;
+use Supe\Editor\Supports\Responsive\StyleGenerator;
+use Supe\Editor\Supports\Responsive\ValueSanitizer;
 use Yoast\WPTestUtils\BrainMonkey\TestCase;
 
 /**
- * Exercises AbstractResponsiveSupport through the real spacing support.
+ * Exercises AbstractResponsiveSupport through the real spacing support. The
+ * render and stylesheet cases live in tests/fixtures/supports/spacing.json,
+ * shared with the JS port (supports/_framework/) so both produce identical
+ * output.
  */
 final class SpacingSupportTest extends TestCase {
 
@@ -25,48 +31,56 @@ final class SpacingSupportTest extends TestCase {
         $this->support->boot( $metadata, new ValueSanitizer() );
     }
 
-    public function test_renders_a_class_and_variable_per_set_viewport_value(): void {
-        $output = $this->support->render( [
-            'padding' => [
-                'desktop' => [ 'top' => 'var:preset|spacing|40', 'left' => '2rem' ],
-                'mobile'  => [ 'top' => '1rem' ],
-            ],
-            'margin'  => [
-                'tablet' => [ 'bottom' => '-1rem' ],
-            ],
-        ] );
-
-        self::assertSame(
-            [ 'has-supe-pt', 'has-supe-pl', 'has-supe-pt-m', 'has-supe-mb-t' ],
-            $output['classes']
-        );
-        self::assertSame(
-            [
-                '--supe-pt'   => 'var(--wp--preset--spacing--40)',
-                '--supe-pl'   => '2rem',
-                '--supe-pt-m' => '1rem',
-                '--supe-mb-t' => '-1rem',
-            ],
-            $output['styles']
-        );
+    /**
+     * @dataProvider provideRenderCases
+     *
+     * @param array<string, mixed>                                            $value
+     * @param array{classes: list<string>, styles: array<string, string>} $expected
+     */
+    public function test_renders_stored_values( array $value, array $expected ): void {
+        self::assertSame( $expected, $this->support->output( $value ) );
     }
 
-    public function test_skips_invalid_values_and_unknown_properties(): void {
-        $output = $this->support->render( [
-            'padding' => [ 'desktop' => [ 'top' => '-1rem', 'right' => 'red' ] ],
-            'border'  => [ 'desktop' => [ 'top' => '1px' ] ],
-        ] );
+    /**
+     * @dataProvider provideStylesheetCases
+     *
+     * @param array{tablet: int, mobile: int} $breakpoints
+     */
+    public function test_builds_the_stylesheet( array $breakpoints, string $css ): void {
+        Functions\when( 'get_option' )->justReturn( $breakpoints );
 
-        self::assertSame( [ 'classes' => [], 'styles' => [] ], $output );
+        $styles = new StyleGenerator( new Breakpoints(), new ValueSanitizer() );
+        $styles->addSupport( $this->support );
+
+        self::assertSame( $css, $styles->css() );
     }
 
-    public function test_rules_cover_every_side_and_viewport(): void {
-        $rules = $this->support->rules();
+    public function test_is_at_version_1(): void {
+        self::assertSame( 1, $this->support->version() );
+    }
 
-        self::assertCount( 8, $rules['desktop'] );
-        self::assertCount( 8, $rules['tablet'] );
-        self::assertCount( 8, $rules['mobile'] );
-        self::assertContains( '.has-supe-pt{padding-top:var(--supe-pt)}', $rules['desktop'] );
-        self::assertContains( '.has-supe-ml-m{margin-left:var(--supe-ml-m)}', $rules['mobile'] );
+    /**
+     * @return iterable<string, array{0: array<string, mixed>, 1: array<string, mixed>}>
+     */
+    public static function provideRenderCases(): iterable {
+        foreach ( self::fixtures()['render'] as $case ) {
+            yield $case['label'] => [ $case['value'], $case['expected'] ];
+        }
+    }
+
+    /**
+     * @return iterable<string, array{0: array<string, int>, 1: string}>
+     */
+    public static function provideStylesheetCases(): iterable {
+        foreach ( self::fixtures()['stylesheet'] as $case ) {
+            yield $case['label'] => [ $case['breakpoints'], $case['css'] ];
+        }
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private static function fixtures(): array {
+        return json_decode( (string) file_get_contents( dirname( __DIR__, 2 ) . '/fixtures/supports/spacing.json' ), true );
     }
 }

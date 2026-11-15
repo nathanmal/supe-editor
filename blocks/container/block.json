@@ -9,7 +9,10 @@
     "description": "Container block for content",
     "example": {},
     "supports": {
-        "html": false
+        "html": false,
+        "supe": {
+            "spacing": true
+        }
     },
     "textdomain": "supe",
     "editorScript": "file:./index.js",
