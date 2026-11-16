@@ -4,19 +4,15 @@
     "name": "supe-container/container",
     "version": "0.1.0",
     "title": "Container",
-    "category": "design",
+    "category": "supe",
     "icon": "smiley",
-    "description": "Container block for content",
-    "example": {},
+    "description": "A wrapper for other blocks that follows the theme's styles.",
     "supports": {
         "html": false,
         "supe": {
             "spacing": true
         }
     },
-    "textdomain": "supe",
-    "editorScript": "file:./index.js",
-    "editorStyle": "file:./index.css",
-    "style": "file:./style-index.css",
-    "viewScript": "file:./view.js"
+    "textdomain": "supe-editor",
+    "editorScript": "file:./index.js"
 }

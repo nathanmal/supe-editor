@@ -1,36 +1,30 @@
-/**
- * Retrieves the translation of text.
- *
- * @see https://developer.wordpress.org/block-editor/reference-guides/packages/packages-i18n/
- */
-import { __ } from '@wordpress/i18n';
-/**
- * React hook that is used to mark the block wrapper element.
- * It provides all the necessary props like the class name.
- *
- * @see https://developer.wordpress.org/block-editor/reference-guides/packages/packages-block-editor/#useblockprops
- */
-import { useBlockProps } from '@wordpress/block-editor';
-/**
- * Lets webpack process CSS, SASS or SCSS files referenced in JavaScript files.
- * Those files can contain any CSS code that gets applied to the editor.
- *
- * @see https://www.npmjs.com/package/@wordpress/scripts#using-css
- */
-import './editor.scss';
+import {
+    InnerBlocks,
+    store as blockEditorStore,
+    useBlockProps,
+    useInnerBlocksProps,
+} from '@wordpress/block-editor';
+import { useSelect } from '@wordpress/data';
 
 /**
- * The edit function describes the structure of your block in the context of the
- * editor. This represents what the editor will render when the block is used.
+ * An empty wrapper for other blocks. It has no colors or typography of its
+ * own, so it follows the theme; spacing comes from the responsive spacing
+ * support. While empty it shows a "+" button instead of the default
+ * paragraph prompt, like core's Group.
  *
- * @see https://developer.wordpress.org/block-editor/reference-guides/block-api/block-edit-save/#edit
- *
- * @return {Element} Element to render.
+ * @param {Object} props
+ * @param {string} props.clientId
  */
-export default function Edit() {
-    return (
-        <p { ...useBlockProps() }>
-            { __( 'Container – hello from the editor!', 'supe' ) }
-        </p>
+export default function Edit( { clientId } ) {
+    const hasInnerBlocks = useSelect(
+        ( select ) => select( blockEditorStore ).getBlockCount( clientId ) > 0,
+        [ clientId ]
     );
+    const innerBlocksProps = useInnerBlocksProps( useBlockProps(), {
+        renderAppender: hasInnerBlocks
+            ? undefined
+            : InnerBlocks.ButtonBlockAppender,
+    } );
+
+    return <div { ...innerBlocksProps } />;
 }
