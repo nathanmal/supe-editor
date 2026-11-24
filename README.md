@@ -25,8 +25,8 @@ blocks, block supports, editor UI and editor settings — while
 - **Callout** (`supe/callout`) — working example of the full
   source → build → register pipeline
 - **Container** (`supe-container/container` — predates the `supe/` naming; kept so saved content keeps working)
-- A read-only **Blocks** admin page under the shared Supe menu listing every
-  registered block (`Admin\BlocksPage`)
+- A **Block Editor** admin page under the shared Supe menu (slug
+  `supe-editor-blocks`), listing every registered block (`Admin\BlocksPage`)
 
 ### Shared components
 

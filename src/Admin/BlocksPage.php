@@ -4,16 +4,20 @@ declare(strict_types=1);
 
 namespace Supe\Editor\Admin;
 
-use Supe\Editor\Blocks\BlockRegistrar;
 use Supe\Core\Admin\DashboardPage;
 use Supe\Core\Support\AbstractAdminPage;
+use Supe\Core\Support\AdminUi;
+use Supe\Editor\Blocks\BlockRegistrar;
+use Supe\Editor\Module;
 
 /**
  * BlocksPage
  *
- * Read-only diagnostic page listing every block in BlockRegistrar's
- * build/blocks-manifest.php, since blocks are added by dropping in a directory rather than
- * any PHP registration a developer would otherwise see.
+ * The module's "Block Editor" page under the Supe menu. Today it lists every
+ * block in BlockRegistrar's build/blocks-manifest.php, since blocks are added
+ * by dropping in a directory rather than any PHP registration a developer
+ * would otherwise see. The slug keeps its original `supe-editor-blocks` so
+ * existing links and bookmarks still work.
  */
 final class BlocksPage extends AbstractAdminPage {
 
@@ -22,46 +26,69 @@ final class BlocksPage extends AbstractAdminPage {
     }
 
     public function pageTitle(): string {
-        return __( 'Supe Blocks', 'supe-editor' );
+        return __( 'Block Editor', 'supe-editor' );
     }
 
     public function menuTitle(): string {
-        return __( 'Blocks', 'supe-editor' );
+        return __( 'Block Editor', 'supe-editor' );
     }
 
     public function parentSlug(): ?string {
         return DashboardPage::slug();
     }
 
-    public function render(): void {
+    public function description(): string {
+        return __( 'Custom blocks, block supports and changes to the block editor itself.', 'supe-editor' );
+    }
+
+    public function version(): string {
+        return Module::version();
+    }
+
+    protected function renderContent(): void {
         /** @var BlockRegistrar $registrar */
         $registrar = $this->make( 'supe.editor.registrar' );
         $blocks    = $this->describeBlocks( $registrar );
 
-        echo '<div class="wrap">';
-        echo '<h1>' . esc_html( $this->pageTitle() ) . '</h1>';
-
         if ( empty( $blocks ) ) {
-            echo '<p>' . esc_html__( 'No compiled blocks found in build/. Run npm run build.', 'supe-editor' ) . '</p>';
-            echo '</div>';
+            AdminUi::emptyState(
+                __( 'No blocks yet', 'supe-editor' ),
+                __( 'No compiled blocks found in build/. Run npm run build.', 'supe-editor' ),
+                'dashicons-block-default'
+            );
             return;
         }
 
-        echo '<table class="widefat striped"><thead><tr>';
-        echo '<th>' . esc_html__( 'Title', 'supe-editor' ) . '</th>';
-        echo '<th>' . esc_html__( 'Block Name', 'supe-editor' ) . '</th>';
-        echo '<th>' . esc_html__( 'Category', 'supe-editor' ) . '</th>';
-        echo '</tr></thead><tbody>';
+        $rows = [];
 
         foreach ( $blocks as $block ) {
-            echo '<tr>';
-            echo '<td>' . esc_html( $block['title'] ) . '</td>';
-            echo '<td><code>' . esc_html( $block['name'] ) . '</code></td>';
-            echo '<td>' . esc_html( $block['category'] ) . '</td>';
-            echo '</tr>';
+            $rows[] = [
+                'title'    => $block['title'],
+                'name'     => AdminUi::code( $block['name'] ),
+                'category' => $block['category'] !== '' ? AdminUi::badge( $block['category'] ) : '',
+            ];
         }
 
-        echo '</tbody></table></div>';
+        AdminUi::cardStart(
+            __( 'Registered Blocks', 'supe-editor' ),
+            sprintf(
+                /* translators: %d: number of blocks */
+                _n( '%d block available in the editor.', '%d blocks available in the editor.', count( $blocks ), 'supe-editor' ),
+                count( $blocks )
+            ),
+            'dashicons-block-default'
+        );
+
+        AdminUi::table(
+            [
+                'title'    => __( 'Title', 'supe-editor' ),
+                'name'     => __( 'Block Name', 'supe-editor' ),
+                'category' => __( 'Category', 'supe-editor' ),
+            ],
+            $rows
+        );
+
+        AdminUi::cardEnd();
     }
 
     /**

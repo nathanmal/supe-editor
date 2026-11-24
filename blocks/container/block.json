@@ -8,6 +8,7 @@
     "icon": "smiley",
     "description": "A wrapper for other blocks that follows the theme's styles.",
     "supports": {
+        "align": [ "wide", "full" ],
         "html": false,
         "supe": {
             "spacing": true

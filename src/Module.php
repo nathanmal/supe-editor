@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace Supe\Editor;
 
-use Composer\InstalledVersions;
 use Supe\Core\Support\AbstractModule;
+use Supe\Core\Support\PackageAssets;
 use Supe\Editor\Admin\BlocksPage;
 use Supe\Editor\Blocks\BlockCategory;
 use Supe\Editor\Blocks\BlockRegistrar;
@@ -46,7 +46,7 @@ use Supe\Editor\Supports\SupportRegistry;
  */
 final class Module extends AbstractModule {
     public static function id(): string {
-        return 'editor';
+        return 'nathanmal/supe-editor';
     }
 
     public static function version(): string {
@@ -58,7 +58,10 @@ final class Module extends AbstractModule {
             define( 'SUPE_EDITOR_DIR', dirname( __DIR__ ) . '/' );
         }
 
-        $this->mapSymlinkedInstall();
+        // Map the symlinked Composer install so WordPress can build URLs for
+        // build/ assets (incl. the block.json ones it realpath()s itself).
+        $this->singleton( 'supe.editor.package', fn( $c ) => new PackageAssets( 'nathanmal/supe-editor', dirname( __DIR__ ) ) );
+        $this->make( 'supe.editor.package' )->register();
 
         $this->singleton( 'supe.editor.components',     fn( $c ) => new SharedComponents( SUPE_EDITOR_DIR . 'build/', SUPE_EDITOR_DIR . 'bootstrap.php' ) );
         $this->singleton( 'supe.editor.category',       fn( $c ) => new BlockCategory() );
@@ -86,55 +89,5 @@ final class Module extends AbstractModule {
         $this->make( 'supe.editor.page_mode' )->register();
 
         $this->addAdminPage( BlocksPage::class );
-    }
-
-    /**
-     * When this package is symlinked in via a Composer path repository, the
-     * real path of every block asset (WordPress realpath()s them) lives
-     * outside wp-content, so plugin_basename() can't turn it into a URL —
-     * worse, a sibling symlinked plugin whose real path is a string prefix of
-     * ours (e.g. ../supe vs ../supe-editor) rewrites it to a bogus
-     * plugins/supe-editor/ URL. Register the Composer install path ↔ real
-     * path pair, the same way wp_register_plugin_realpath() does for
-     * symlinked plugins. A no-op when the package isn't symlinked.
-     */
-    private function mapSymlinkedInstall(): void {
-        global $wp_plugin_paths;
-
-        if ( ! class_exists( InstalledVersions::class ) || ! InstalledVersions::isInstalled( 'nathanmal/supe-editor' ) ) {
-            return;
-        }
-
-        $installPath = InstalledVersions::getInstallPath( 'nathanmal/supe-editor' );
-        $realPath    = realpath( dirname( __DIR__ ) );
-
-        if ( null === $installPath || false === $realPath ) {
-            return;
-        }
-
-        $installPath = self::collapseDotSegments( wp_normalize_path( $installPath ) );
-        $realPath    = wp_normalize_path( $realPath );
-
-        if ( $installPath !== $realPath ) {
-            $wp_plugin_paths[ $installPath ] = $realPath;
-        }
-    }
-
-    /**
-     * Resolves ./.. segments lexically — unlike realpath(), without
-     * following the symlink we're trying to preserve.
-     */
-    private static function collapseDotSegments( string $path ): string {
-        $segments = [];
-
-        foreach ( explode( '/', $path ) as $segment ) {
-            if ( '..' === $segment ) {
-                array_pop( $segments );
-            } elseif ( '.' !== $segment && ( '' !== $segment || [] === $segments ) ) {
-                $segments[] = $segment;
-            }
-        }
-
-        return implode( '/', $segments );
     }
 }
