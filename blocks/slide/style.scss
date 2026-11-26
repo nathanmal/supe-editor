@@ -1,0 +1,17 @@
+/**
+ * A column, so the content can be aligned vertically within the slide's
+ * height. Flow layout only: constrained layout's auto margins would shrink
+ * flex items to their content.
+ */
+.wp-block-supe-slide {
+    display: flex;
+    flex-direction: column;
+
+    &.is-vertically-aligned-center {
+        justify-content: center;
+    }
+
+    &.is-vertically-aligned-bottom {
+        justify-content: flex-end;
+    }
+}

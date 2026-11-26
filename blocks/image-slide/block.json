@@ -1,0 +1,24 @@
+{
+    "$schema": "https://schemas.wp.org/trunk/block.json",
+    "apiVersion": 3,
+    "name": "supe/image-slide",
+    "version": "0.1.0",
+    "title": "Image slide",
+    "category": "supe",
+    "icon": "format-image",
+    "description": "A slide showing one image.",
+    "textdomain": "supe-editor",
+    "parent": [ "supe/slides-track" ],
+    "attributes": {
+        "id": {
+            "type": "number"
+        }
+    },
+    "supports": {
+        "html": false,
+        "reusable": false
+    },
+    "editorScript": "file:./index.js",
+    "style": "file:./style-index.css",
+    "render": "file:./render.php"
+}

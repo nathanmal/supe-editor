@@ -1,0 +1,23 @@
+{
+    "$schema": "https://schemas.wp.org/trunk/block.json",
+    "apiVersion": 3,
+    "name": "supe/slides-track",
+    "version": "0.1.0",
+    "title": "Slide track",
+    "category": "supe",
+    "icon": "slides",
+    "description": "Holds a slider's slides.",
+    "textdomain": "supe-editor",
+    "parent": [ "supe/slides" ],
+    "usesContext": [ "supe/slides/type" ],
+    "allowedBlocks": [ "supe/slide", "supe/image-slide" ],
+    "supports": {
+        "html": false,
+        "inserter": false,
+        "lock": false,
+        "renaming": false,
+        "reusable": false
+    },
+    "editorScript": "file:./index.js",
+    "render": "file:./render.php"
+}

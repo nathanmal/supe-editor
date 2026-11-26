@@ -1,0 +1,21 @@
+/**
+ * Front end and editor. Without the engine (no JS, or before it loads) the
+ * track is a horizontal scroll-snap strip, so every slide stays reachable.
+ */
+.supe-slides {
+    position: relative;
+}
+
+.supe-slides__track {
+    display: flex;
+    overflow-x: auto;
+    overscroll-behavior-x: contain;
+    scroll-snap-type: x mandatory;
+
+    > .supe-slides__slide {
+        box-sizing: border-box;
+        flex: 0 0 100%;
+        min-width: 0;
+        scroll-snap-align: start;
+    }
+}

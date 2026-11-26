@@ -34,7 +34,7 @@ Organized by the package's three areas — editor customization, supports, block
 src/                     PHP (Supe\Editor\*), one class per file
   Module.php             binds services in the container and registers them (boot())
   SharedComponents.php   registers the shared components script
-  Blocks/                BlockRegistrar, BlockCategory
+  Blocks/                BlockRegistrar, BlockCategory, Slides/Markup (shared by the slides render.php files)
   Editor/                EditorAssets, HeaderBehavior, PageTemplateMode
   Supports/              SupportRegistry, Renderer, Abstract*Support, SupportAssets
     Responsive/          Breakpoints, StyleGenerator, ValueSanitizer, Viewport
@@ -100,4 +100,4 @@ composer test:feature  # real WordPress: ~/wordpress-core + DB supe_phpunit (tes
   - Asset URLs resolve through the Composer install path (`/wp-content/plugins/supe/vendor/nathanmal/supe-editor/build/...`) thanks to supe-core's `PackageAssets`, registered in `Module::boot()` (this used to be `Module::mapSymlinkedInstall()`, promoted to core on 2026-11-23).
   - `?page_id=` URLs redirect to pretty permalinks — follow redirects (`curl -L`) when testing.
   - Its database is `supe_test` — **never** point Feature tests at it. They use `supe_phpunit` with WordPress core in `~/wordpress-core` (7.1.4, no wp-content).
-- **Editor testing:** supe.test has an administrator `claude` created for Claude to sign in via `wp-login.php` with Playwright. The user sets its password; Claude keeps it in its local memory (outside every repo), so don't reset it each session. If sign-in fails, check it read-only with `wp user check-password claude '...'` and ask the user to set it again (single quotes: zsh expands `$` and `!` inside double quotes). Keep it out of the repo. Never sign in as `nathanmal`. New editor users see the welcome guides (post editor, Site Editor) first.
+- **Editor testing:** supe.test has an administrator `claude` created for Claude to sign in via `wp-login.php` with Playwright. Where the password lives and how to read it is in `../supe/SUPE.md` ("Dev site sign-in"); don't reset it. If sign-in fails, ask the user to set it again. Never sign in as `nathanmal`. New editor users see the welcome guides (post editor, Site Editor) first.

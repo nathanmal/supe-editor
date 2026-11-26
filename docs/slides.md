@@ -1,7 +1,8 @@
 # Slides Block — Plan
 
-**Status:** Planned, not started. Captures the design decisions made on
-2026-11-04; update this doc as phases land (and log them in `PROGRESS.md`).
+**Status:** Phase 1 (structure) done 2026-11-26; phase 2 (editing) next.
+Captures the design decisions made on 2026-11-04; update this doc as phases
+land (and log them in `PROGRESS.md`).
 
 **Depends on:** phase 1 of [`responsive-supports.md`](responsive-supports.md)
 (breakpoints, value sanitizing, `ResponsiveControl`, and generated CSS for
@@ -61,6 +62,13 @@ supe/slides                       ← settings: type, playback, transition, layo
   images → `supe/image-slide`; content → `supe/slide`; posts → one `core/query`.
 - Each child block sets `"parent"` / `"ancestor"` so it can only be inserted in
   the right container.
+- **`parent` beats `allowedBlocks`:** the editor allows an insertion when
+  *either* the container's allowed list or the child's `parent` allows it, so
+  the track's per-type `allowedBlocks` alone can't keep an image slide out of
+  a content track. `blocks/slides-track/slide-blocks.js` vetoes it through
+  core's `blockEditor.__unstableCanInsertBlockType` filter (core uses it to
+  keep template parts out of post content). `ancestor` instead of `parent`
+  would offer slide blocks inside every container nested in a content slide.
 - At most one controls area per placement. The parent inspector's
   **Overlay controls** / **Controls below** toggles insert or remove the areas
   (in a fixed order: track, overlay, below); the editor enforces the
@@ -108,9 +116,13 @@ supe/slides                       ← settings: type, playback, transition, layo
 
 ### Content slides (`supe/slide`)
 
-- InnerBlocks, behaves like a Group: background color/image, padding, vertical
-  content alignment (core supports for now; the custom spacing support once it
-  exists).
+- InnerBlocks, behaves like a Group: background color/image, colors,
+  responsive spacing (`supe.spacing`), vertical content alignment (toolbar,
+  `is-vertically-aligned-{top|center|bottom}`).
+- The slide is a flex column so content can align vertically; layout is
+  **flow only** (`allowSwitching`/`allowInheriting` off) because constrained
+  layout's auto margins shrink flex items to their content. Put a Group inside
+  for a content width.
 
 ### Image slides (`supe/image-slide`)
 
@@ -396,21 +408,25 @@ scripts for `viewScriptModule`. Add `enshrined/svg-sanitize` to
 
 0. **Responsive foundation** — phase 1 of `responsive-supports.md`, including
    responsive variables.
-1. **Structure** — `slides`, `slides-track`, `slides-controls`, `slide`,
-   `image-slide`; type variations; dynamic render; slide class; scroll-snap
-   fallback.
+1. **Structure** ✅ — `slides`, `slides-track`, `slide`, `image-slide`;
+   images/content variations + Type panel (confirm before replacing slides);
+   dynamic render; slide class and "N of M: name" labels
+   (`Supe\Editor\Blocks\Slides\Markup`, top-level slides only via
+   `WP_HTML_Processor` depth); scroll-snap fallback; editor stacks slides.
+   Moved out: `slides-controls` → phase 5 (an area is useless without control
+   blocks), the posts variation → phase 8 (needs the post-item slide class).
 2. **Editing** — slide navigator (drag + keyboard reorder), multi-image
    select, image settings (fit, size, focal point, alt, caption), parent
    defaults.
 3. **Layout** — responsive per view, gap, height (all modes, both targets).
 4. **Engine** — index/loop math, step, `slide` + `fade`, autoplay, keyboard,
    accessibility, reduced motion.
-5. **Controls** — prev/next/indicators/pause blocks, overlay grid + below
-   area, preset icons, parent toggles, pause rule.
+5. **Controls** — `slides-controls` areas, prev/next/indicators/pause blocks,
+   overlay grid + below area, preset icons, parent toggles, pause rule.
 6. **Drag** — pointer handling, axis, thresholds, click suppression.
 7. **Lightbox.**
-8. **Posts** — locked Query Loop, slide class at render, "Selected posts"
-   (after the editor-preview spike).
+8. **Posts** — posts variation, locked Query Loop, slide class at render,
+   "Selected posts" (after the editor-preview spike).
 9. **SVG uploads** — `SvgUploads` service, upload + output sanitizing,
    custom icons in controls.
 
