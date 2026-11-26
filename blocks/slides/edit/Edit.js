@@ -18,6 +18,7 @@ import ControlsPanel from './ControlsPanel';
 import ImageDefaultsPanel from './ImageDefaultsPanel';
 import InteractionPanel from './InteractionPanel';
 import LayoutPanel from './LayoutPanel';
+import PostsPanel from './PostsPanel';
 import PlaybackPanel from './PlaybackPanel';
 import SlideList from './SlideList';
 import TransitionPanel from './TransitionPanel';
@@ -92,9 +93,12 @@ export default function Edit( { attributes, setAttributes, clientId, name } ) {
         viewStart.current
     );
     viewStart.current = firstShown;
-    const shownSlides = showAll
-        ? []
-        : slides.slice( firstShown, lastShown + 1 );
+    // Post slides aren't blocks: the editor shows the query's posts as a
+    // strip (editor.scss) rather than a view.
+    const shownSlides =
+        showAll || type === 'posts'
+            ? []
+            : slides.slice( firstShown, lastShown + 1 );
 
     const layout = layoutOutput( attributes );
     const config = configFrom( attributes );
@@ -147,7 +151,10 @@ export default function Edit( { attributes, setAttributes, clientId, name } ) {
                     type={ type }
                     setAttributes={ setAttributes }
                 />
-                { trackClientId && (
+                { trackClientId && type === 'posts' && (
+                    <PostsPanel trackClientId={ trackClientId } />
+                ) }
+                { trackClientId && type !== 'posts' && (
                     <SlideList
                         trackClientId={ trackClientId }
                         type={ type }

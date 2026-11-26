@@ -19,7 +19,7 @@ final class Markup {
     public const SLIDE_CLASS = 'supe-slides__slide';
 
     /** Slide types that render (posts arrive with phase 8 of docs/slides.md). */
-    public const TYPES = [ 'images', 'content' ];
+    public const TYPES = [ 'images', 'content', 'posts' ];
 
     public const VERTICAL_ALIGNMENTS = [ 'top', 'center', 'bottom' ];
 

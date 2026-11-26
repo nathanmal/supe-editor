@@ -213,6 +213,41 @@ final class SlidesTest extends TestCase {
         self::assertStringNotContainsString( 'supe-slides__zoom', $html );
     }
 
+    public function test_post_slides_render_each_post_as_a_slide_in_the_track(): void {
+        self::factory()->post->create( [ 'post_title' => 'First post', 'post_date' => '2026-01-01 10:00:00' ] );
+        $second = self::factory()->post->create( [ 'post_title' => 'Second post', 'post_date' => '2026-01-02 10:00:00' ] );
+
+        $html = do_blocks( $this->postSlides( [ 'perPage' => 2, 'orderBy' => 'date', 'order' => 'desc' ] ) );
+
+        self::assertSame( [ '1 of 2: Second post', '2 of 2: First post' ], $this->slideLabels( $html ) );
+        self::assertStringNotContainsString( 'wp-block-query', $html, "Core's Query Loop markup is skipped." );
+        self::assertStringContainsString( 'post-' . $second, $html );
+        self::assertStringContainsString( '>Second post</h3>', $html );
+
+        // The slides sit directly in the track.
+        $processor = new \WP_HTML_Tag_Processor( $html );
+        self::assertTrue( $processor->next_tag( [ 'class_name' => 'supe-slides__track' ] ) );
+        self::assertTrue( $processor->next_tag() );
+        self::assertTrue( $processor->has_class( 'supe-slides__slide' ) );
+        self::assertTrue( $processor->has_class( 'wp-block-post' ) );
+    }
+
+    public function test_selected_posts_show_those_posts_in_their_order(): void {
+        $a = self::factory()->post->create( [ 'post_title' => 'Alpha' ] );
+        $b = self::factory()->post->create( [ 'post_title' => 'Beta' ] );
+        self::factory()->post->create( [ 'post_title' => 'Gamma' ] );
+
+        $html = do_blocks( $this->postSlides( [ 'orderBy' => 'include', 'include' => [ $b, $a ], 'perPage' => 2 ] ) );
+
+        self::assertSame( [ '1 of 2: Beta', '2 of 2: Alpha' ], $this->slideLabels( $html ) );
+    }
+
+    public function test_selected_posts_with_none_picked_render_nothing(): void {
+        self::factory()->post->create( [ 'post_title' => 'Alpha' ] );
+
+        self::assertSame( '', trim( do_blocks( $this->postSlides( [ 'orderBy' => 'include', 'include' => [], 'perPage' => 1 ] ) ) ) );
+    }
+
     public function test_an_empty_control_area_renders_nothing(): void {
         self::assertSame( '', trim( do_blocks( '<!-- wp:supe/slides-overlay --><!-- /wp:supe/slides-overlay -->' ) ) );
     }
@@ -246,6 +281,19 @@ final class SlidesTest extends TestCase {
     /**
      * @param string[] $slides Serialized slide blocks.
      */
+    /**
+     * A posts slider markup with the given Query Loop query.
+     */
+    private function postSlides( array $query ): string {
+        $query = wp_json_encode( [ 'query' => [ 'postType' => 'post', 'inherit' => false ] + $query ] );
+
+        return '<!-- wp:supe/slides {"type":"posts"} --><!-- wp:supe/slides-track -->'
+            . '<!-- wp:query ' . $query . ' --><div class="wp-block-query"><!-- wp:post-template -->'
+            . '<!-- wp:post-title {"level":3} /-->'
+            . '<!-- /wp:post-template --></div><!-- /wp:query -->'
+            . '<!-- /wp:supe/slides-track --><!-- /wp:supe/slides -->';
+    }
+
     private function slides( string $type, array $slides ): string {
         $attributes = '' === $type ? '' : ' {"type":"' . $type . '"}';
 

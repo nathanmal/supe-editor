@@ -12,6 +12,7 @@ import ControlSettings from '../slides/shared/ControlSettings';
 import { configFrom } from '../slides/shared/config';
 import { positionClass } from '../slides/shared/controls';
 import { perViewAt } from '../slides/shared/layout';
+import { postsCount } from '../slides/shared/posts';
 import metadata from './block.json';
 
 const DEFAULT_POSITION = metadata.attributes.position.default;
@@ -42,9 +43,16 @@ export default function Edit( { attributes, setAttributes, clientId } ) {
                 ( child ) => child.name === 'supe/slides-track'
             );
 
+            // Posts aren't blocks: count what the query asks for.
+            const query = track?.innerBlocks.find(
+                ( child ) => child.name === 'core/query'
+            );
+
             return {
                 slider: block?.attributes ?? {},
-                count: track?.innerBlocks.length ?? 0,
+                count: query
+                    ? postsCount( query.attributes.query )
+                    : track?.innerBlocks.length ?? 0,
             };
         },
         [ clientId ]

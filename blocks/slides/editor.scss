@@ -34,3 +34,27 @@
         justify-content: center;
     }
 }
+
+// Post slides: the Query Loop and its post template step aside so each post
+// is a slide in the track, as on the front end (Blocks\Slides\Posts renders
+// them straight into the track). The editor shows them as a scrolling strip.
+.editor-styles-wrapper .supe-slides__track > .wp-block-query,
+.editor-styles-wrapper .supe-slides__track > .wp-block-query > .wp-block-post-template {
+    display: contents;
+}
+
+.editor-styles-wrapper .supe-slides__track > .wp-block-query > .wp-block-post-template > li {
+    box-shadow: inset 0 0 0 1px rgba(127, 127, 127, 0.4);
+    box-sizing: border-box;
+    flex: 0 0 calc((100% - var(--supe-slides-gaps)) / var(--supe-slides-columns));
+    margin: 0;
+    min-width: 0;
+    scroll-snap-align: start;
+}
+
+.editor-styles-wrapper .supe-slides.is-height-slide > .supe-slides__track > .wp-block-query > .wp-block-post-template > li {
+    aspect-ratio: var(--supe-slides-ar, auto);
+    height: var(--supe-slides-h, auto);
+    min-height: 0;
+    overflow: hidden;
+}

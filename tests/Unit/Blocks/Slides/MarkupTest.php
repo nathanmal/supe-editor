@@ -19,7 +19,8 @@ final class MarkupTest extends TestCase {
     public function test_type_accepts_only_known_types(): void {
         self::assertSame( 'images', Markup::type( [ 'type' => 'images' ] ) );
         self::assertSame( 'content', Markup::type( [ 'type' => 'content' ] ) );
-        self::assertSame( '', Markup::type( [ 'type' => 'posts' ] ) );
+        self::assertSame( 'posts', Markup::type( [ 'type' => 'posts' ] ) );
+        self::assertSame( '', Markup::type( [ 'type' => 'videos' ] ) );
         self::assertSame( '', Markup::type( [ 'type' => [ 'images' ] ] ) );
         self::assertSame( '', Markup::type( [] ) );
     }

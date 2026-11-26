@@ -128,3 +128,19 @@
 .supe-slides-layout > .supe-viewport-switcher {
     margin-bottom: -8px;
 }
+
+// PostsPanel: search results to add.
+.supe-slides-results {
+    list-style: none;
+    margin: 8px 0 0;
+    padding: 0;
+
+    .components-button {
+        height: auto;
+        justify-content: flex-start;
+        min-height: 32px;
+        text-align: left;
+        white-space: normal;
+        width: 100%;
+    }
+}

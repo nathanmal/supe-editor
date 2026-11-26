@@ -24,6 +24,7 @@ import { starterSlides } from '../variations';
 const TYPE_LABELS = {
     images: __( 'Images', 'supe-editor' ),
     content: __( 'Content', 'supe-editor' ),
+    posts: __( 'Posts', 'supe-editor' ),
 };
 
 /**

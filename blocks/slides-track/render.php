@@ -1,7 +1,9 @@
 <?php
 /**
  * Slide track: the slides, each labelled with its position ("2 of 5").
- * Focusable so the no-JS scroll strip works from the keyboard.
+ * Focusable so the no-JS scroll strip works from the keyboard. A posts
+ * slider's track renders its Query Loop's posts as the slides
+ * (Blocks\Slides\Posts).
  *
  * @var array    $attributes
  * @var string   $content
@@ -11,6 +13,10 @@
 use Supe\Editor\Blocks\Slides\Markup;
 
 defined( 'ABSPATH' ) || exit;
+
+if ( 'posts' === ( $block->context['supe/slides/type'] ?? null ) ) {
+    $content = supe( 'supe.editor.slides.posts' )->render( $block );
+}
 
 if ( '' === trim( $content ) ) {
     return;

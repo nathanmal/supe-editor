@@ -48,7 +48,7 @@ The editor has little responsive support beyond core's `clamp()` fluid values; t
 
 Blocks that use the custom/responsive supports, referenced by `supe-theme`, with paired Next.js components later.
 
-- [ ] Slides block (`supe/slides`): image/content/post slideshows with responsive layout, control blocks, lightbox — planned in `docs/slides.md` (phases 0–7 done; phase 8, posts, next).
+- [ ] Slides block (`supe/slides`): image/content/post slideshows with responsive layout, control blocks, lightbox — planned in `docs/slides.md` (phases 0–8 done; phase 9, SVG uploads, next).
 - [ ] Decide on the front-end script approach for blocks (Interactivity API vs plain JS shareable with Next.js).
 - [ ] More blocks beyond `Callout`/`Container`, including a dynamic (server-rendered) example using `render.php`, per the pattern in this module's `README.md`.
 

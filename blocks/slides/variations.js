@@ -1,5 +1,7 @@
 import { __ } from '@wordpress/i18n';
-import { cover, gallery } from '@wordpress/icons';
+import { cover, gallery, postList } from '@wordpress/icons';
+
+import { POSTS_QUERY } from './shared/posts';
 
 /**
  * One variation per slide type, picked when the block is inserted (scope
@@ -47,6 +49,47 @@ const variations = [
             track( [
                 [ 'supe/slide', {}, [ [ 'core/paragraph' ] ] ],
                 [ 'supe/slide', {}, [ [ 'core/paragraph' ] ] ],
+            ] ),
+            overlay,
+        ],
+        scope: [ 'block' ],
+        isActive: [ 'type' ],
+    },
+    {
+        name: 'posts',
+        title: __( 'Post slides', 'supe-editor' ),
+        description: __(
+            'One post per slide, from a query or picked by hand.',
+            'supe-editor'
+        ),
+        icon: postList,
+        attributes: { type: 'posts' },
+        innerBlocks: [
+            track( [
+                [
+                    'core/query',
+                    {
+                        query: POSTS_QUERY,
+                        lock: { move: true, remove: true },
+                    },
+                    [
+                        [
+                            'core/post-template',
+                            { lock: { move: true, remove: true } },
+                            [
+                                [
+                                    'core/post-featured-image',
+                                    { isLink: true },
+                                ],
+                                [
+                                    'core/post-title',
+                                    { isLink: true, level: 3 },
+                                ],
+                                [ 'core/post-excerpt', { excerptLength: 20 } ],
+                            ],
+                        ],
+                    ],
+                ],
             ] ),
             overlay,
         ],

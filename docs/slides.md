@@ -1,7 +1,7 @@
 # Slides Block — Plan
 
-**Status:** Phases 1–7 (structure, editing, layout, engine, controls, drag,
-lightbox) done 2026-11-26; phase 8 (posts) next.
+**Status:** Phases 1–8 (structure, editing, layout, engine, controls, drag,
+lightbox, posts) done 2026-11-26; phase 9 (SVG uploads) next.
 Captures the design decisions made on 2026-11-04; update this doc as phases
 land (and log them in `PROGRESS.md`).
 
@@ -89,8 +89,9 @@ supe/slides                       ← settings: type, playback, transition, layo
 
 - `supe/slide` and `supe/image-slide` output `.supe-slides__slide` from their
   own `render.php`.
-- For posts, the parent's `render.php` adds `.supe-slides__slide` to each
-  post `<li>` from `core/post-template`, using `WP_HTML_Tag_Processor`.
+- For posts, the track renders each post as a `.supe-slides__slide` itself
+  (see [Post slides](#post-slides-corequery)) instead of adding the class to
+  core's `<li>`s, so the slides are direct children of the track.
 - The front-end engine only ever looks for `.supe-slides__slide`.
 
 ### Slide names
@@ -161,17 +162,33 @@ supe/slides                       ← settings: type, playback, transition, layo
 
 ### Post slides (`core/query`)
 
-- Inserted from a fixed template: `core/query` (pagination off) →
-  `core/post-template`, structure locked; the post template's contents are
-  freely editable (this is the per-post slide template). Query Loop's own UI
-  covers post types, count, order, taxonomies, authors, and pattern selection.
-- **"Selected posts" mode:** a searchable post picker with a sortable list in
-  the inspector, applied via the `query_loop_block_query_vars` filter as
-  `post__in` + `orderby: post__in`.
-  - **Needs a spike:** the editor preview of Query Loop is built from REST
-    requests and doesn't forward custom query keys by default. Making the
-    preview respect "Selected posts" likely needs a `rest_{$post_type}_query`
-    filter plus passing the IDs through; verify before committing to the UI.
+- Inserted from the "Post slides" variation: the track holds `core/query`
+  (`inherit: false`, latest 6 posts) → `core/post-template` (featured
+  image, title, excerpt), both locked in place; the post template's
+  contents are freely editable (the per-post slide design). Query Loop's own
+  settings cover post type, count, order, taxonomies, authors.
+- **Rendering (`Blocks\Slides\Posts`, `supe.editor.slides.posts`):** the
+  track renders the posts itself — each post through the post template's
+  blocks (as core/post-template does), wrapped in a slide
+  (`supe-slides__slide wp-block-post` + post classes, the title as the slide
+  name) directly in the track — and `pre_render_block` skips core's render of
+  a Query Loop whose parent is a slider track (no double query, no
+  `wp-block-query` wrapper). So layout, labels and the engine are the same as
+  for other types. `inherit: true` uses the page's query, like core.
+- **Editor:** `editor.scss` gives the Query Loop and post template
+  `display: contents`, so the posts sit in the track as slides (shown as a
+  scrolling strip, not a view). The slider's **Posts** panel replaces the
+  slide list.
+- **"Selected posts" mode** (spike resolved): stored in the Query Loop's own
+  `query` as `include: [ids]` + `orderBy: "include"` (+ `perPage` = count).
+  Core's post template forwards unknown query keys to the REST request
+  (`...restQueryArgs`) and the posts endpoint supports `include` and
+  `orderby=include`, so the editor preview shows exactly those posts in that
+  order with no PHP filter. On the front end `Posts::queryVars()` turns it
+  into `post__in` + `orderby: post__in` (none picked → no posts). Posts
+  panel: [A query | Selected posts]; search (debounced REST search of the
+  query's post type) → add; rows with move up/down/remove. Query Loop's own
+  order control shows no value in this mode.
 
 ---
 
@@ -457,7 +474,7 @@ border and font size supports. Shared PHP: `Blocks\Slides\Controls`
 - Selecting a block inside a slide (canvas or List View) shows that slide.
 - Both slide types have a "Slide name" field (`metadata.name`).
 - List View drag-and-drop and block movers also work for every slide type.
-- Posts type shows Query Loop's normal preview.
+- Posts type shows the query's posts as slides (scrolling strip).
 - **Inspector panels (parent):** Type · Playback (autoplay, delay, loop,
   pause-on-hover) · Transition · Layout (per view, step, gap, height — all
   responsive via `ResponsiveControl`) · Controls (area + control toggles) ·
@@ -553,8 +570,7 @@ of the `[ scripts, modules ]` config it then gets). Add `enshrined/svg-sanitize`
 7. **Lightbox** ✅ — see [Lightbox](#lightbox). Editor: "Lightbox" select
    on image slides (disabled with a link), "Open images in a lightbox" in
    Image defaults.
-8. **Posts** — posts variation, locked Query Loop, slide class at render,
-   "Selected posts" (after the editor-preview spike).
+8. **Posts** ✅ — see [Post slides](#post-slides-corequery).
 9. **SVG uploads** — `SvgUploads` service, upload + output sanitizing,
    custom icons in controls.
 

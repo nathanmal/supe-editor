@@ -4,6 +4,8 @@ import { addFilter } from '@wordpress/hooks';
 export const SLIDE_BLOCKS = {
     images: [ 'supe/image-slide' ],
     content: [ 'supe/slide' ],
+    // One locked Query Loop; its post template is the slide.
+    posts: [ 'core/query' ],
 };
 
 const ALL_SLIDE_BLOCKS = Object.values( SLIDE_BLOCKS ).flat();
