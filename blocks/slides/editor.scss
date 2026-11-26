@@ -1,7 +1,7 @@
 /**
- * The editor stacks every slide so each one can be edited (the slide
- * navigator replaces this in phase 2). An inset line marks each slide's
- * edges without competing with the selection outline.
+ * "Show all slides" stacks every slide (otherwise Edit.js hides all but the
+ * selected one). An inset line marks each slide's edges without competing
+ * with the selection outline.
  */
 .editor-styles-wrapper .supe-slides__track {
     flex-direction: column;

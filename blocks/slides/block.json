@@ -13,10 +13,15 @@
         "type": {
             "type": "string",
             "default": ""
+        },
+        "imageDefaults": {
+            "type": "object",
+            "default": {}
         }
     },
     "providesContext": {
-        "supe/slides/type": "type"
+        "supe/slides/type": "type",
+        "supe/slides/imageDefaults": "imageDefaults"
     },
     "allowedBlocks": [ "supe/slides-track" ],
     "supports": {

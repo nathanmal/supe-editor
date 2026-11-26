@@ -56,4 +56,47 @@ final class MarkupTest extends TestCase {
         self::assertSame( '3 of 7', Markup::label( 3, 7 ) );
         self::assertSame( '3 of 7: Summer', Markup::label( 3, 7, 'Summer' ) );
     }
+
+    public function test_image_settings_fall_back_from_slide_to_slider_defaults_to_built_ins(): void {
+        $sizes = [ 'thumbnail', 'medium', 'large' ];
+
+        self::assertSame(
+            [ 'size' => 'large', 'fit' => 'cover', 'captionPosition' => 'below' ],
+            array_intersect_key( Markup::image( [], [], $sizes ), Markup::IMAGE_DEFAULTS )
+        );
+        self::assertSame(
+            [ 'size' => 'medium', 'fit' => 'contain', 'captionPosition' => 'overlay' ],
+            array_intersect_key( Markup::image(
+                [ 'size' => 'medium', 'fit' => 'bogus' ],
+                [ 'size' => 'thumbnail', 'fit' => 'contain', 'captionPosition' => 'overlay' ],
+                $sizes
+            ), Markup::IMAGE_DEFAULTS )
+        );
+        self::assertSame( 'full', Markup::image( [ 'size' => 'full' ], [], $sizes )['size'] );
+        self::assertSame( 'large', Markup::image( [ 'size' => 'huge' ], [ 'size' => 'huge' ], $sizes )['size'] );
+    }
+
+    public function test_image_settings_clean_up_text_and_link_values(): void {
+        $image = Markup::image(
+            [ 'alt' => ' A field ', 'caption' => ' <em>Hi</em> ', 'href' => ' https://example.com ', 'linkTarget' => '_blank' ],
+            [],
+            []
+        );
+
+        self::assertSame( 'A field', $image['alt'] );
+        self::assertSame( '<em>Hi</em>', $image['caption'] );
+        self::assertSame( 'https://example.com', $image['href'] );
+        self::assertTrue( $image['newTab'] );
+        self::assertFalse( Markup::image( [ 'linkTarget' => '_self' ], [], [] )['newTab'] );
+        self::assertSame( '', Markup::image( [ 'alt' => [ 'x' ] ], [], [] )['alt'] );
+    }
+
+    public function test_object_position_comes_from_a_valid_focal_point(): void {
+        self::assertSame( '25% 70%', Markup::objectPosition( [ 'x' => 0.25, 'y' => 0.7 ] ) );
+        self::assertSame( '0% 100%', Markup::objectPosition( [ 'x' => -1, 'y' => 3 ] ) );
+        self::assertSame( '33.33% 50%', Markup::objectPosition( [ 'x' => 0.333333, 'y' => 0.5 ] ) );
+        self::assertNull( Markup::objectPosition( [ 'x' => '0.5;color:red', 'y' => 0.5 ] ) );
+        self::assertNull( Markup::objectPosition( [ 'x' => 0.5 ] ) );
+        self::assertNull( Markup::objectPosition( null ) );
+    }
 }

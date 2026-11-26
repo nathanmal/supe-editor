@@ -9,9 +9,34 @@
     "description": "A slide showing one image.",
     "textdomain": "supe-editor",
     "parent": [ "supe/slides-track" ],
+    "usesContext": [ "supe/slides/imageDefaults" ],
     "attributes": {
         "id": {
             "type": "number"
+        },
+        "size": {
+            "type": "string"
+        },
+        "fit": {
+            "type": "string"
+        },
+        "focalPoint": {
+            "type": "object"
+        },
+        "alt": {
+            "type": "string"
+        },
+        "caption": {
+            "type": "string"
+        },
+        "captionPosition": {
+            "type": "string"
+        },
+        "href": {
+            "type": "string"
+        },
+        "linkTarget": {
+            "type": "string"
         }
     },
     "supports": {

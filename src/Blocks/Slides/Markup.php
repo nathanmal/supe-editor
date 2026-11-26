@@ -23,6 +23,17 @@ final class Markup {
 
     public const VERTICAL_ALIGNMENTS = [ 'top', 'center', 'bottom' ];
 
+    public const FITS = [ 'cover', 'contain', 'fill', 'none' ];
+
+    public const CAPTION_POSITIONS = [ 'below', 'overlay', 'hidden' ];
+
+    /** Used when neither the slide nor the slider's image defaults set a value. */
+    public const IMAGE_DEFAULTS = [
+        'size'            => 'large',
+        'fit'             => 'cover',
+        'captionPosition' => 'below',
+    ];
+
     public static function type( array $attributes ): string {
         $type = $attributes['type'] ?? '';
 
@@ -42,6 +53,67 @@ final class Markup {
         $alignment = $attributes['verticalAlignment'] ?? '';
 
         return in_array( $alignment, self::VERTICAL_ALIGNMENTS, true ) ? $alignment : '';
+    }
+
+    /**
+     * An image slide's settings: each comes from the slide, else the slider's
+     * image defaults (block context), else IMAGE_DEFAULTS. Invalid values are
+     * skipped at every level.
+     *
+     * @param array<string, mixed> $defaults The slider's `imageDefaults`.
+     * @param string[]             $sizes    Registered image size slugs.
+     * @return array{size: string, fit: string, captionPosition: string, position: ?string, alt: string, caption: string, href: string, newTab: bool}
+     */
+    public static function image( array $attributes, array $defaults, array $sizes ): array {
+        $valid = [
+            'size'            => [ ...$sizes, 'full' ],
+            'fit'             => self::FITS,
+            'captionPosition' => self::CAPTION_POSITIONS,
+        ];
+
+        $settings = [];
+        foreach ( $valid as $key => $allowed ) {
+            $settings[ $key ] = self::IMAGE_DEFAULTS[ $key ];
+            foreach ( [ $attributes[ $key ] ?? null, $defaults[ $key ] ?? null ] as $value ) {
+                if ( in_array( $value, $allowed, true ) ) {
+                    $settings[ $key ] = $value;
+                    break;
+                }
+            }
+        }
+
+        $caption = $attributes['caption'] ?? '';
+        $alt     = $attributes['alt'] ?? '';
+        $href    = $attributes['href'] ?? '';
+
+        return $settings + [
+            'position' => self::objectPosition( $attributes['focalPoint'] ?? null ),
+            'alt'      => is_string( $alt ) ? trim( $alt ) : '',
+            'caption'  => is_string( $caption ) ? trim( $caption ) : '',
+            'href'     => is_string( $href ) ? trim( $href ) : '',
+            'newTab'   => '_blank' === ( $attributes['linkTarget'] ?? '' ),
+        ];
+    }
+
+    /**
+     * A focal point ({ x, y } from 0 to 1) as an `object-position` value, or
+     * null when it's missing or malformed.
+     */
+    public static function objectPosition( mixed $focalPoint ): ?string {
+        if ( ! is_array( $focalPoint ) ) {
+            return null;
+        }
+
+        $axes = [];
+        foreach ( [ 'x', 'y' ] as $axis ) {
+            $value = $focalPoint[ $axis ] ?? null;
+            if ( ! is_int( $value ) && ! is_float( $value ) ) {
+                return null;
+            }
+            $axes[] = round( max( 0, min( 1, $value ) ) * 100, 2 ) . '%';
+        }
+
+        return implode( ' ', $axes );
     }
 
     /**

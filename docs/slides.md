@@ -1,6 +1,7 @@
 # Slides Block — Plan
 
-**Status:** Phase 1 (structure) done 2026-11-26; phase 2 (editing) next.
+**Status:** Phases 1 (structure) and 2 (editing) done 2026-11-26; phase 3
+(layout) next.
 Captures the design decisions made on 2026-11-04; update this doc as phases
 land (and log them in `PROGRESS.md`).
 
@@ -35,7 +36,7 @@ infinite loop, and a lightbox for image slides.
 | Icons | Preset sets + SVG uploads (anyone with `upload_files`), sanitized on upload and on output, rendered inline |
 | Image slides | Per-image fit, size, focal point, alt, caption, lightbox; parent-level defaults |
 | Lightbox | Custom: one native `<dialog>` per slider, prev/next across its images |
-| Ordering | Block-based (List View, movers) + drag-to-reorder in the editor's slide navigator; posts via query order or "Selected posts" |
+| Ordering | Block-based (List View, movers) + drag-to-reorder in the sidebar slide list; posts via query order or "Selected posts" |
 | Script | `viewScriptModule` (needs `--experimental-modules` on `wp-scripts`) |
 
 ---
@@ -81,8 +82,8 @@ supe/slides                       ← settings: type, playback, transition, layo
 - The three types are **block variations** of `supe/slides` (`isActive` on the
   `type` attribute), so inserting the block shows a variation picker (like
   Columns).
-- Changing type later replaces the track's contents — the editor asks for
-  confirmation first.
+- Changing type later (the sidebar's [Images | Content] toggle) replaces the
+  track's contents — the editor asks for confirmation first.
 
 ### Slide wrapper class
 
@@ -103,7 +104,7 @@ supe/slides                       ← settings: type, playback, transition, layo
   - content slide → "Slide N";
   - post slide → the post title (read at render time).
 - Where names appear:
-  - editor slide navigator tabs and List View;
+  - the sidebar slide list and List View;
   - the slide's accessible label ("Slide 3 of 7: Summer collection");
   - indicator buttons' `aria-label` and `title` ("Go to slide: Summer collection").
 - Names are never shown visually on the front end in v1. A "labels"
@@ -126,21 +127,36 @@ supe/slides                       ← settings: type, playback, transition, layo
 
 ### Image slides (`supe/image-slide`)
 
-- **Adding:** an "Add images" button on the parent opens the media library
-  with multiple selection (its gallery view also allows ordering before
-  insert); one `supe/image-slide` is created per image. Adding again appends.
-- **Per-image settings** (each falls back to a parent default when unset):
+- **Adding:** "Add images" (parent toolbar and the sidebar slide list) and the empty
+  image slide's placeholder open the media library's gallery flow (pick
+  several, then reorder before insert); one `supe/image-slide` per image.
+  The slide list/toolbar append; the placeholder fills its own slide and
+  inserts the rest after it.
+  - **Core bug worked around:** in the gallery flow `MediaUpload.openModal()`
+    registers the frame's listeners a second time (WordPress 7.1), so
+    `onSelect` fires twice per insert. `slides/shared/use-media-select.js`
+    drops a same-tick repeat of the same selection.
+- **Per-image settings** (size, fit and caption position fall back to the
+  parent's `imageDefaults`, then `Markup::IMAGE_DEFAULTS` — large, cover,
+  below; the selects show "Default (…)" naming the fallback):
   - image size (thumbnail, large, full, …)
   - fit: `cover` / `contain` / `fill` / `none` → `object-fit`
   - focal point (`FocalPointPicker`) → `object-position`
-  - lightbox on/off
+  - lightbox on/off (phase 7)
+- Replacing the image resets focal point and alt override, and pre-fills the
+  caption from the library only if the slide has none.
+- Images fill their slide (flex column): slides stretch to the tallest one,
+  so fit/focal point show even before phase 3's heights.
 - **Alt text:** empty = use the media library's alt, resolved at render time
   (so library edits flow through); a per-slide value overrides it.
-- **Caption:** RichText, optionally pre-filled from the library caption.
-  Position: below, overlaid at the bottom, or hidden.
+- **Caption:** RichText, pre-filled from the library caption on insert.
+  Position: below, overlaid at the bottom, or hidden (also a parent
+  default — added to `imageDefaults` beyond the original plan).
 - **Link:** optional; mutually exclusive with lightbox on the same image.
-- **Output:** `wp_get_attachment_image()` for `srcset`/`sizes`. First slide
-  `loading="eager"` + `fetchpriority="high"`; the rest lazy.
+- **Output:** `wp_get_attachment_image()` for `srcset`/`sizes`, keeping
+  core's `attachment-{size} size-{size}` classes. Core's loading optimization
+  already gives the first image `fetchpriority="high"` and lazy-loads the
+  rest; revisit if the engine needs otherwise.
 
 ### Post slides (`core/query`)
 
@@ -355,16 +371,30 @@ blocks/slides/engine/
 
 ## Editor
 
-- **One slide at a time** in the canvas (others hidden via an editor-only
-  class keyed to local state — never saved), no animation, no autoplay.
-- **Slide navigator** bar under the slider: tabs showing each slide's number
-  and name (plus a small thumbnail for image slides), "+ Add slide" /
-  "Add images", "Show all" toggle.
-  - Selecting a slide in List View jumps the navigator to it.
-  - **Drag tabs to reorder** — via `moveBlockToPosition` on the
-    `core/block-editor` store (same operation as List View; undo works).
-    Native HTML drag events first; `dnd-kit` if that proves clunky.
-  - **Keyboard move buttons** on each tab (drag-only isn't accessible).
+- **No editing UI in the canvas** — it only ever shows the design. The
+  canvas shows **one slide at a time**: the one holding the selection (other
+  slides hidden by a `<style>` rule scoped to this track's direct children,
+  `#block-{track} > .supe-slides__slide:not(#block-{active})`, so nested
+  sliders keep their own state). Active slide = local state, never saved.
+  No animation, no autoplay.
+- **Sidebar, on the slider block** (2026-11-26, replacing the first
+  in-canvas navigator bar):
+  - **Slides** panel: type as a segmented [Images | Content] toggle.
+  - **Images** / **Content** panel (`SlideList.js`): the slides in order,
+    one row each (drag handle, number, thumbnail for images, name with the
+    front end's fallbacks). **Drag a row** to reorder (pointer in a row's top
+    or bottom half → drop line above/below; `moveBlockToPosition`, so undo
+    works; custom drag type so editor drop zones ignore it). Each row has
+    **move up/down buttons** (drag-only isn't accessible). **Clicking a row
+    selects that slide block** (its settings open; the canvas shows it).
+    "Add images" (gallery flow) or "Add slide", and a "Show all slides in
+    the editor" toggle.
+  - The rows' click target is a `div[role=button]`, not a `<button>`:
+    browsers won't start a drag that begins on a button (why the first
+    navigator's tabs couldn't be dragged).
+  - Image defaults panel (images type).
+- Selecting a block inside a slide (canvas or List View) shows that slide.
+- Both slide types have a "Slide name" field (`metadata.name`).
 - List View drag-and-drop and block movers also work for every slide type.
 - Posts type shows Query Loop's normal preview.
 - **Inspector panels (parent):** Type · Playback (autoplay, delay, loop,
@@ -381,7 +411,7 @@ blocks/
   slides/
     block.json, index.js, variations.js
     edit/
-      Edit.js, TypePicker.js, SlideNavigator.js
+      Edit.js, TypePicker.js, TypePanel.js, SlideList.js, AddImages.js
       panels/ Playback.js, Transition.js, Layout.js, Controls.js, Interaction.js, ImageDefaults.js
     engine/          (see Front-End Engine)
     view.js          ← finds .wp-block-supe-slides, mounts Slider
@@ -415,9 +445,10 @@ scripts for `viewScriptModule`. Add `enshrined/svg-sanitize` to
    `WP_HTML_Processor` depth); scroll-snap fallback; editor stacks slides.
    Moved out: `slides-controls` → phase 5 (an area is useless without control
    blocks), the posts variation → phase 8 (needs the post-item slide class).
-2. **Editing** — slide navigator (drag + keyboard reorder), multi-image
-   select, image settings (fit, size, focal point, alt, caption), parent
-   defaults.
+2. **Editing** ✅ — sidebar slide list (drag + keyboard reorder, click to
+   select, show all; canvas follows selection), type toggle, multi-image add (gallery flow), image settings (size,
+   fit, focal point, alt, caption + position, link), parent image defaults,
+   slide name field. Lightbox toggle left for phase 7.
 3. **Layout** — responsive per view, gap, height (all modes, both targets).
 4. **Engine** — index/loop math, step, `slide` + `fade`, autoplay, keyboard,
    accessibility, reduced motion.

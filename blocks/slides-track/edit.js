@@ -1,8 +1,4 @@
-import {
-    InnerBlocks,
-    useBlockProps,
-    useInnerBlocksProps,
-} from '@wordpress/block-editor';
+import { useBlockProps, useInnerBlocksProps } from '@wordpress/block-editor';
 
 import { SLIDE_BLOCKS } from './slide-blocks';
 
@@ -18,7 +14,8 @@ export default function Edit( { context } ) {
         useBlockProps( { className: 'supe-slides__track' } ),
         {
             allowedBlocks: SLIDE_BLOCKS[ context[ 'supe/slides/type' ] ] ?? [],
-            renderAppender: InnerBlocks.ButtonBlockAppender,
+            // The slider's navigator adds slides.
+            renderAppender: false,
         }
     );
 

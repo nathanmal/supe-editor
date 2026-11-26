@@ -1,5 +1,6 @@
 import './style.scss';
 import './editor.scss';
+import './sidebar.scss';
 
 import { InnerBlocks } from '@wordpress/block-editor';
 import { registerBlockType } from '@wordpress/blocks';

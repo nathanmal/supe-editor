@@ -2,11 +2,15 @@ import {
     BlockControls,
     BlockVerticalAlignmentToolbar,
     InnerBlocks,
+    InspectorControls,
     store as blockEditorStore,
     useBlockProps,
     useInnerBlocksProps,
 } from '@wordpress/block-editor';
 import { useSelect } from '@wordpress/data';
+
+import SelectSliderButton from '../slides/shared/SelectSliderButton';
+import SlideNamePanel from '../slides/shared/SlideNamePanel';
 
 /**
  * A content slide: any blocks, like a Group, with vertical alignment of its
@@ -50,6 +54,13 @@ export default function Edit( { attributes, setAttributes, clientId } ) {
                     }
                 />
             </BlockControls>
+            <InspectorControls>
+                <SelectSliderButton clientId={ clientId } />
+                <SlideNamePanel
+                    attributes={ attributes }
+                    setAttributes={ setAttributes }
+                />
+            </InspectorControls>
             <div { ...innerBlocksProps } />
         </>
     );

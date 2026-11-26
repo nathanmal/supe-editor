@@ -64,8 +64,44 @@ final class SlidesTest extends TestCase {
         ] ) );
 
         self::assertSame( [ '1 of 2: Canola field', '2 of 2: Renamed' ], $this->slideLabels( $html ) );
-        self::assertSame( 2, substr_count( $html, 'class="supe-slides__image' ) );
+        self::assertSame( 2, substr_count( $html, 'size-large supe-slides__image"' ) );
         self::assertStringContainsString( 'srcset=', $html );
+    }
+
+    public function test_image_slides_apply_their_settings_over_the_slider_defaults(): void {
+        $id = self::factory()->attachment->create_upload_object( DIR_TESTDATA . '/images/canola.jpg' );
+
+        $html = do_blocks(
+            '<!-- wp:supe/slides {"type":"images","imageDefaults":{"fit":"contain","captionPosition":"overlay","size":"medium"}} --><!-- wp:supe/slides-track -->'
+            . '<!-- wp:supe/image-slide {"id":' . $id . ',"fit":"cover","focalPoint":{"x":0.2,"y":0.8},"alt":"Own alt","caption":"A <em>field</em><script>x</script>","href":"https://example.com/","linkTarget":"_blank"} /-->'
+            . '<!-- wp:supe/image-slide {"id":' . $id . ',"captionPosition":"hidden","caption":"Hidden"} /-->'
+            . '<!-- /wp:supe/slides-track --><!-- /wp:supe/slides -->'
+        );
+
+        $processor = new \WP_HTML_Tag_Processor( $html );
+
+        self::assertTrue( $processor->next_tag( [ 'class_name' => Markup::SLIDE_CLASS ] ) );
+        self::assertTrue( $processor->has_class( 'has-caption-overlay' ) );
+        self::assertSame( '1 of 2: Own alt', $processor->get_attribute( 'aria-label' ) );
+        self::assertTrue( $processor->next_tag( 'a' ) );
+        self::assertSame( 'https://example.com/', $processor->get_attribute( 'href' ) );
+        self::assertSame( '_blank', $processor->get_attribute( 'target' ) );
+        self::assertSame( 'noopener', $processor->get_attribute( 'rel' ) );
+        self::assertTrue( $processor->next_tag( 'img' ) );
+        self::assertSame( 'Own alt', $processor->get_attribute( 'alt' ) );
+        self::assertSame( 'object-fit:cover;object-position:20% 80%', $processor->get_attribute( 'style' ) );
+        self::assertTrue( $processor->next_tag( 'figcaption' ) );
+
+        // Second slide: slider defaults (contain, medium), caption hidden.
+        self::assertTrue( $processor->next_tag( [ 'class_name' => Markup::SLIDE_CLASS ] ) );
+        self::assertFalse( $processor->has_class( 'has-caption-overlay' ) );
+        self::assertTrue( $processor->next_tag( 'img' ) );
+        self::assertSame( 'object-fit:contain', $processor->get_attribute( 'style' ) );
+        self::assertStringContainsString( 'size-medium', (string) $processor->get_attribute( 'class' ) );
+
+        self::assertStringContainsString( 'A <em>field</em>', $html );
+        self::assertStringNotContainsString( '<script>', $html );
+        self::assertStringNotContainsString( 'Hidden', $html );
     }
 
     public function test_renders_nothing_without_a_type_or_slides(): void {

@@ -1,5 +1,41 @@
+/**
+ * The image fills the slide: when slides stretch to the tallest one, fit
+ * and focal point decide how a shorter image covers the extra height.
+ */
+.wp-block-supe-image-slide {
+    display: flex;
+    flex-direction: column;
+}
+
+.supe-slides__figure {
+    display: flex;
+    flex: 1 1 auto;
+    flex-direction: column;
+    margin: 0;
+    min-height: 0;
+    position: relative;
+}
+
+.supe-slides__link {
+    display: flex;
+    flex: 1 1 auto;
+    min-height: 0;
+}
+
 .supe-slides__image {
     display: block;
+    flex: 1 1 auto;
     height: auto;
+    min-height: 0;
     width: 100%;
+}
+
+.has-caption-overlay .supe-slides__caption {
+    background: linear-gradient(transparent, rgba(0, 0, 0, 0.6));
+    bottom: 0;
+    color: #fff;
+    left: 0;
+    padding: 2rem 1rem 1rem;
+    position: absolute;
+    right: 0;
 }
