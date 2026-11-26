@@ -58,3 +58,9 @@
     min-height: 0;
     overflow: hidden;
 }
+
+// A custom control icon (shared/CustomIcon.js): the wrapper takes no space,
+// so the SVG sits in the button as on the front end.
+.supe-slides__icon-raw {
+    display: contents;
+}

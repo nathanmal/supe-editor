@@ -9,6 +9,7 @@ import { __ } from '@wordpress/i18n';
 
 import ControlIcon from '../slides/shared/ControlIcon';
 import ControlSettings from '../slides/shared/ControlSettings';
+import { CustomIcon, CustomIconControl } from '../slides/shared/CustomIcon';
 import { icons, positionClass } from '../slides/shared/controls';
 import metadata from './block.json';
 
@@ -63,12 +64,34 @@ export default function Edit( { attributes, setAttributes, clientId } ) {
                             ) }
                         </Notice>
                     ) }
+                    <CustomIconControl
+                        label={ __( 'Custom pause icon', 'supe-editor' ) }
+                        value={ attributes.iconId }
+                        onChange={ ( iconId ) => setAttributes( { iconId } ) }
+                    />
+                    <CustomIconControl
+                        label={ __( 'Custom play icon', 'supe-editor' ) }
+                        help={ __(
+                            'Shown while autoplay is paused.',
+                            'supe-editor'
+                        ) }
+                        value={ attributes.playIconId }
+                        onChange={ ( playIconId ) =>
+                            setAttributes( { playIconId } )
+                        }
+                    />
                 </ControlSettings>
             </InspectorControls>
             <div { ...blockProps }>
-                <ControlIcon
-                    paths={ icons.pause }
+                <CustomIcon
+                    id={ attributes.iconId }
                     className="supe-slides__icon is-pause"
+                    fallback={
+                        <ControlIcon
+                            paths={ icons.pause }
+                            className="supe-slides__icon is-pause"
+                        />
+                    }
                 />
             </div>
         </>

@@ -16,6 +16,9 @@
         "arrows": {
             "type": "string",
             "default": "chevron"
+        },
+        "iconId": {
+            "type": "number"
         }
     },
     "supports": {

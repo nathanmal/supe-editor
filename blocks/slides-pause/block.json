@@ -12,6 +12,12 @@
         "position": {
             "type": "string",
             "default": "bottom-right"
+        },
+        "iconId": {
+            "type": "number"
+        },
+        "playIconId": {
+            "type": "number"
         }
     },
     "supports": {

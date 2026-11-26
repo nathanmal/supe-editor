@@ -1,7 +1,8 @@
 # Slides Block — Plan
 
-**Status:** Phases 1–8 (structure, editing, layout, engine, controls, drag,
-lightbox, posts) done 2026-11-26; phase 9 (SVG uploads) next.
+**Status:** All planned phases (1–9: structure, editing, layout, engine,
+controls, drag, lightbox, posts, SVG uploads) done 2026-11-26. Remaining
+ideas are under [Deferred](#deferred).
 Captures the design decisions made on 2026-11-04; update this doc as phases
 land (and log them in `PROGRESS.md`).
 
@@ -404,13 +405,29 @@ border and font size supports. Shared PHP: `Blocks\Slides\Controls`
 - **Presets:** a few sets (chevron, arrow, caret, line) in
   `blocks/slides/icons.json` (name → SVG), read by both `render.php` and the
   editor so the preview matches the front end.
-- **Uploads:** per control, choose a preset or upload an SVG.
-  - Allowed for **anyone with `upload_files`** (filterable).
-  - Sanitized **on upload** with `enshrined/svg-sanitize` (Composer) and
-    **again on output** (defense in depth); sanitized markup cached.
-  - Lives in `src/Editor/SvgUploads.php` (mime type + upload sanitizing)
-    since it's site-wide, not slider-specific.
-- Icons render **inline** so `currentColor` follows color controls.
+- **Uploads:** per control, a preset or an uploaded SVG — prev/next share
+  `iconId` (an SVG pointing right; prev is turned around, like the presets),
+  the pause button has `iconId` (pause) and `playIconId`. Sidebar
+  "Custom arrow" / "Custom pause icon" / "Custom play icon"
+  (`shared/CustomIcon.js`: media modal limited to SVGs, preview, Replace,
+  "Use preset").
+  - `Editor\SvgUploads` (`supe.editor.svg`), site-wide: adds `svg` to
+    `upload_mimes` for **anyone with `upload_files`** (filter
+    `supe/editor/svg_uploads/can_upload`, `( bool $allowed, WP_User $user )`);
+    restores the file type core can't sniff (`wp_check_filetype_and_ext`,
+    only for files that really start as SVG).
+  - Sanitized **on upload** (`wp_handle_upload_prefilter` /
+    `wp_handle_sideload_prefilter`, in place; unusable files are rejected)
+    with `enshrined/svg-sanitize` (remote references removed, XML prolog
+    dropped, minified) and **again on output** (`markup()`), cached in post
+    meta `_supe_svg_markup` against the file's mtime + size, so a file
+    replaced outside WordPress is re-sanitized.
+  - The editor never inlines the raw file: media REST responses carry the
+    sanitized markup as `supe_svg`. The media modal shows SVGs as images
+    (`wp_prepare_attachment_for_js`).
+- Icons render **inline** (`SvgUploads::icon()` adds the icon class,
+  `aria-hidden`, `focusable="false"`) so `currentColor` follows the
+  control's color; an unusable or deleted SVG falls back to the preset.
 
 ---
 
@@ -571,8 +588,9 @@ of the `[ scripts, modules ]` config it then gets). Add `enshrined/svg-sanitize`
    on image slides (disabled with a link), "Open images in a lightbox" in
    Image defaults.
 8. **Posts** ✅ — see [Post slides](#post-slides-corequery).
-9. **SVG uploads** — `SvgUploads` service, upload + output sanitizing,
-   custom icons in controls.
+9. **SVG uploads** ✅ — see [Icons](#icons). New dependency
+   `enshrined/svg-sanitize` ^1.1 (also installed into `../supe` for
+   supe.test).
 
 ### Testing (each phase)
 

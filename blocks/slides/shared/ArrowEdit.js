@@ -15,6 +15,7 @@ import { __ } from '@wordpress/i18n';
 
 import ControlSettings from './ControlSettings';
 import { ArrowIcon } from './ControlIcon';
+import { CustomIcon, CustomIconControl } from './CustomIcon';
 import { ARROW_SETS, arrowSet, positionClass } from './controls';
 import useControlAreas from './use-control-areas';
 
@@ -72,10 +73,17 @@ export default function arrowEdit( action, defaultPosition ) {
                             __nextHasNoMarginBottom
                             isBlock
                             label={ __( 'Arrows', 'supe-editor' ) }
-                            help={ __(
-                                'Applies to both arrows.',
-                                'supe-editor'
-                            ) }
+                            help={
+                                attributes.iconId
+                                    ? __(
+                                          'The custom arrow below is used instead.',
+                                          'supe-editor'
+                                      )
+                                    : __(
+                                          'Applies to both arrows.',
+                                          'supe-editor'
+                                      )
+                            }
                             value={ set }
                             onChange={ ( arrows ) =>
                                 updateBlockAttributes(
@@ -95,10 +103,30 @@ export default function arrowEdit( action, defaultPosition ) {
                                 />
                             ) ) }
                         </ToggleGroupControl>
+                        <CustomIconControl
+                            label={ __( 'Custom arrow', 'supe-editor' ) }
+                            help={ __(
+                                'An SVG pointing right, to the next slide; the previous arrow is turned around. Applies to both arrows.',
+                                'supe-editor'
+                            ) }
+                            value={ attributes.iconId }
+                            onChange={ ( iconId ) =>
+                                updateBlockAttributes(
+                                    controls( ARROW_BLOCKS ).map(
+                                        ( block ) => block.clientId
+                                    ),
+                                    { iconId }
+                                )
+                            }
+                        />
                     </ControlSettings>
                 </InspectorControls>
                 <div { ...blockProps }>
-                    <ArrowIcon set={ set } />
+                    <CustomIcon
+                        id={ attributes.iconId }
+                        className="supe-slides__icon"
+                        fallback={ <ArrowIcon set={ set } /> }
+                    />
                 </div>
             </>
         );

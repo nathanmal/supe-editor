@@ -14,6 +14,7 @@ use Supe\Editor\Blocks\Slides\Posts;
 use Supe\Editor\Editor\EditorAssets;
 use Supe\Editor\Editor\HeaderBehavior;
 use Supe\Editor\Editor\PageTemplateMode;
+use Supe\Editor\Editor\SvgUploads;
 use Supe\Editor\Supports\Renderer;
 use Supe\Editor\Supports\Responsive\Breakpoints;
 use Supe\Editor\Supports\Responsive\StyleGenerator;
@@ -79,6 +80,7 @@ final class Module extends AbstractModule {
         $this->singleton( 'supe.editor.assets',         fn( $c ) => new EditorAssets( SUPE_EDITOR_DIR . 'build/', SUPE_EDITOR_DIR . 'bootstrap.php' ) );
         $this->singleton( 'supe.editor.header',         fn( $c ) => new HeaderBehavior( SUPE_EDITOR_DIR . 'build/', SUPE_EDITOR_DIR . 'bootstrap.php' ) );
         $this->singleton( 'supe.editor.page_mode',      fn( $c ) => new PageTemplateMode() );
+        $this->singleton( 'supe.editor.svg',            fn( $c ) => new SvgUploads() );
 
         $this->make( 'supe.editor.components' )->register();
         $this->make( 'supe.editor.category' )->register();
@@ -93,6 +95,7 @@ final class Module extends AbstractModule {
         $this->make( 'supe.editor.assets' )->register();
         $this->make( 'supe.editor.header' )->register();
         $this->make( 'supe.editor.page_mode' )->register();
+        $this->make( 'supe.editor.svg' )->register();
 
         $this->addAdminPage( BlocksPage::class );
     }

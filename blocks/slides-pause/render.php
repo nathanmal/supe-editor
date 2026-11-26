@@ -23,5 +23,7 @@ printf(
         'data-label-play'         => __( 'Play slideshow', 'supe-editor' ),
         'data-supe-slides-action' => 'pause',
     ] ),
-    Controls::icon( 'pause' ) . Controls::icon( 'play' ) // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- the package's own icons.
+    // Custom SVGs (sanitized, Editor\SvgUploads) or the preset icons.
+    ( supe( 'supe.editor.svg' )->icon( absint( $attributes['iconId'] ?? 0 ), 'supe-slides__icon is-pause' ) ?: Controls::icon( 'pause' ) )
+        . ( supe( 'supe.editor.svg' )->icon( absint( $attributes['playIconId'] ?? 0 ), 'supe-slides__icon is-play' ) ?: Controls::icon( 'play' ) ) // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- sanitized SVGs or the package's own icons.
 );

@@ -19,5 +19,6 @@ printf(
         'aria-label'              => __( 'Previous slide', 'supe-editor' ),
         'data-supe-slides-action' => 'prev',
     ] ),
-    Controls::arrow( $attributes['arrows'] ?? null ) // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- the package's own icon.
+    // A custom SVG (sanitized, Editor\SvgUploads) or the arrow set's icon.
+    supe( 'supe.editor.svg' )->icon( absint( $attributes['iconId'] ?? 0 ), 'supe-slides__icon' ) ?: Controls::arrow( $attributes['arrows'] ?? null ) // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- sanitized SVG or the package's own icon.
 );

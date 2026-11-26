@@ -144,3 +144,26 @@
         width: 100%;
     }
 }
+
+// CustomIconControl: the chosen SVG beside its buttons.
+.supe-slides-custom-icon {
+    align-items: center;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.supe-slides-custom-icon__preview {
+    align-items: center;
+    border: 1px solid #ddd;
+    border-radius: 2px;
+    display: inline-flex;
+    font-size: 24px;
+    justify-content: center;
+    padding: 6px;
+
+    svg {
+        height: 1em;
+        width: 1em;
+    }
+}
