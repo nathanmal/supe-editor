@@ -28,10 +28,14 @@ const RESPONSIVE = [ 'perView', 'gap', 'height' ];
  *
  * @param {Object}   props
  * @param {Object}   props.attributes
+ * @param {boolean}  props.vertical      Slides stack in rows (up / down).
  * @param {Function} props.setAttributes
  */
-export default function LayoutPanel( { attributes, setAttributes } ) {
+export default function LayoutPanel( { attributes, vertical, setAttributes } ) {
     const { perView, gap, height, heightTarget = 'slider' } = attributes;
+    const perViewLabel = vertical
+        ? __( 'Rows', 'supe-editor' )
+        : __( 'Columns', 'supe-editor' );
     const [ viewport, setViewport ] = useViewport();
     const { breakpoints } = editorSettings();
     const overridden = VIEWPORTS.slice( 1 ).filter( ( name ) =>
@@ -48,7 +52,7 @@ export default function LayoutPanel( { attributes, setAttributes } ) {
                     breakpoints={ breakpoints }
                 />
                 <ResponsiveControl
-                    label={ __( 'Columns', 'supe-editor' ) }
+                    label={ perViewLabel }
                     value={ perView }
                     onChange={ ( next ) => setAttributes( { perView: next } ) }
                     showSwitcher={ false }
@@ -58,11 +62,18 @@ export default function LayoutPanel( { attributes, setAttributes } ) {
                         <RangeControl
                             __next40pxDefaultSize
                             __nextHasNoMarginBottom
-                            label={ __( 'Columns', 'supe-editor' ) }
-                            help={ __(
-                                'Slides shown side by side.',
-                                'supe-editor'
-                            ) }
+                            label={ perViewLabel }
+                            help={
+                                vertical
+                                    ? __(
+                                          'Slides shown one above another.',
+                                          'supe-editor'
+                                      )
+                                    : __(
+                                          'Slides shown side by side.',
+                                          'supe-editor'
+                                      )
+                            }
                             min={ 1 }
                             max={ 12 }
                             value={ value }

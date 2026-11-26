@@ -30,13 +30,33 @@
         "heightTarget": {
             "type": "string",
             "enum": [ "slider", "slide" ]
+        },
+        "loop": {
+            "type": "boolean"
+        },
+        "step": {
+            "type": "string",
+            "enum": [ "slide", "page" ]
+        },
+        "keyboard": {
+            "type": "boolean"
+        },
+        "autoplay": {
+            "type": "object"
+        },
+        "transition": {
+            "type": "object"
         }
     },
     "providesContext": {
         "supe/slides/type": "type",
         "supe/slides/imageDefaults": "imageDefaults"
     },
-    "allowedBlocks": [ "supe/slides-track" ],
+    "allowedBlocks": [
+        "supe/slides-track",
+        "supe/slides-overlay",
+        "supe/slides-bar"
+    ],
     "supports": {
         "align": [ "wide", "full" ],
         "anchor": true,
@@ -48,5 +68,6 @@
     "editorScript": "file:./index.js",
     "editorStyle": "file:./index.css",
     "style": "file:./style-index.css",
+    "viewScriptModule": "file:./view.js",
     "render": "file:./render.php"
 }

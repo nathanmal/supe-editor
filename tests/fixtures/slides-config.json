@@ -1,0 +1,104 @@
+{
+    "description": "Slider behavior config (Blocks\\Slides\\Config / blocks/slides/shared/config.js): attributes in, the data-supe-slides config and root classes out. Run by tests/Unit/Blocks/Slides/ConfigTest.php and blocks/slides/shared/test/config.test.js.",
+    "cases": [
+        {
+            "label": "no settings: defaults",
+            "attributes": {},
+            "expected": {
+                "config": {
+                    "loop": false,
+                    "step": "slide",
+                    "keyboard": true,
+                    "autoplay": { "enabled": false, "delay": 5000, "pauseOnHover": true },
+                    "transition": { "name": "slide", "direction": "left", "duration": 500, "easing": "ease" }
+                },
+                "classes": []
+            }
+        },
+        {
+            "label": "valid settings are kept",
+            "attributes": {
+                "loop": true,
+                "step": "page",
+                "keyboard": false,
+                "autoplay": { "enabled": true, "delay": 3000, "pauseOnHover": false },
+                "transition": { "name": "fade", "direction": "right", "duration": 800, "easing": "ease-in-out" }
+            },
+            "expected": {
+                "config": {
+                    "loop": true,
+                    "step": "page",
+                    "keyboard": false,
+                    "autoplay": { "enabled": true, "delay": 3000, "pauseOnHover": false },
+                    "transition": { "name": "fade", "direction": "right", "duration": 800, "easing": "ease-in-out" }
+                },
+                "classes": [ "is-reversed" ]
+            }
+        },
+        {
+            "label": "vertical directions",
+            "attributes": { "transition": { "direction": "down" } },
+            "expected": {
+                "config": {
+                    "loop": false,
+                    "step": "slide",
+                    "keyboard": true,
+                    "autoplay": { "enabled": false, "delay": 5000, "pauseOnHover": true },
+                    "transition": { "name": "slide", "direction": "down", "duration": 500, "easing": "ease" }
+                },
+                "classes": [ "is-vertical", "is-reversed" ]
+            }
+        },
+        {
+            "label": "numbers are clamped and rounded; numeric strings accepted",
+            "attributes": {
+                "autoplay": { "delay": 120000 },
+                "transition": { "name": "slide", "direction": "up", "duration": " 250.6 " }
+            },
+            "expected": {
+                "config": {
+                    "loop": false,
+                    "step": "slide",
+                    "keyboard": true,
+                    "autoplay": { "enabled": false, "delay": 60000, "pauseOnHover": true },
+                    "transition": { "name": "slide", "direction": "up", "duration": 251, "easing": "ease" }
+                },
+                "classes": [ "is-vertical" ]
+            }
+        },
+        {
+            "label": "invalid values fall back to the defaults",
+            "attributes": {
+                "loop": "yes",
+                "step": "two",
+                "keyboard": 1,
+                "autoplay": { "enabled": "true", "delay": "soon", "pauseOnHover": null },
+                "transition": { "name": "Fade<script>", "direction": "sideways", "duration": -5, "easing": "cubic-bezier(0,0,1,1)" }
+            },
+            "expected": {
+                "config": {
+                    "loop": false,
+                    "step": "slide",
+                    "keyboard": true,
+                    "autoplay": { "enabled": false, "delay": 5000, "pauseOnHover": true },
+                    "transition": { "name": "slide", "direction": "left", "duration": 0, "easing": "ease" }
+                },
+                "classes": []
+            }
+        },
+        {
+            "label": "non-object groups are ignored",
+            "attributes": { "autoplay": true, "transition": "fade" },
+            "expected": {
+                "config": {
+                    "loop": false,
+                    "step": "slide",
+                    "keyboard": true,
+                    "autoplay": { "enabled": false, "delay": 5000, "pauseOnHover": true },
+                    "transition": { "name": "slide", "direction": "left", "duration": 500, "easing": "ease" }
+                },
+                "classes": []
+            }
+        }
+    ]
+}

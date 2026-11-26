@@ -1,0 +1,28 @@
+{
+    "$schema": "https://schemas.wp.org/trunk/block.json",
+    "apiVersion": 3,
+    "name": "supe/slides-overlay",
+    "version": "0.1.0",
+    "title": "Overlay controls",
+    "category": "supe",
+    "icon": "slides",
+    "description": "Slider controls laid over the slides, each in a cell of a 3×3 grid.",
+    "parent": [ "supe/slides" ],
+    "allowedBlocks": [
+        "supe/slides-prev",
+        "supe/slides-next",
+        "supe/slides-indicators",
+        "supe/slides-pause"
+    ],
+    "supports": {
+        "html": false,
+        "inserter": false,
+        "reusable": false,
+        "spacing": {
+            "padding": true
+        }
+    },
+    "textdomain": "supe-editor",
+    "editorScript": "file:./index.js",
+    "render": "file:./render.php"
+}

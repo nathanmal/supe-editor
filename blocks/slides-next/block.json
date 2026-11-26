@@ -1,0 +1,46 @@
+{
+    "$schema": "https://schemas.wp.org/trunk/block.json",
+    "apiVersion": 3,
+    "name": "supe/slides-next",
+    "version": "0.1.0",
+    "title": "Next slide",
+    "category": "supe",
+    "icon": "slides",
+    "description": "A button that shows the next slide.",
+    "parent": [ "supe/slides-overlay", "supe/slides-bar" ],
+    "attributes": {
+        "position": {
+            "type": "string",
+            "default": "center-right"
+        },
+        "arrows": {
+            "type": "string",
+            "default": "chevron"
+        }
+    },
+    "supports": {
+        "html": false,
+        "reusable": false,
+        "color": {
+            "background": true,
+            "text": true,
+            "gradients": true
+        },
+        "spacing": {
+            "padding": true,
+            "margin": true
+        },
+        "__experimentalBorder": {
+            "color": true,
+            "radius": true,
+            "style": true,
+            "width": true
+        },
+        "typography": {
+            "fontSize": true
+        }
+    },
+    "textdomain": "supe-editor",
+    "editorScript": "file:./index.js",
+    "render": "file:./render.php"
+}

@@ -13,7 +13,7 @@ use Yoast\WPTestUtils\WPIntegration\TestCase;
 final class SlidesTest extends TestCase {
 
     public function test_the_slides_blocks_are_registered(): void {
-        foreach ( [ 'supe/slides', 'supe/slides-track', 'supe/slide', 'supe/image-slide' ] as $name ) {
+        foreach ( [ 'supe/slides', 'supe/slides-track', 'supe/slide', 'supe/image-slide', 'supe/slides-overlay', 'supe/slides-bar', 'supe/slides-prev', 'supe/slides-next', 'supe/slides-indicators', 'supe/slides-pause' ] as $name ) {
             self::assertTrue( \WP_Block_Type_Registry::get_instance()->is_registered( $name ), $name );
         }
     }
@@ -124,6 +124,66 @@ final class SlidesTest extends TestCase {
             '.wp-block-supe-slides{--supe-slides-per-view:var(--supe-slides-per-view-d);',
             implode( '', wp_styles()->get_data( 'supe-responsive', 'after' ) ?: [] )
         );
+    }
+
+    public function test_behavior_settings_become_the_engine_config_and_enqueue_it(): void {
+        $html = do_blocks(
+            '<!-- wp:supe/slides {"type":"content","loop":true,"autoplay":{"enabled":true,"delay":3000},"transition":{"name":"slide","direction":"down","duration":"abc"}} -->'
+            . '<!-- wp:supe/slides-track --><!-- wp:supe/slide --><!-- /wp:supe/slide --><!-- /wp:supe/slides-track --><!-- /wp:supe/slides -->'
+        );
+
+        $processor = new \WP_HTML_Tag_Processor( $html );
+        self::assertTrue( $processor->next_tag( 'section' ) );
+        self::assertTrue( $processor->has_class( 'is-vertical' ) );
+        self::assertTrue( $processor->has_class( 'is-reversed' ) );
+
+        $config = json_decode( (string) $processor->get_attribute( 'data-supe-slides' ), true );
+        self::assertTrue( $config['loop'] );
+        self::assertSame( [ 'enabled' => true, 'delay' => 3000, 'pauseOnHover' => true ], $config['autoplay'] );
+        self::assertSame( [ 'name' => 'slide', 'direction' => 'down', 'duration' => 500, 'easing' => 'ease' ], $config['transition'] );
+
+        self::assertContains( 'supe-slides-view-script-module', wp_script_modules()->get_queue() );
+    }
+
+    public function test_controls_render_in_their_areas_with_their_actions(): void {
+        $html = do_blocks(
+            '<!-- wp:supe/slides {"type":"content"} --><!-- wp:supe/slides-track --><!-- wp:supe/slide --><!-- /wp:supe/slide --><!-- /wp:supe/slides-track -->'
+            . '<!-- wp:supe/slides-overlay --><!-- wp:supe/slides-prev {"arrows":"caret"} /--><!-- wp:supe/slides-next {"position":"top-right"} /--><!-- /wp:supe/slides-overlay -->'
+            . '<!-- wp:supe/slides-bar --><!-- wp:supe/slides-indicators {"className":"is-style-numbers"} /--><!-- wp:supe/slides-pause /--><!-- /wp:supe/slides-bar -->'
+            . '<!-- /wp:supe/slides -->'
+        );
+
+        $processor = new \WP_HTML_Tag_Processor( $html );
+
+        self::assertTrue( $processor->next_tag( [ 'class_name' => 'supe-slides__overlay' ] ) );
+
+        self::assertTrue( $processor->next_tag( 'button' ) );
+        self::assertSame( 'prev', $processor->get_attribute( 'data-supe-slides-action' ) );
+        self::assertSame( 'Previous slide', $processor->get_attribute( 'aria-label' ) );
+        self::assertTrue( $processor->has_class( 'is-position-center-left' ) );
+
+        self::assertTrue( $processor->next_tag( 'button' ) );
+        self::assertSame( 'next', $processor->get_attribute( 'data-supe-slides-action' ) );
+        self::assertTrue( $processor->has_class( 'is-position-top-right' ) );
+
+        self::assertTrue( $processor->next_tag( [ 'class_name' => 'supe-slides__bar' ] ) );
+        self::assertTrue( $processor->has_class( 'is-layout-flex' ) );
+
+        self::assertTrue( $processor->next_tag( [ 'class_name' => 'supe-slides__indicators' ] ) );
+        self::assertTrue( $processor->has_class( 'is-style-numbers' ) );
+        self::assertSame( 'Show slide %d', $processor->get_attribute( 'data-label' ) );
+        self::assertTrue( $processor->next_tag( 'template' ) );
+
+        self::assertTrue( $processor->next_tag( [ 'class_name' => 'supe-slides__pause' ] ) );
+        self::assertNotNull( $processor->get_attribute( 'hidden' ), 'Hidden until the engine finds autoplay.' );
+        self::assertSame( 'Play slideshow', $processor->get_attribute( 'data-label-play' ) );
+
+        self::assertStringContainsString( 'M9 6l7 6-7 6z', $html, 'The caret arrow.' );
+        self::assertSame( 2, substr_count( $html, 'is-pause' ) + substr_count( $html, 'is-play' ) );
+    }
+
+    public function test_an_empty_control_area_renders_nothing(): void {
+        self::assertSame( '', trim( do_blocks( '<!-- wp:supe/slides-overlay --><!-- /wp:supe/slides-overlay -->' ) ) );
     }
 
     public function test_without_layout_settings_the_root_has_no_style(): void {

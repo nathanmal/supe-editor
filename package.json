@@ -4,8 +4,8 @@
     "private": true,
     "description": "Block editor module for the Supe ecosystem: custom blocks and editor modifications.",
     "scripts": {
-        "build": "wp-scripts build --webpack-src-dir=blocks --blocks-manifest",
-        "start": "wp-scripts start --webpack-src-dir=blocks --blocks-manifest",
+        "build": "wp-scripts build --webpack-src-dir=blocks --blocks-manifest --experimental-modules",
+        "start": "wp-scripts start --webpack-src-dir=blocks --blocks-manifest --experimental-modules",
         "format": "wp-scripts format",
         "lint:js": "wp-scripts lint-js",
         "lint:css": "wp-scripts lint-style \"blocks/**/*.scss\" \"editor/**/*.scss\"",

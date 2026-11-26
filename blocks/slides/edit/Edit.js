@@ -11,19 +11,24 @@ import { useEffect, useRef, useState } from '@wordpress/element';
 import { __ } from '@wordpress/i18n';
 import { useViewport } from '@supe-editor/components';
 
+import { configClasses, configFrom } from '../shared/config';
 import { layoutOutput, perViewAt, viewRange } from '../shared/layout';
 import AddImages from './AddImages';
+import ControlsPanel from './ControlsPanel';
 import ImageDefaultsPanel from './ImageDefaultsPanel';
 import LayoutPanel from './LayoutPanel';
+import PlaybackPanel from './PlaybackPanel';
 import SlideList from './SlideList';
+import TransitionPanel from './TransitionPanel';
 import TypePanel from './TypePanel';
 import TypePicker from './TypePicker';
 
 /**
  * The slider's root. Until a type is chosen it shows the variation picker;
- * after that it holds the locked track (controls areas come with phase 5).
+ * after that it holds the locked track and any control areas (overlay, bar).
  * The canvas previews the real layout (per view, gap, height for the device
- * preview's viewport) showing the view that holds the selected slide; the
+ * preview's viewport, direction) showing the view that holds the selected
+ * slide, without the engine (nothing moves in the editor); the
  * sidebar lists the slides (SlideList). No editing UI is drawn in the
  * canvas.
  *
@@ -91,11 +96,13 @@ export default function Edit( { attributes, setAttributes, clientId, name } ) {
         : slides.slice( firstShown, lastShown + 1 );
 
     const layout = layoutOutput( attributes );
+    const config = configFrom( attributes );
     const blockProps = useBlockProps( {
         className: [
             'supe-slides',
             type && `is-type-${ type }`,
             ...layout.classes,
+            ...configClasses( config ),
             showAll && 'is-showing-all',
         ]
             .filter( Boolean )
@@ -154,7 +161,24 @@ export default function Edit( { attributes, setAttributes, clientId, name } ) {
                 ) }
                 <LayoutPanel
                     attributes={ attributes }
+                    vertical={ configClasses( config ).includes(
+                        'is-vertical'
+                    ) }
                     setAttributes={ setAttributes }
+                />
+                <PlaybackPanel
+                    config={ config }
+                    autoplay={ attributes.autoplay }
+                    setAttributes={ setAttributes }
+                />
+                <TransitionPanel
+                    config={ config }
+                    transition={ attributes.transition }
+                    setAttributes={ setAttributes }
+                />
+                <ControlsPanel
+                    clientId={ clientId }
+                    autoplay={ config.autoplay.enabled }
                 />
                 { type === 'images' && (
                     <ImageDefaultsPanel

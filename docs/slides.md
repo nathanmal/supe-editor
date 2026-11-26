@@ -1,7 +1,7 @@
 # Slides Block — Plan
 
-**Status:** Phases 1 (structure), 2 (editing) and 3 (layout) done
-2026-11-26; phase 4 (engine) next.
+**Status:** Phases 1–5 (structure, editing, layout, engine, controls) done
+2026-11-26; phase 6 (drag) next.
 Captures the design decisions made on 2026-11-04; update this doc as phases
 land (and log them in `PROGRESS.md`).
 
@@ -32,7 +32,7 @@ infinite loop, and a lightbox for image slides.
 | Transitions | `slide` (left / right / up / down) and `fade` initially; more added as files |
 | Slides per view | "Columns" (horizontal) / "Rows" (vertical), **responsive** |
 | Height | `px` / `%` / `vh` / `ratio` / `auto`, **responsive**; applies to the whole slider (default) or to each slide |
-| Controls | Blocks, in an **overlay** layer (3×3 grid, z-index above the track) and/or an area **below** the slider — each optional |
+| Controls | Blocks, in an **overlay** area (3×3 grid over the track) and/or a **bar** below the slider — every control optional, pause included |
 | Icons | Preset sets + SVG uploads (anyone with `upload_files`), sanitized on upload and on output, rendered inline |
 | Image slides | Per-image fit, size, focal point, alt, caption, lightbox; parent-level defaults |
 | Lightbox | Custom: one native `<dialog>` per slider, prev/next across its images |
@@ -50,9 +50,9 @@ supe/slides                       ← settings: type, playback, transition, layo
  │    ├─ supe/image-slide         ← "images" type: one image + settings
  │    └─ core/query               ← "posts" type: exactly one, locked structure
  │         └─ core/post-template
- ├─ supe/slides-controls          ← optional, placement: "overlay"
+ ├─ supe/slides-overlay           ← optional: controls over the track
  │    └─ any of: prev, next, indicators, pause
- └─ supe/slides-controls          ← optional, placement: "below"
+ └─ supe/slides-bar               ← optional: controls below the slider
       └─ any of: prev, next, indicators, pause
 ```
 
@@ -324,10 +324,19 @@ blocks/slides/engine/
 
 | Block | Purpose |
 |---|---|
-| `supe/slides-controls` | Container; `placement: "overlay" \| "below"` (two variations) |
-| `supe/slides-prev` / `supe/slides-next` | Buttons, `data-supe-slides-action="prev\|next"` |
-| `supe/slides-indicators` | Indicator list; style: dots, bars, numbers (thumbnail indicators deferred) |
-| `supe/slides-pause` | Pause/play toggle |
+| `supe/slides-overlay` | Area over the track: 3×3 grid (no layout support) |
+| `supe/slides-bar` | Area below the slider: core flex layout (justification, gap, wrap) |
+| `supe/slides-prev` / `supe/slides-next` | Buttons, `data-supe-slides-action="prev\|next"`; `arrows` set (shared by both) |
+| `supe/slides-indicators` | Built at runtime from a `<template>`; block styles dots (default), bars, numbers (thumbnail indicators deferred) |
+| `supe/slides-pause` | Pause/play toggle, `hidden` until the engine finds autoplay |
+
+Two area blocks rather than one with a `placement` attribute (the plan's
+first idea): the bar's flex layout controls would otherwise show, doing
+nothing, on the overlay. Every control has `position` (overlay cell,
+`is-position-{row}-{column}`; default prev center-left, next center-right,
+indicators bottom-center, pause bottom-right) and core color, spacing,
+border and font size supports. Shared PHP: `Blocks\Slides\Controls`
+(cells, arrow sets, `icons.json` presets); JS mirror `shared/controls.js`.
 
 - Any combination is allowed in either area — prev/next only, indicators
   only, both, or none (remove the area entirely).
@@ -338,24 +347,39 @@ blocks/slides/engine/
 - **Indicators are built at runtime** from a `<template>` holding the icon
   markup: the count depends on `perView`, `step`, and (for posts) how many
   posts the query returned.
-- Controls read the `navigable` context and hide when navigation is disabled.
+- Areas are hidden until the engine runs and while there's nowhere to go
+  (`[data-supe-slides]:not(.is-initialized.is-navigable)`).
 
 ### Placement
 
-- **Overlay** area: absolutely positioned over the track, `z-index` above it,
-  laid out as a **3×3 grid** with `pointer-events: none` (clicks and drags
-  pass through to slides). Each control re-enables `pointer-events` and picks
-  a cell (top-left … center-right … bottom-center); spacing supports act as
-  offset.
-- **Below** area: normal flow after the track, core flex layout
-  (justification, gap, wrap).
+- The slider root is a one-column grid: the track and the overlay share the
+  first cell (no absolute positioning, so the overlay is exactly the track's
+  size), the bar sits in the second.
+- **Overlay**: a **3×3 grid** of equal cells with `pointer-events: none`
+  (clicks and drags pass through to slides). Each control re-enables
+  `pointer-events` and picks a cell; margin acts as offset; controls in the
+  same cell overlap.
+- **Bar**: core flex layout (justification, gap, wrap).
+- Arrow icons point "next"; prev is rotated 180°, and `--supe-slides-arrow`
+  turns both for right / up / down sliders and right-to-left pages. Overlay
+  indicators stack vertically on vertical sliders.
 
 ### Parent toggles and the pause rule
 
-- Inspector toggles **Arrows**, **Indicators**, **Pause** insert/remove the
-  matching blocks (into the overlay area by default, creating it if needed).
-- **Enabling autoplay auto-inserts a pause block**; the editor shows a
-  warning if it's removed while autoplay is on.
+- The slider's **Controls** panel toggles **Arrows**, **Indicators**,
+  **Pause button**: they're added to the overlay (created if needed) and
+  removed from both areas; an emptied area is removed. Each control's own
+  sidebar moves it between the areas ("Over the slides" / "Below") and picks
+  its cell (`AlignmentMatrixControl`). New sliders start with arrows and
+  indicators in the overlay.
+- **The pause button is optional** (2026-11-26, user decision: sliders used
+  as backgrounds, clients who don't need strict WCAG conformance). Nothing
+  is inserted automatically and there's no warning; the toggle's help says
+  it lets visitors stop autoplay. Built-in accessibility stays (inert,
+  labels, live region, reduced motion, keyboard).
+- A new area is created *around* its first controls: the editor won't insert
+  or move blocks into an area it hasn't rendered yet (no block list
+  settings), so moving a control to a missing area inserts a copy.
 
 ### Icons
 
@@ -452,8 +476,9 @@ src/
 ```
 
 `BlockRegistrar` registers every block from the manifest — no PHP
-registration changes. Add `--experimental-modules` to the `build`/`start`
-scripts for `viewScriptModule`. Add `enshrined/svg-sanitize` to
+registration changes. `--experimental-modules` is on the `build`/`start`
+scripts for `viewScriptModule` (`webpack.config.js` extends the scripts half
+of the `[ scripts, modules ]` config it then gets). Add `enshrined/svg-sanitize` to
 `composer.json`.
 
 ---
@@ -476,10 +501,25 @@ scripts for `viewScriptModule`. Add `enshrined/svg-sanitize` to
 3. **Layout** ✅ — responsive per view, gap, height (all modes, both
    targets), Layout panel, canvas preview of the current view; responsive
    variables ported to the portable JS.
-4. **Engine** — index/loop math, step, `slide` + `fade`, autoplay, keyboard,
-   accessibility, reduced motion.
-5. **Controls** — `slides-controls` areas, prev/next/indicators/pause blocks,
-   overlay grid + below area, preset icons, parent toggles, pause rule.
+4. **Engine** ✅ — `Blocks\Slides\Config` (+ `shared/config.js`, fixture
+   `slides-config.json`) validates `loop`, `step`, `keyboard`, `autoplay`,
+   `transition` into `data-supe-slides`; direction → root classes
+   `is-vertical` / `is-reversed`. `engine/`: `math.js` (start = first slide in
+   view; each slide moved to a slot via `--supe-slide-offset`, so loop is slot
+   arithmetic, no clones), `Slider.js` (per view from the resolved CSS
+   variable, `ResizeObserver`, vertical rows measured from the tallest slide
+   when the slider has no height, `inert` off-view slides, live region
+   reading the slides' labels, `supe-slides:change` / `:layout` events),
+   `transitions/` registry (`slide`, `fade` — page-only), `autoplay.js`
+   (pauses on hover, focus, hidden tab, off screen, reduced motion; returns
+   `pause()`/`resume()` for phase 5), `keyboard.js`. Editor: Playback and
+   Transition panels (effects/directions from the registry), "Rows" for
+   vertical, canvas previews direction. **Until phase 5 adds the pause
+   control, autoplay has no visible pause button (WCAG 2.2.2).**
+5. **Controls** ✅ — overlay + bar areas, prev/next/indicators/pause blocks,
+   preset arrow sets (`shared/icons.json`), Controls panel, per-control area
+   and position, `engine/controls.js` (actions, disabled ends, indicators
+   from `indicatorStarts()`, pause/play label). Pause optional (see above).
 6. **Drag** — pointer handling, axis, thresholds, click suppression.
 7. **Lightbox.**
 8. **Posts** — posts variation, locked Query Loop, slide class at render,

@@ -3,7 +3,8 @@ import { cover, gallery } from '@wordpress/icons';
 
 /**
  * One variation per slide type, picked when the block is inserted (scope
- * `block`, like Columns). Each holds the locked track with starter slides;
+ * `block`, like Columns). Each holds the locked track with starter slides
+ * and overlay controls;
  * TypePanel reuses the starter slides when the type changes later.
  *
  * @param {Array} slides Inner blocks template for the track.
@@ -14,6 +15,17 @@ const track = ( slides ) => [
     slides,
 ];
 
+/** Arrows and indicators over the slides; the Controls panel turns them off. */
+const overlay = [
+    'supe/slides-overlay',
+    {},
+    [
+        [ 'supe/slides-prev' ],
+        [ 'supe/slides-next' ],
+        [ 'supe/slides-indicators' ],
+    ],
+];
+
 const variations = [
     {
         name: 'images',
@@ -21,7 +33,7 @@ const variations = [
         description: __( 'One image per slide.', 'supe-editor' ),
         icon: gallery,
         attributes: { type: 'images' },
-        innerBlocks: [ track( [ [ 'supe/image-slide' ] ] ) ],
+        innerBlocks: [ track( [ [ 'supe/image-slide' ] ] ), overlay ],
         scope: [ 'block' ],
         isActive: [ 'type' ],
     },
@@ -36,6 +48,7 @@ const variations = [
                 [ 'supe/slide', {}, [ [ 'core/paragraph' ] ] ],
                 [ 'supe/slide', {}, [ [ 'core/paragraph' ] ] ],
             ] ),
+            overlay,
         ],
         scope: [ 'block' ],
         isActive: [ 'type' ],

@@ -1,15 +1,56 @@
+@use "sass:list";
+
 /**
  * Front end and editor. Without the engine (no JS, or before it loads) the
  * track is a horizontal scroll-snap strip, so every slide stays reachable.
+ * The engine (engine/Slider.js) adds `.is-initialized` and takes over.
  *
  * Layout comes from responsive variables on the root (Blocks\Slides\Layout):
  *   --supe-slides-per-view  slides side by side (default 1)
  *   --supe-slides-gap       space between slides (default 0)
  *   --supe-slides-h / -ar   height / aspect ratio — of the track, or of each
  *                           slide with `.is-height-slide` (default auto)
+ *
+ * Direction (Config::classes): `.is-reversed` lays the slides out from the
+ * end side; `.is-vertical` stacks them in rows (with the engine, and in the
+ * editor).
  */
 .supe-slides {
+    // One column: the track, the overlay controls in the same cell, the
+    // controls bar below.
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
     position: relative;
+
+    // Which way the arrow icons point for "next" (icons point right).
+    --supe-slides-arrow: 0deg;
+
+    &.is-reversed,
+    &:dir(rtl):not(.is-vertical) {
+        --supe-slides-arrow: 180deg;
+    }
+
+    &.is-reversed:dir(rtl):not(.is-vertical) {
+        --supe-slides-arrow: 0deg;
+    }
+
+    &.is-vertical {
+        --supe-slides-arrow: 90deg;
+    }
+
+    &.is-vertical.is-reversed {
+        --supe-slides-arrow: -90deg;
+    }
+
+    // The track and the overlay share the first cell; the bar goes below.
+    > :where(.supe-slides__track, .supe-slides__overlay) {
+        grid-area: 1 / 1;
+    }
+
+    > :where(.supe-slides__bar) {
+        grid-area: 2 / 1;
+    }
+
 }
 
 .supe-slides__track {
@@ -48,5 +89,254 @@
         height: var(--supe-slides-h, auto);
         min-height: 0;
         overflow: hidden;
+    }
+}
+
+.supe-slides.is-reversed > .supe-slides__track {
+    flex-direction: row-reverse;
+}
+
+// With the engine: no scrolling; each slide sits in its slot, offset from
+// its own place by --supe-slide-offset columns (or rows), towards the end
+// side unless --supe-slides-sign flips it.
+.supe-slides.is-initialized > .supe-slides__track {
+    overflow: hidden;
+    scroll-snap-type: none;
+
+    // Per slide: a custom property resolves where it's declared.
+    > .supe-slides__slide {
+        --supe-slides-shift: calc(var(--supe-slide-offset, 0) * var(--supe-slides-sign, 1));
+        transform: translateX(calc(var(--supe-slides-shift) * (100% + var(--supe-slides-gap, 0px))));
+    }
+}
+
+// Rows: the track's height is split between them, so it needs one — the
+// slider's height or ratio, else the engine measures the tallest slide
+// (`.is-measured`, --supe-slides-row). The editor's "show all" keeps its
+// own stack (editor.scss).
+.supe-slides.is-vertical:is(.is-initialized, .editor-styles-wrapper *):not(.is-showing-all) {
+
+    > .supe-slides__track {
+        align-items: stretch;
+        flex-direction: column;
+        overflow: hidden;
+        scroll-snap-type: none;
+    }
+
+    &.is-reversed > .supe-slides__track {
+        flex-direction: column-reverse;
+    }
+
+    &.is-measured > .supe-slides__track {
+        aspect-ratio: auto;
+        height: calc(var(--supe-slides-columns) * var(--supe-slides-row) + var(--supe-slides-gaps));
+
+        > .supe-slides__slide {
+            flex-basis: var(--supe-slides-row);
+        }
+    }
+
+    &.is-initialized > .supe-slides__track > .supe-slides__slide {
+        transform: translateY(calc(var(--supe-slides-shift) * (100% + var(--supe-slides-gap, 0px))));
+    }
+}
+
+.supe-slides__status {
+    clip-path: inset(50%);
+    height: 1px;
+    overflow: hidden;
+    position: absolute;
+    white-space: nowrap;
+    width: 1px;
+}
+
+// Controls do nothing without the engine or with nowhere to go.
+[data-supe-slides]:not(.is-initialized.is-navigable) > :is(.supe-slides__overlay, .supe-slides__bar) {
+    display: none;
+}
+
+// Overlay: a 3×3 grid over the track that lets clicks through to the
+// slides, except on the controls. Equal cells, so a centered control is
+// centered on the slider whatever the corners hold.
+.supe-slides__overlay {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    grid-template-rows: repeat(3, minmax(0, 1fr));
+    pointer-events: none;
+    z-index: 1;
+
+    > * {
+        max-width: none;
+        pointer-events: auto;
+        width: max-content;
+    }
+}
+
+:where(.supe-slides__overlay) {
+    box-sizing: border-box;
+    padding: 1rem;
+}
+
+$supe-slides-rows: (top: 1 start, center: 2 center, bottom: 3 end);
+$supe-slides-columns: (left: 1 start, center: 2 center, right: 3 end);
+
+@each $row, $row-place in $supe-slides-rows {
+
+    @each $column, $column-place in $supe-slides-columns {
+        .supe-slides__overlay > .is-position-#{$row}-#{$column} {
+            align-self: list.nth($row-place, 2);
+            grid-area: #{list.nth($row-place, 1)} / #{list.nth($column-place, 1)};
+            justify-self: list.nth($column-place, 2);
+        }
+    }
+}
+
+// Buttons. Defaults sit in :where() so the blocks' color, border, spacing
+// and font size settings win.
+:where(.supe-slides__button) {
+    align-items: center;
+    appearance: none;
+    background: rgb(0 0 0 / 45%);
+    border: 0;
+    border-radius: 999px;
+    color: #fff;
+    cursor: pointer;
+    display: inline-flex;
+    font-size: 1.25rem;
+    justify-content: center;
+    line-height: 1;
+    margin: 0;
+    padding: 0.5em;
+}
+
+:where(.supe-slides__bar) :where(.supe-slides__button) {
+    background: none;
+    color: inherit;
+}
+
+.supe-slides__button {
+
+    &[hidden] {
+        display: none;
+    }
+
+    &[aria-disabled="true"] {
+        cursor: default;
+        opacity: 0.35;
+    }
+
+    &:focus-visible {
+        outline: 2px solid currentcolor;
+        outline-offset: 2px;
+    }
+}
+
+.supe-slides__icon {
+    display: block;
+    height: 1em;
+    width: 1em;
+}
+
+.supe-slides__next .supe-slides__icon {
+    rotate: var(--supe-slides-arrow);
+}
+
+.supe-slides__prev .supe-slides__icon {
+    rotate: calc(var(--supe-slides-arrow) + 180deg);
+}
+
+.supe-slides__pause {
+
+    .is-play,
+    &.is-paused .is-pause {
+        display: none;
+    }
+
+    &.is-paused .is-play {
+        display: block;
+    }
+}
+
+// Indicators: dots (default style), bars or numbers.
+:where(.supe-slides__indicators) {
+    align-items: center;
+    display: flex;
+    flex-wrap: wrap;
+    font-size: 1rem;
+    gap: 0.25em;
+    justify-content: center;
+}
+
+:where(.supe-slides__overlay) :where(.supe-slides__indicators) {
+    color: #fff;
+}
+
+.supe-slides__indicator {
+    appearance: none;
+    background: none;
+    border: 0;
+    color: inherit;
+    cursor: pointer;
+    display: inline-flex;
+    font: inherit;
+    line-height: 1;
+    margin: 0;
+    padding: 0.25em;
+
+    &:focus-visible {
+        outline: 2px solid currentcolor;
+        outline-offset: 1px;
+    }
+}
+
+.supe-slides__indicator-mark {
+    background: currentcolor;
+    border-radius: 50%;
+    display: block;
+    height: 0.625em;
+    opacity: 0.45;
+    transition: opacity 0.2s, width 0.2s;
+    width: 0.625em;
+
+    .is-current > & {
+        opacity: 1;
+    }
+}
+
+.supe-slides__indicators.is-style-bars .supe-slides__indicator-mark {
+    border-radius: 2px;
+    height: 0.25em;
+    width: 1.5em;
+}
+
+.supe-slides__indicators.is-style-numbers .supe-slides__indicator-mark {
+    background: none;
+    font-variant-numeric: tabular-nums;
+    height: auto;
+    min-width: 1.25em;
+    opacity: 0.6;
+    text-align: center;
+    width: auto;
+
+    .is-current > & {
+        font-weight: 600;
+        opacity: 1;
+    }
+}
+
+// Over a vertical slider, indicators run along its axis.
+.supe-slides.is-vertical > .supe-slides__overlay .supe-slides__indicators {
+    flex-direction: column;
+
+    &.is-style-bars .supe-slides__indicator-mark {
+        height: 1.5em;
+        width: 0.25em;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+
+    .supe-slides__indicator-mark {
+        transition: none;
     }
 }

@@ -1,0 +1,44 @@
+{
+    "$schema": "https://schemas.wp.org/trunk/block.json",
+    "apiVersion": 3,
+    "name": "supe/slides-bar",
+    "version": "0.1.0",
+    "title": "Controls bar",
+    "category": "supe",
+    "icon": "slides",
+    "description": "Slider controls in a row below the slides.",
+    "parent": [ "supe/slides" ],
+    "allowedBlocks": [
+        "supe/slides-prev",
+        "supe/slides-next",
+        "supe/slides-indicators",
+        "supe/slides-pause"
+    ],
+    "supports": {
+        "html": false,
+        "inserter": false,
+        "reusable": false,
+        "color": {
+            "background": true,
+            "text": true
+        },
+        "spacing": {
+            "padding": true,
+            "margin": [ "top", "bottom" ],
+            "blockGap": true
+        },
+        "layout": {
+            "allowSwitching": false,
+            "allowInheriting": false,
+            "allowOrientation": false,
+            "default": {
+                "type": "flex",
+                "flexWrap": "wrap",
+                "justifyContent": "center"
+            }
+        }
+    },
+    "textdomain": "supe-editor",
+    "editorScript": "file:./index.js",
+    "render": "file:./render.php"
+}

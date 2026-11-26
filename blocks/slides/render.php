@@ -1,13 +1,15 @@
 <?php
 /**
- * Slides: the slider's root, carrying the layout variables. Renders nothing
- * until a type is chosen and the track has slides.
+ * Slides: the slider's root, carrying the layout variables and the engine's
+ * config (`data-supe-slides`). Renders nothing until a type is chosen and the
+ * track has slides.
  *
  * @var array    $attributes
  * @var string   $content
  * @var WP_Block $block
  */
 
+use Supe\Editor\Blocks\Slides\Config;
 use Supe\Editor\Blocks\Slides\Layout;
 use Supe\Editor\Blocks\Slides\Markup;
 use Supe\Editor\Supports\Responsive\StyleGenerator;
@@ -19,10 +21,12 @@ if ( '' === $supe_type || '' === trim( $content ) ) {
     return;
 }
 
+$supe_config  = Config::from( $attributes );
 $supe_wrapper = [
-    'class'                => implode( ' ', [ 'supe-slides', 'is-type-' . $supe_type, ...Layout::classes( $attributes ) ] ),
+    'class'                => implode( ' ', [ 'supe-slides', 'is-type-' . $supe_type, ...Layout::classes( $attributes ), ...Config::classes( $supe_config ) ] ),
     'aria-roledescription' => __( 'carousel', 'supe-editor' ),
     'aria-label'           => Markup::name( $attributes ) ?: __( 'Slideshow', 'supe-editor' ),
+    'data-supe-slides'     => wp_json_encode( $supe_config ),
 ];
 
 // Responsive layout (per view, gap, height) as variables the CSS consumes.

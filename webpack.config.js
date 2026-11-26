@@ -12,6 +12,10 @@
  *   editor/canvas.scss    → editor/canvas      styles inside the editor canvas (EditorAssets)
  *   editor/{name}/view.js → {name}/view        a feature's front end (its own service)
  *   supports/index.js     → supports/index     block supports (responsive supports phase 2)
+ *
+ * With `--experimental-modules` (package.json), wp-scripts exports
+ * [ scripts, modules ]: the entries above join the scripts config, and
+ * block.json `viewScriptModule` files build as ES modules in the second.
  */
 const fs = require( 'fs' );
 const path = require( 'path' );
@@ -52,25 +56,34 @@ function conventionEntries() {
     return entries;
 }
 
-module.exports = {
-    ...defaultConfig,
-    entry: () => ( { ...defaultConfig.entry(), ...conventionEntries() } ),
-    output: {
-        ...defaultConfig.output,
-        // Entries are a function, so webpack can't see the components
-        // library type up front.
-        enabledLibraryTypes: [ 'window' ],
+const [ scriptConfig, ...moduleConfigs ] = [].concat( defaultConfig );
+
+module.exports = [
+    {
+        ...scriptConfig,
+        entry: () => ( { ...scriptConfig.entry(), ...conventionEntries() } ),
+        output: {
+            ...scriptConfig.output,
+            // Entries are a function, so webpack can't see the components
+            // library type up front.
+            enabledLibraryTypes: [ 'window' ],
+        },
+        plugins: [
+            ...scriptConfig.plugins.filter(
+                ( plugin ) =>
+                    ! ( plugin instanceof DependencyExtractionWebpackPlugin )
+            ),
+            new DependencyExtractionWebpackPlugin( {
+                requestToExternal: ( request ) =>
+                    request === COMPONENTS.request
+                        ? COMPONENTS.global
+                        : undefined,
+                requestToHandle: ( request ) =>
+                    request === COMPONENTS.request
+                        ? COMPONENTS.handle
+                        : undefined,
+            } ),
+        ],
     },
-    plugins: [
-        ...defaultConfig.plugins.filter(
-            ( plugin ) =>
-                ! ( plugin instanceof DependencyExtractionWebpackPlugin )
-        ),
-        new DependencyExtractionWebpackPlugin( {
-            requestToExternal: ( request ) =>
-                request === COMPONENTS.request ? COMPONENTS.global : undefined,
-            requestToHandle: ( request ) =>
-                request === COMPONENTS.request ? COMPONENTS.handle : undefined,
-        } ),
-    ],
-};
+    ...moduleConfigs,
+];
