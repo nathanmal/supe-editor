@@ -18,6 +18,32 @@ export const FIT_OPTIONS = [
     { value: 'none', label: __( 'None', 'supe-editor' ) },
 ];
 
+export const LIGHTBOX_OPTIONS = [
+    { value: 'on', label: __( 'On', 'supe-editor' ) },
+    { value: 'off', label: __( 'Off', 'supe-editor' ) },
+];
+
+/**
+ * Whether an image slide opens in the lightbox, like Markup::lightbox() and
+ * Markup::image(): its own setting, else the slider's, else no — never
+ * when it links somewhere.
+ *
+ * @param {Object} attributes The slide's attributes.
+ * @param {Object} defaults   The slider's `imageDefaults`.
+ * @return {boolean} Opens in the lightbox.
+ */
+export function resolveLightbox( attributes, defaults = {} ) {
+    if ( attributes.href?.trim() ) {
+        return false;
+    }
+
+    return (
+        [ attributes.lightbox, defaults.lightbox ].find(
+            ( value ) => typeof value === 'boolean'
+        ) ?? false
+    );
+}
+
 export const CAPTION_POSITION_OPTIONS = [
     { value: 'below', label: __( 'Below the image', 'supe-editor' ) },
     { value: 'overlay', label: __( 'Over the image', 'supe-editor' ) },

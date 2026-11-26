@@ -353,7 +353,125 @@ $supe-slides-columns: (left: 1 start, center: 2 center, right: 3 end);
     }
 }
 
+// Lightbox (engine/lightbox.js): the full-size image, centred, with its
+// caption; the buttons sit at the screen's edges.
+// Themes can set --supe-slides-lightbox-background / -color.
+.supe-slides__lightbox {
+    background: var(--supe-slides-lightbox-background, rgb(0 0 0 / 95%));
+    border: 0;
+    box-sizing: border-box;
+    color: var(--supe-slides-lightbox-color, #fff);
+    height: 100dvh;
+    margin: 0;
+    max-height: none;
+    max-width: none;
+    padding: 4rem 5rem;
+    width: 100vw;
+
+    // Its arrows point left / right whatever the slider's direction.
+    --supe-slides-arrow: 0deg;
+
+    &:dir(rtl) {
+        --supe-slides-arrow: 180deg;
+    }
+
+    &[open] {
+        align-items: center;
+        display: flex;
+        justify-content: center;
+    }
+
+    &::backdrop {
+        background: transparent;
+    }
+
+    &.has-one-image :is(.supe-slides__prev, .supe-slides__next, .supe-slides__lightbox-count) {
+        display: none;
+    }
+
+    > .supe-slides__button {
+        position: fixed;
+    }
+
+    > .supe-slides__prev,
+    > .supe-slides__next {
+        top: 50%;
+        translate: 0 -50%;
+    }
+
+    > .supe-slides__prev {
+        inset-inline-start: 1rem;
+    }
+
+    > .supe-slides__next {
+        inset-inline-end: 1rem;
+    }
+}
+
+.supe-slides__lightbox-close {
+    inset-block-start: 1rem;
+    inset-inline-end: 1rem;
+}
+
+.supe-slides__lightbox-figure {
+    align-items: center;
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    margin: 0;
+    max-height: 100%;
+    max-width: 100%;
+}
+
+.supe-slides__lightbox-image {
+    height: auto;
+    max-height: calc(100dvh - 10rem);
+    max-width: 100%;
+    min-height: 0;
+    object-fit: contain;
+    transition: opacity 0.2s;
+    width: auto;
+
+    &.is-loading {
+        opacity: 0.4;
+    }
+}
+
+.supe-slides__lightbox-caption {
+    max-width: 60ch;
+    text-align: center;
+}
+
+.supe-slides__lightbox-count {
+    font-size: 0.875rem;
+    inset-block-start: 1.5rem;
+    inset-inline-start: 1.5rem;
+    margin: 0;
+    position: fixed;
+}
+
+// No page scrolling behind an open lightbox.
+:root:has(.supe-slides__lightbox[open]) {
+    overflow: hidden;
+}
+
+@media (max-width: 600px) {
+
+    .supe-slides__lightbox {
+        padding: 4rem 1rem;
+    }
+
+    .supe-slides__lightbox > :is(.supe-slides__prev, .supe-slides__next) {
+        inset-block: auto 1rem;
+        translate: none;
+    }
+}
+
 @media (prefers-reduced-motion: reduce) {
+
+    .supe-slides__lightbox-image {
+        transition: none;
+    }
 
     .supe-slides__indicator-mark {
         transition: none;

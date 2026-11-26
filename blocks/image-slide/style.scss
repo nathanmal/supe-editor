@@ -16,7 +16,8 @@
     position: relative;
 }
 
-.supe-slides__link {
+.supe-slides__link,
+.supe-slides__zoom {
     display: flex;
     flex: 1 1 auto;
     min-height: 0;
@@ -38,4 +39,22 @@
     padding: 2rem 1rem 1rem;
     position: absolute;
     right: 0;
+}
+
+// Opens the slider's lightbox: a bare button around the image.
+.supe-slides__zoom {
+    appearance: none;
+    background: none;
+    border: 0;
+    color: inherit;
+    cursor: zoom-in;
+    font: inherit;
+    margin: 0;
+    padding: 0;
+    width: 100%;
+
+    &:focus-visible {
+        outline: 2px solid currentcolor;
+        outline-offset: -4px;
+    }
 }

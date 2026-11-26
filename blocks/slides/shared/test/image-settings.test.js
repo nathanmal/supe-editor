@@ -2,6 +2,7 @@ import {
     FIT_OPTIONS,
     imageSlideAttributes,
     resolveImageSettings,
+    resolveLightbox,
     withDefaultOption,
 } from '../image-settings';
 
@@ -53,5 +54,21 @@ describe( 'imageSlideAttributes', () => {
             id: 4,
             caption: undefined,
         } );
+    } );
+} );
+
+describe( 'resolveLightbox', () => {
+    it( 'falls back to the slider default, then off', () => {
+        expect( resolveLightbox( {} ) ).toBe( false );
+        expect( resolveLightbox( {}, { lightbox: true } ) ).toBe( true );
+        expect(
+            resolveLightbox( { lightbox: false }, { lightbox: true } )
+        ).toBe( false );
+    } );
+
+    it( 'never opens a linked image', () => {
+        expect(
+            resolveLightbox( { lightbox: true, href: 'https://example.com' } )
+        ).toBe( false );
     } );
 } );

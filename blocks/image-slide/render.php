@@ -1,7 +1,8 @@
 <?php
 /**
  * Image slide: the attachment through wp_get_attachment_image() (srcset,
- * sizes, library alt text), optionally linked, with an optional caption.
+ * sizes, library alt text), optionally linked or opening the slider's
+ * lightbox (a button carrying the full-size image), with an optional caption.
  * Settings fall back to the slider's image defaults (block context).
  * Renders nothing without a valid image.
  *
@@ -37,16 +38,6 @@ if ( '' !== $supe_image['alt'] ) {
 
 $supe_markup = wp_get_attachment_image( $supe_id, $supe_image['size'], false, $supe_image_attributes );
 
-$supe_href = esc_url( $supe_image['href'] );
-if ( '' !== $supe_href ) {
-    $supe_markup = sprintf(
-        '<a class="supe-slides__link" href="%s"%s>%s</a>',
-        $supe_href,
-        $supe_image['newTab'] ? ' target="_blank" rel="noopener"' : '',
-        $supe_markup
-    );
-}
-
 $supe_caption = '';
 if ( '' !== $supe_image['caption'] && 'hidden' !== $supe_image['captionPosition'] ) {
     $supe_caption = '<figcaption class="supe-slides__caption">' . wp_kses_post( $supe_image['caption'] ) . '</figcaption>';
@@ -58,6 +49,42 @@ $supe_name = Markup::name( $attributes )
     ?: $supe_image['alt']
     ?: trim( (string) get_post_meta( $supe_id, '_wp_attachment_image_alt', true ) )
     ?: trim( get_the_title( $supe_id ) );
+
+$supe_href = esc_url( $supe_image['href'] );
+if ( '' !== $supe_href ) {
+    $supe_markup = sprintf(
+        '<a class="supe-slides__link" href="%s"%s>%s</a>',
+        $supe_href,
+        $supe_image['newTab'] ? ' target="_blank" rel="noopener"' : '',
+        $supe_markup
+    );
+} elseif ( $supe_image['lightbox'] ) {
+    $supe_full = wp_get_attachment_image_src( $supe_id, 'full' );
+
+    if ( $supe_full ) {
+        $supe_markup = sprintf(
+            '<button %s>%s</button>',
+            implode( ' ', array_map(
+                static fn ( string $name, string $value ): string => sprintf( '%s="%s"', $name, esc_attr( $value ) ),
+                [ 'type', 'class', 'aria-haspopup', 'aria-label', 'data-supe-slides-action', 'data-src', 'data-srcset', 'data-width', 'data-height', 'data-caption' ],
+                [
+                    'button',
+                    'supe-slides__zoom',
+                    'dialog',
+                    /* translators: %s: the image's name or alt text. */
+                    '' === $supe_name ? __( 'Enlarge image', 'supe-editor' ) : sprintf( __( 'Enlarge image: %s', 'supe-editor' ), $supe_name ),
+                    'lightbox',
+                    $supe_full[0],
+                    (string) wp_get_attachment_image_srcset( $supe_id, 'full' ),
+                    (string) $supe_full[1],
+                    (string) $supe_full[2],
+                    '' === $supe_image['caption'] ? '' : wp_kses_post( $supe_image['caption'] ),
+                ]
+            ) ),
+            $supe_markup
+        );
+    }
+}
 
 printf(
     '<div %s><figure class="supe-slides__figure">%s%s</figure></div>',

@@ -13,6 +13,7 @@ import { configFrom, configClasses } from '../shared/config';
 import autoplay from './autoplay';
 import controls from './controls';
 import drag from './drag';
+import lightbox from './lightbox';
 import keyboard from './keyboard';
 import {
     advance,
@@ -115,6 +116,7 @@ export default class Slider {
         this.autoplay = autoplay( this );
         controls( this );
         drag( this );
+        lightbox( this );
     }
 
     /** @return {Object} What math.js needs. */

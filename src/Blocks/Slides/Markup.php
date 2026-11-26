@@ -86,13 +86,59 @@ final class Markup {
         $alt     = $attributes['alt'] ?? '';
         $href    = $attributes['href'] ?? '';
 
+        $href = is_string( $href ) ? trim( $href ) : '';
+
         return $settings + [
             'position' => self::objectPosition( $attributes['focalPoint'] ?? null ),
             'alt'      => is_string( $alt ) ? trim( $alt ) : '',
             'caption'  => is_string( $caption ) ? trim( $caption ) : '',
-            'href'     => is_string( $href ) ? trim( $href ) : '',
+            'href'     => $href,
             'newTab'   => '_blank' === ( $attributes['linkTarget'] ?? '' ),
+            'lightbox' => '' === $href && self::lightbox( $attributes, $defaults ),
         ];
+    }
+
+    /**
+     * Whether an image slide opens in the lightbox: its own setting, else
+     * the slider's default, else no. (A linked image never does; image()
+     * applies that.)
+     */
+    public static function lightbox( array $attributes, array $defaults ): bool {
+        foreach ( [ $attributes['lightbox'] ?? null, $defaults['lightbox'] ?? null ] as $value ) {
+            if ( is_bool( $value ) ) {
+                return $value;
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * Whether any of a slider's image slides opens in the lightbox, from its
+     * parsed inner blocks (the slider renders the dialog only then).
+     *
+     * @param array $innerBlocks The slider's parsed inner blocks.
+     * @param array $defaults    Its `imageDefaults`.
+     */
+    public static function hasLightbox( array $innerBlocks, array $defaults ): bool {
+        foreach ( $innerBlocks as $track ) {
+            if ( 'supe/slides-track' !== ( $track['blockName'] ?? null ) ) {
+                continue;
+            }
+            foreach ( $track['innerBlocks'] ?? [] as $slide ) {
+                $attributes = (array) ( $slide['attrs'] ?? [] );
+
+                if (
+                    'supe/image-slide' === ( $slide['blockName'] ?? null )
+                    && '' === trim( (string) ( $attributes['href'] ?? '' ) )
+                    && self::lightbox( $attributes, $defaults )
+                ) {
+                    return true;
+                }
+            }
+        }
+
+        return false;
     }
 
     /**

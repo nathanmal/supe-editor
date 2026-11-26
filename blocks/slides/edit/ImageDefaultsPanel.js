@@ -1,4 +1,4 @@
-import { PanelBody, SelectControl } from '@wordpress/components';
+import { PanelBody, SelectControl, ToggleControl } from '@wordpress/components';
 import { __ } from '@wordpress/i18n';
 
 import {
@@ -47,6 +47,16 @@ export default function ImageDefaultsPanel( { imageDefaults, setAttributes } ) {
                 value={ value.captionPosition }
                 options={ CAPTION_POSITION_OPTIONS }
                 onChange={ update( 'captionPosition' ) }
+            />
+            <ToggleControl
+                __nextHasNoMarginBottom
+                label={ __( 'Open images in a lightbox', 'supe-editor' ) }
+                help={ __(
+                    'Clicking an image shows it full size, with the slider’s other images. Linked images open their link instead.',
+                    'supe-editor'
+                ) }
+                checked={ !! imageDefaults?.lightbox }
+                onChange={ update( 'lightbox' ) }
             />
         </PanelBody>
     );

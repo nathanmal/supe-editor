@@ -1,7 +1,7 @@
 # Slides Block — Plan
 
-**Status:** Phases 1–6 (structure, editing, layout, engine, controls, drag)
-done 2026-11-26; phase 7 (lightbox) next.
+**Status:** Phases 1–7 (structure, editing, layout, engine, controls, drag,
+lightbox) done 2026-11-26; phase 8 (posts) next.
 Captures the design decisions made on 2026-11-04; update this doc as phases
 land (and log them in `PROGRESS.md`).
 
@@ -142,7 +142,8 @@ supe/slides                       ← settings: type, playback, transition, layo
   - image size (thumbnail, large, full, …)
   - fit: `cover` / `contain` / `fill` / `none` → `object-fit`
   - focal point (`FocalPointPicker`) → `object-position`
-  - lightbox on/off (phase 7)
+  - lightbox: Default / On / Off (`lightbox` boolean; the slider's
+    `imageDefaults.lightbox`, else off; a linked image never opens it)
 - Replacing the image resets focal point and alt override, and pre-fills the
   caption from the library only if the slide has none.
 - Images fill their slide (flex column): slides stretch to the tallest one,
@@ -398,15 +399,27 @@ border and font size supports. Shared PHP: `Blocks\Slides\Controls`
 
 ## Lightbox
 
-- One native `<dialog>` per slider, rendered only if at least one image slide
-  has lightbox enabled.
-- Opens on click of a lightbox-enabled image: full-size image (`srcset`),
-  caption, prev/next across that slider's lightbox-enabled images, close
-  button.
-- `showModal()` provides focus containment and the backdrop; `Esc` closes;
-  focus returns to the triggering image.
-- Opening the lightbox pauses autoplay; closing syncs the slider to the last
-  viewed image.
+- One native `<dialog>` per slider (`slides/render.php`), rendered only if
+  at least one image slide opens in it (`Markup::hasLightbox()` over the
+  parsed inner blocks; `Markup::lightbox()` resolves slide → slider default
+  → off, and `image()` turns it off for linked images).
+- A lightbox image is wrapped in `<button class="supe-slides__zoom"
+  data-supe-slides-action="lightbox">` ("Enlarge image: name") carrying the
+  full-size `src`, `srcset`, size and the `wp_kses_post` caption as data
+  attributes; `engine/lightbox.js` fills the dialog from them.
+- In the dialog: full-size image (`sizes="100vw"`), caption (also when it's
+  hidden on the slide), "2 / 5" counter, prev/next across the slider's
+  lightbox images (wrapping; ←/→ keys, flipped for RTL — the slider's own
+  keyboard handler ignores the dialog), close button. Prev/next and the
+  counter hide with one image; on phones the arrows move to the bottom.
+- `showModal()` provides focus containment and the backdrop; Esc, the close
+  button or a click outside the image (on the dialog itself) closes; the
+  page doesn't scroll while it's open.
+- Opening holds autoplay (`autoplay.hold( 'lightbox' )`); closing moves the
+  slider to the last viewed image if it's out of view and focuses its
+  button. A drag starting on an image doesn't open it (click suppressed).
+- Colors: `--supe-slides-lightbox-background` / `--supe-slides-lightbox-color`.
+- Not yet: swipe between images inside the lightbox, zoom/pan.
 
 ---
 
@@ -537,7 +550,9 @@ of the `[ scripts, modules ]` config it then gets). Add `enshrined/svg-sanitize`
    Autoplay holds during a drag (`autoplay.hold()`). Editor: Interaction
    panel (arrow keys, swipe on touch screens, drag with a mouse; disabled
    for transitions without `supportsDrag`).
-7. **Lightbox.**
+7. **Lightbox** ✅ — see [Lightbox](#lightbox). Editor: "Lightbox" select
+   on image slides (disabled with a link), "Open images in a lightbox" in
+   Image defaults.
 8. **Posts** — posts variation, locked Query Loop, slide class at render,
    "Selected posts" (after the editor-preview spike).
 9. **SVG uploads** — `SvgUploads` service, upload + output sanitizing,

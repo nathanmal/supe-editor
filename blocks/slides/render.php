@@ -10,6 +10,7 @@
  */
 
 use Supe\Editor\Blocks\Slides\Config;
+use Supe\Editor\Blocks\Slides\Controls;
 use Supe\Editor\Blocks\Slides\Layout;
 use Supe\Editor\Blocks\Slides\Markup;
 use Supe\Editor\Supports\Responsive\StyleGenerator;
@@ -35,8 +36,30 @@ if ( '' !== $supe_layout ) {
     $supe_wrapper['style'] = $supe_layout;
 }
 
+// One lightbox per slider, only when an image slide opens in it; the engine
+// fills it (engine/lightbox.js).
+$supe_lightbox = '';
+if ( Markup::hasLightbox( $block->parsed_block['innerBlocks'] ?? [], (array) ( $attributes['imageDefaults'] ?? [] ) ) ) {
+    $supe_lightbox = sprintf(
+        '<dialog class="supe-slides__lightbox" aria-label="%1$s">'
+            . '<figure class="supe-slides__lightbox-figure"><img class="supe-slides__lightbox-image" alt="" /><figcaption class="supe-slides__lightbox-caption"></figcaption></figure>'
+            . '<p class="supe-slides__lightbox-count"></p>'
+            . '<button type="button" class="supe-slides__button supe-slides__prev" data-lightbox="prev" aria-label="%2$s">%5$s</button>'
+            . '<button type="button" class="supe-slides__button supe-slides__next" data-lightbox="next" aria-label="%3$s">%5$s</button>'
+            . '<button type="button" class="supe-slides__button supe-slides__lightbox-close" data-lightbox="close" aria-label="%4$s">%6$s</button>'
+            . '</dialog>',
+        esc_attr__( 'Image viewer', 'supe-editor' ),
+        esc_attr__( 'Previous image', 'supe-editor' ),
+        esc_attr__( 'Next image', 'supe-editor' ),
+        esc_attr__( 'Close', 'supe-editor' ),
+        Controls::arrow( 'chevron' ),
+        Controls::icon( 'close' )
+    );
+}
+
 printf(
-    '<section %s>%s</section>',
+    '<section %s>%s%s</section>',
     get_block_wrapper_attributes( $supe_wrapper ),
-    $content // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- rendered inner blocks.
+    $content, // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- rendered inner blocks.
+    $supe_lightbox // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- escaped above.
 );

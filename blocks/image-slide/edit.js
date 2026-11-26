@@ -23,8 +23,10 @@ import { __, sprintf } from '@wordpress/i18n';
 import {
     CAPTION_POSITION_OPTIONS,
     FIT_OPTIONS,
+    LIGHTBOX_OPTIONS,
     imageSlideAttributes,
     resolveImageSettings,
+    resolveLightbox,
     withDefaultOption,
 } from '../slides/shared/image-settings';
 import useImageSizeOptions from '../slides/shared/use-image-size-options';
@@ -34,6 +36,18 @@ import SlideNamePanel from '../slides/shared/SlideNamePanel';
 import ImageLink from './ImageLink';
 
 const ALLOWED_TYPES = [ 'image' ];
+
+/**
+ * @param {boolean|undefined} value
+ * @return {string} The lightbox select's value: `on`, `off` or '' (default).
+ */
+const lightboxValue = ( value ) => {
+    if ( typeof value !== 'boolean' ) {
+        return '';
+    }
+
+    return value ? 'on' : 'off';
+};
 
 /**
  * One image from the media library. The markup (srcset, library alt) is
@@ -260,6 +274,38 @@ export default function Edit( {
                             defaults.captionPosition
                         ) }
                         onChange={ update( 'captionPosition' ) }
+                    />
+                    <SelectControl
+                        __next40pxDefaultSize
+                        __nextHasNoMarginBottom
+                        label={ __( 'Lightbox', 'supe-editor' ) }
+                        value={ lightboxValue( attributes.lightbox ) }
+                        options={ withDefaultOption(
+                            LIGHTBOX_OPTIONS,
+                            lightboxValue(
+                                resolveLightbox(
+                                    {},
+                                    context[ 'supe/slides/imageDefaults' ]
+                                )
+                            )
+                        ) }
+                        disabled={ !! attributes.href }
+                        help={
+                            attributes.href
+                                ? __(
+                                      'A linked image opens its link instead.',
+                                      'supe-editor'
+                                  )
+                                : __(
+                                      'Clicking the image shows it full size.',
+                                      'supe-editor'
+                                  )
+                        }
+                        onChange={ ( next ) =>
+                            setAttributes( {
+                                lightbox: next ? next === 'on' : undefined,
+                            } )
+                        }
                     />
                 </PanelBody>
             </InspectorControls>

@@ -37,6 +37,9 @@
         },
         "linkTarget": {
             "type": "string"
+        },
+        "lightbox": {
+            "type": "boolean"
         }
     },
     "supports": {

@@ -182,6 +182,37 @@ final class SlidesTest extends TestCase {
         self::assertSame( 2, substr_count( $html, 'is-pause' ) + substr_count( $html, 'is-play' ) );
     }
 
+    public function test_lightbox_images_render_a_button_and_the_slider_its_dialog(): void {
+        $id = self::factory()->attachment->create_upload_object( DIR_TESTDATA . '/images/canola.jpg' );
+
+        $html = do_blocks(
+            '<!-- wp:supe/slides {"type":"images","imageDefaults":{"lightbox":true}} --><!-- wp:supe/slides-track -->'
+            . '<!-- wp:supe/image-slide {"id":' . $id . ',"caption":"A \\u003cem\\u003efield\\u003c/em\\u003e","metadata":{"name":"Canola"}} /-->'
+            . '<!-- wp:supe/image-slide {"id":' . $id . ',"href":"https://example.com"} /-->'
+            . '<!-- wp:supe/image-slide {"id":' . $id . ',"lightbox":false} /-->'
+            . '<!-- /wp:supe/slides-track --><!-- /wp:supe/slides -->'
+        );
+
+        $processor = new \WP_HTML_Tag_Processor( $html );
+        self::assertTrue( $processor->next_tag( [ 'class_name' => 'supe-slides__zoom' ] ) );
+        self::assertSame( 'lightbox', $processor->get_attribute( 'data-supe-slides-action' ) );
+        self::assertSame( 'Enlarge image: Canola', $processor->get_attribute( 'aria-label' ) );
+        self::assertSame( wp_get_attachment_image_url( $id, 'full' ), $processor->get_attribute( 'data-src' ) );
+        self::assertSame( 'A <em>field</em>', $processor->get_attribute( 'data-caption' ) );
+        self::assertFalse( $processor->next_tag( [ 'class_name' => 'supe-slides__zoom' ] ), 'Only the first slide opens the lightbox.' );
+
+        self::assertSame( 1, substr_count( $html, '<dialog class="supe-slides__lightbox"' ) );
+        self::assertStringContainsString( 'data-lightbox="close"', $html );
+    }
+
+    public function test_a_slider_without_lightbox_images_has_no_dialog(): void {
+        $id   = self::factory()->attachment->create_upload_object( DIR_TESTDATA . '/images/canola.jpg' );
+        $html = do_blocks( $this->slides( 'images', [ '<!-- wp:supe/image-slide {"id":' . $id . '} /-->' ] ) );
+
+        self::assertStringNotContainsString( '<dialog', $html );
+        self::assertStringNotContainsString( 'supe-slides__zoom', $html );
+    }
+
     public function test_an_empty_control_area_renders_nothing(): void {
         self::assertSame( '', trim( do_blocks( '<!-- wp:supe/slides-overlay --><!-- /wp:supe/slides-overlay -->' ) ) );
     }

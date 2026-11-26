@@ -76,6 +76,31 @@ final class MarkupTest extends TestCase {
         self::assertSame( 'large', Markup::image( [ 'size' => 'huge' ], [ 'size' => 'huge' ], $sizes )['size'] );
     }
 
+    public function test_the_lightbox_falls_back_to_the_slider_default_and_never_opens_from_a_link(): void {
+        self::assertFalse( Markup::lightbox( [], [] ) );
+        self::assertTrue( Markup::lightbox( [], [ 'lightbox' => true ] ) );
+        self::assertFalse( Markup::lightbox( [ 'lightbox' => false ], [ 'lightbox' => true ] ) );
+        self::assertFalse( Markup::lightbox( [ 'lightbox' => 'yes' ], [] ) );
+
+        self::assertTrue( Markup::image( [ 'lightbox' => true ], [], [] )['lightbox'] );
+        self::assertFalse( Markup::image( [ 'lightbox' => true, 'href' => 'https://example.com' ], [], [] )['lightbox'] );
+    }
+
+    public function test_a_slider_has_a_lightbox_when_one_of_its_image_slides_opens_in_it(): void {
+        $track = static fn ( array ...$slides ): array => [
+            [ 'blockName' => 'supe/slides-track', 'innerBlocks' => array_map(
+                static fn ( array $attrs ): array => [ 'blockName' => 'supe/image-slide', 'attrs' => $attrs ],
+                $slides
+            ) ],
+        ];
+
+        self::assertFalse( Markup::hasLightbox( $track( [ 'id' => 1 ] ), [] ) );
+        self::assertTrue( Markup::hasLightbox( $track( [ 'id' => 1 ], [ 'id' => 2, 'lightbox' => true ] ), [] ) );
+        self::assertTrue( Markup::hasLightbox( $track( [ 'id' => 1 ] ), [ 'lightbox' => true ] ) );
+        self::assertFalse( Markup::hasLightbox( $track( [ 'id' => 1, 'href' => 'https://example.com' ] ), [ 'lightbox' => true ] ) );
+        self::assertFalse( Markup::hasLightbox( [ [ 'blockName' => 'supe/slides-overlay', 'innerBlocks' => [] ] ], [ 'lightbox' => true ] ) );
+    }
+
     public function test_image_settings_clean_up_text_and_link_values(): void {
         $image = Markup::image(
             [ 'alt' => ' A field ', 'caption' => ' <em>Hi</em> ', 'href' => ' https://example.com ', 'linkTarget' => '_blank' ],
