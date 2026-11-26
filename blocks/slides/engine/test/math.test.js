@@ -1,7 +1,10 @@
 import {
     advance,
     currentIndicator,
+    dragSlots,
     indicatorStarts,
+    releaseSteps,
+    resist,
     distance,
     inView,
     maxStart,
@@ -144,5 +147,44 @@ describe( 'indicators', () => {
         expect( currentIndicator( [ 0, 2, 4 ], 2 ) ).toBe( 1 );
         expect( currentIndicator( [ 0, 2, 4 ], 3 ) ).toBe( 1 );
         expect( currentIndicator( [ 0, 2, 4 ], 1 ) ).toBe( 0 );
+    } );
+} );
+
+describe( 'dragging', () => {
+    it( 'drags forward from rest', () => {
+        expect( dragSlots( 4, 1, -0.5, true ) ).toEqual( [ 3, 0, 1, 2 ] );
+    } );
+
+    it( 'lines slides up before the view when dragging back', () => {
+        expect( dragSlots( 4, 0, 0.5, true ) ).toEqual( [ 0, 1, 2, -1 ] );
+        expect( dragSlots( 4, 0, 1.5, true ) ).toEqual( [ 0, 1, -2, -1 ] );
+        expect( dragSlots( 4, 0, 0.2, true, 2 ) ).toEqual( [ 0, 1, -2, -1 ] );
+        expect( dragSlots( 3, 1, 0.5, false ) ).toEqual( [ -1, 0, 1 ] );
+    } );
+
+    it( 'holds back past the ends without loop', () => {
+        const ends = { count: 4, perView: 1, loop: false };
+
+        expect( resist( 0, 1, ends ) ).toBeCloseTo( 0.3 );
+        expect( resist( 3, -1, ends ) ).toBeCloseTo( -0.3 );
+        expect( resist( 1, 0.5, ends ) ).toBe( 0.5 );
+        expect( resist( 0, 1, { ...ends, loop: true } ) ).toBe( 1 );
+    } );
+
+    it( 'moves on release past the threshold, to the nearest slide', () => {
+        expect( releaseSteps( 0.1, 0, 1 ) ).toBe( 0 );
+        expect( releaseSteps( 0.25, 0, 1 ) ).toBe( 1 );
+        expect( releaseSteps( -0.25, 0, 1 ) ).toBe( -1 );
+        expect( releaseSteps( 1.6, 0, 1 ) ).toBe( 2 );
+    } );
+
+    it( 'moves on a flick, and cancels on a flick back', () => {
+        expect( releaseSteps( 0.05, 0.5, 1 ) ).toBe( 1 );
+        expect( releaseSteps( 0.6, -0.5, 1 ) ).toBe( 0 );
+    } );
+
+    it( 'moves in whole steps', () => {
+        expect( releaseSteps( 0.4, 0, 3 ) ).toBe( 3 );
+        expect( releaseSteps( 4.8, 0, 3 ) ).toBe( 6 );
     } );
 } );

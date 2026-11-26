@@ -110,6 +110,25 @@
     }
 }
 
+// Drag (engine/drag.js): the browser keeps the other axis for scrolling
+// the page; the mouse gets a grab cursor and no text selection mid-drag.
+.supe-slides.is-draggable > .supe-slides__track {
+    touch-action: pan-y pinch-zoom;
+}
+
+.supe-slides.is-mouse-draggable > .supe-slides__track {
+    cursor: grab;
+}
+
+.supe-slides.is-dragging > .supe-slides__track {
+    cursor: grabbing;
+    user-select: none;
+}
+
+.supe-slides.is-draggable.is-vertical > .supe-slides__track {
+    touch-action: pan-x pinch-zoom;
+}
+
 // Rows: the track's height is split between them, so it needs one — the
 // slider's height or ratio, else the engine measures the tallest slide
 // (`.is-measured`, --supe-slides-row). The editor's "show all" keeps its

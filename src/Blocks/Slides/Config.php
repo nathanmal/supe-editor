@@ -7,10 +7,10 @@ namespace Supe\Editor\Blocks\Slides;
 /**
  * Config
  *
- * The slider's behavior (loop, step, keyboard, autoplay, transition) from its
- * attributes, validated and filled with defaults. render.php writes it to the
- * root as `data-supe-slides` for the engine (blocks/slides/engine/), and adds
- * its classes. Responsive values (per view, gap, height) aren't here; they're
+ * The slider's behavior (loop, step, keyboard, drag, autoplay, transition)
+ * from its attributes, validated and filled with defaults. render.php writes
+ * it to the root as `data-supe-slides` for the engine (blocks/slides/engine/),
+ * and adds its classes. Responsive values (per view, gap, height) aren't here; they're
  * CSS variables (Layout). Mirrored by blocks/slides/shared/config.js; both
  * run tests/fixtures/slides-config.json.
  *
@@ -31,6 +31,10 @@ final class Config {
         'loop'       => false,
         'step'       => 'slide',
         'keyboard'   => true,
+        'drag'       => [
+            'touch' => true,
+            'mouse' => false,
+        ],
         'autoplay'   => [
             'enabled'      => false,
             'delay'        => 5000,
@@ -45,10 +49,11 @@ final class Config {
     ];
 
     /**
-     * @return array{loop: bool, step: string, keyboard: bool, autoplay: array, transition: array}
+     * @return array{loop: bool, step: string, keyboard: bool, drag: array, autoplay: array, transition: array}
      */
     public static function from( array $attributes ): array {
         $defaults   = self::DEFAULTS;
+        $drag       = is_array( $attributes['drag'] ?? null ) ? $attributes['drag'] : [];
         $autoplay   = is_array( $attributes['autoplay'] ?? null ) ? $attributes['autoplay'] : [];
         $transition = is_array( $attributes['transition'] ?? null ) ? $attributes['transition'] : [];
         $name       = $transition['name'] ?? null;
@@ -57,6 +62,10 @@ final class Config {
             'loop'       => self::bool( $attributes['loop'] ?? null, $defaults['loop'] ),
             'step'       => self::oneOf( $attributes['step'] ?? null, self::STEPS, $defaults['step'] ),
             'keyboard'   => self::bool( $attributes['keyboard'] ?? null, $defaults['keyboard'] ),
+            'drag'       => [
+                'touch' => self::bool( $drag['touch'] ?? null, $defaults['drag']['touch'] ),
+                'mouse' => self::bool( $drag['mouse'] ?? null, $defaults['drag']['mouse'] ),
+            ],
             'autoplay'   => [
                 'enabled'      => self::bool( $autoplay['enabled'] ?? null, $defaults['autoplay']['enabled'] ),
                 'delay'        => self::milliseconds( $autoplay['delay'] ?? null, self::DELAY, $defaults['autoplay']['delay'] ),

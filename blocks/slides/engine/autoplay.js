@@ -6,8 +6,8 @@
  * reduced motion. Any move restarts the wait, so it never cuts one short.
  *
  * @param {import('./Slider').default} slider
- * @return {?{pause: Function, resume: Function, paused: Function}} Controls,
- *         or null when autoplay is off.
+ * @return {?{hold: Function, pause: Function, resume: Function, paused: Function}}
+ *         Controls, or null when autoplay is off.
  */
 export default function autoplay( slider ) {
     const { enabled, delay, pauseOnHover } = slider.config.autoplay;
@@ -73,6 +73,14 @@ export default function autoplay( slider ) {
     schedule();
 
     return {
+        /**
+         * Pauses while something's going on (a drag), without counting as
+         * the visitor pausing.
+         *
+         * @param {string}  reason
+         * @param {boolean} on
+         */
+        hold: ( reason, on ) => pause( reason, on ),
         pause: () => pause( 'user' ),
         resume: () => pause( 'user', false ),
         paused: () => reasons.has( 'user' ),

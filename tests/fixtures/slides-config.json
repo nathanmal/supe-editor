@@ -9,8 +9,21 @@
                     "loop": false,
                     "step": "slide",
                     "keyboard": true,
-                    "autoplay": { "enabled": false, "delay": 5000, "pauseOnHover": true },
-                    "transition": { "name": "slide", "direction": "left", "duration": 500, "easing": "ease" }
+                    "drag": {
+                        "touch": true,
+                        "mouse": false
+                    },
+                    "autoplay": {
+                        "enabled": false,
+                        "delay": 5000,
+                        "pauseOnHover": true
+                    },
+                    "transition": {
+                        "name": "slide",
+                        "direction": "left",
+                        "duration": 500,
+                        "easing": "ease"
+                    }
                 },
                 "classes": []
             }
@@ -21,49 +34,118 @@
                 "loop": true,
                 "step": "page",
                 "keyboard": false,
-                "autoplay": { "enabled": true, "delay": 3000, "pauseOnHover": false },
-                "transition": { "name": "fade", "direction": "right", "duration": 800, "easing": "ease-in-out" }
+                "autoplay": {
+                    "enabled": true,
+                    "delay": 3000,
+                    "pauseOnHover": false
+                },
+                "transition": {
+                    "name": "fade",
+                    "direction": "right",
+                    "duration": 800,
+                    "easing": "ease-in-out"
+                },
+                "drag": {
+                    "touch": false,
+                    "mouse": true
+                }
             },
             "expected": {
                 "config": {
                     "loop": true,
                     "step": "page",
                     "keyboard": false,
-                    "autoplay": { "enabled": true, "delay": 3000, "pauseOnHover": false },
-                    "transition": { "name": "fade", "direction": "right", "duration": 800, "easing": "ease-in-out" }
+                    "drag": {
+                        "touch": false,
+                        "mouse": true
+                    },
+                    "autoplay": {
+                        "enabled": true,
+                        "delay": 3000,
+                        "pauseOnHover": false
+                    },
+                    "transition": {
+                        "name": "fade",
+                        "direction": "right",
+                        "duration": 800,
+                        "easing": "ease-in-out"
+                    }
                 },
-                "classes": [ "is-reversed" ]
+                "classes": [
+                    "is-reversed"
+                ]
             }
         },
         {
             "label": "vertical directions",
-            "attributes": { "transition": { "direction": "down" } },
-            "expected": {
-                "config": {
-                    "loop": false,
-                    "step": "slide",
-                    "keyboard": true,
-                    "autoplay": { "enabled": false, "delay": 5000, "pauseOnHover": true },
-                    "transition": { "name": "slide", "direction": "down", "duration": 500, "easing": "ease" }
-                },
-                "classes": [ "is-vertical", "is-reversed" ]
-            }
-        },
-        {
-            "label": "numbers are clamped and rounded; numeric strings accepted",
             "attributes": {
-                "autoplay": { "delay": 120000 },
-                "transition": { "name": "slide", "direction": "up", "duration": " 250.6 " }
+                "transition": {
+                    "direction": "down"
+                }
             },
             "expected": {
                 "config": {
                     "loop": false,
                     "step": "slide",
                     "keyboard": true,
-                    "autoplay": { "enabled": false, "delay": 60000, "pauseOnHover": true },
-                    "transition": { "name": "slide", "direction": "up", "duration": 251, "easing": "ease" }
+                    "drag": {
+                        "touch": true,
+                        "mouse": false
+                    },
+                    "autoplay": {
+                        "enabled": false,
+                        "delay": 5000,
+                        "pauseOnHover": true
+                    },
+                    "transition": {
+                        "name": "slide",
+                        "direction": "down",
+                        "duration": 500,
+                        "easing": "ease"
+                    }
                 },
-                "classes": [ "is-vertical" ]
+                "classes": [
+                    "is-vertical",
+                    "is-reversed"
+                ]
+            }
+        },
+        {
+            "label": "numbers are clamped and rounded; numeric strings accepted",
+            "attributes": {
+                "autoplay": {
+                    "delay": 120000
+                },
+                "transition": {
+                    "name": "slide",
+                    "direction": "up",
+                    "duration": " 250.6 "
+                }
+            },
+            "expected": {
+                "config": {
+                    "loop": false,
+                    "step": "slide",
+                    "keyboard": true,
+                    "drag": {
+                        "touch": true,
+                        "mouse": false
+                    },
+                    "autoplay": {
+                        "enabled": false,
+                        "delay": 60000,
+                        "pauseOnHover": true
+                    },
+                    "transition": {
+                        "name": "slide",
+                        "direction": "up",
+                        "duration": 251,
+                        "easing": "ease"
+                    }
+                },
+                "classes": [
+                    "is-vertical"
+                ]
             }
         },
         {
@@ -72,30 +154,73 @@
                 "loop": "yes",
                 "step": "two",
                 "keyboard": 1,
-                "autoplay": { "enabled": "true", "delay": "soon", "pauseOnHover": null },
-                "transition": { "name": "Fade<script>", "direction": "sideways", "duration": -5, "easing": "cubic-bezier(0,0,1,1)" }
+                "autoplay": {
+                    "enabled": "true",
+                    "delay": "soon",
+                    "pauseOnHover": null
+                },
+                "transition": {
+                    "name": "Fade<script>",
+                    "direction": "sideways",
+                    "duration": -5,
+                    "easing": "cubic-bezier(0,0,1,1)"
+                },
+                "drag": {
+                    "touch": "no",
+                    "mouse": 1
+                }
             },
             "expected": {
                 "config": {
                     "loop": false,
                     "step": "slide",
                     "keyboard": true,
-                    "autoplay": { "enabled": false, "delay": 5000, "pauseOnHover": true },
-                    "transition": { "name": "slide", "direction": "left", "duration": 0, "easing": "ease" }
+                    "drag": {
+                        "touch": true,
+                        "mouse": false
+                    },
+                    "autoplay": {
+                        "enabled": false,
+                        "delay": 5000,
+                        "pauseOnHover": true
+                    },
+                    "transition": {
+                        "name": "slide",
+                        "direction": "left",
+                        "duration": 0,
+                        "easing": "ease"
+                    }
                 },
                 "classes": []
             }
         },
         {
             "label": "non-object groups are ignored",
-            "attributes": { "autoplay": true, "transition": "fade" },
+            "attributes": {
+                "autoplay": true,
+                "transition": "fade",
+                "drag": "mouse"
+            },
             "expected": {
                 "config": {
                     "loop": false,
                     "step": "slide",
                     "keyboard": true,
-                    "autoplay": { "enabled": false, "delay": 5000, "pauseOnHover": true },
-                    "transition": { "name": "slide", "direction": "left", "duration": 500, "easing": "ease" }
+                    "drag": {
+                        "touch": true,
+                        "mouse": false
+                    },
+                    "autoplay": {
+                        "enabled": false,
+                        "delay": 5000,
+                        "pauseOnHover": true
+                    },
+                    "transition": {
+                        "name": "slide",
+                        "direction": "left",
+                        "duration": 500,
+                        "easing": "ease"
+                    }
                 },
                 "classes": []
             }

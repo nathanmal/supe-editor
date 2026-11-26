@@ -1,7 +1,7 @@
 # Slides Block — Plan
 
-**Status:** Phases 1–5 (structure, editing, layout, engine, controls) done
-2026-11-26; phase 6 (drag) next.
+**Status:** Phases 1–6 (structure, editing, layout, engine, controls, drag)
+done 2026-11-26; phase 7 (lightbox) next.
 Captures the design decisions made on 2026-11-04; update this doc as phases
 land (and log them in `PROGRESS.md`).
 
@@ -449,6 +449,8 @@ border and font size supports. Shared PHP: `Blocks\Slides\Controls`
   pause-on-hover) · Transition · Layout (per view, step, gap, height — all
   responsive via `ResponsiveControl`) · Controls (area + control toggles) ·
   Interaction (touch, mouse, keyboard) · Image defaults (images type only).
+  As built: Slides · slide list · Layout · Playback · Transition ·
+  Interaction · Controls · Image defaults.
 
 ---
 
@@ -520,7 +522,21 @@ of the `[ scripts, modules ]` config it then gets). Add `enshrined/svg-sanitize`
    preset arrow sets (`shared/icons.json`), Controls panel, per-control area
    and position, `engine/controls.js` (actions, disabled ends, indicators
    from `indicatorStarts()`, pause/play label). Pause optional (see above).
-6. **Drag** — pointer handling, axis, thresholds, click suppression.
+6. **Drag** ✅ — `drag: { touch, mouse }` (default touch on, mouse off) in
+   `Config` + fixture; `engine/drag.js` (Pointer Events; a gesture becomes
+   a drag after 6px along the axis, one going across first is left to page
+   scrolling — `touch-action: pan-y` / `pan-x`; pointer capture; grab
+   cursor; native image/link drags prevented; the click ending a drag is
+   swallowed). Slides follow the pointer (`Slider.drag()`, slots from
+   `dragSlots()` so looping back lines the previous slides up before the
+   view), held back past the ends without loop (`resist()`). Release
+   (`releaseSteps()`): moves when past 20% of a slide or flicked
+   (> 0.3px/ms; a flick back cancels), by the nearest whole number of
+   slides in whole steps; animates on from where the slides were, for the
+   remaining part of the duration (`Slider.move()`, shared with `goTo()`).
+   Autoplay holds during a drag (`autoplay.hold()`). Editor: Interaction
+   panel (arrow keys, swipe on touch screens, drag with a mouse; disabled
+   for transitions without `supportsDrag`).
 7. **Lightbox.**
 8. **Posts** — posts variation, locked Query Loop, slide class at render,
    "Selected posts" (after the editor-preview spike).

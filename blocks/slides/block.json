@@ -41,6 +41,9 @@
         "keyboard": {
             "type": "boolean"
         },
+        "drag": {
+            "type": "object"
+        },
         "autoplay": {
             "type": "object"
         },

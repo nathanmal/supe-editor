@@ -14,7 +14,7 @@ import { getTransition } from '../engine/transitions';
 import { DELAY } from '../shared/config';
 
 /**
- * How the slider moves: loop, step, arrow keys and autoplay.
+ * How the slider moves: loop, step and autoplay.
  *
  * @param {Object}   props
  * @param {Object}   props.config        From configFrom().
@@ -68,16 +68,6 @@ export default function PlaybackPanel( {
                         label={ __( 'Whole view', 'supe-editor' ) }
                     />
                 </ToggleGroupControl>
-                <ToggleControl
-                    __nextHasNoMarginBottom
-                    label={ __( 'Arrow keys', 'supe-editor' ) }
-                    help={ __(
-                        'Arrow keys move the slider while it has focus.',
-                        'supe-editor'
-                    ) }
-                    checked={ config.keyboard }
-                    onChange={ ( keyboard ) => setAttributes( { keyboard } ) }
-                />
                 <ToggleControl
                     __nextHasNoMarginBottom
                     label={ __( 'Autoplay', 'supe-editor' ) }

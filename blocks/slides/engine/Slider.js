@@ -12,15 +12,19 @@
 import { configFrom, configClasses } from '../shared/config';
 import autoplay from './autoplay';
 import controls from './controls';
+import drag from './drag';
 import keyboard from './keyboard';
 import {
     advance,
     distance,
+    dragSlots,
     inView,
     mod,
     moveSlots,
     navigable,
     normalize,
+    releaseSteps,
+    resist,
     restSlots,
     stepSize,
 } from './math';
@@ -110,6 +114,7 @@ export default class Slider {
         keyboard( this );
         this.autoplay = autoplay( this );
         controls( this );
+        drag( this );
     }
 
     /** @return {Object} What math.js needs. */
@@ -318,22 +323,42 @@ export default class Slider {
 
         // Finish a move still running, then start from rest.
         this.settle();
-        this.start = to;
 
-        const { duration } = this;
         const { before, after } = moveSlots(
             state.count,
             from,
             delta,
             state.loop
         );
+        this.move( to, before, after, { source } );
+    }
+
+    /**
+     * Animates the slides from `before` to `after` slots and makes `to` the
+     * start. The change is announced and dispatched when the start changed
+     * (a released drag can also snap back).
+     *
+     * @param {number}   to
+     * @param {number[]} before             Slots to start from (may be
+     *                                      fractional).
+     * @param {number[]} after              Slots to end at.
+     * @param {Object}   options
+     * @param {string}   options.source     What asked, in the change event.
+     * @param {number}   [options.duration] Instead of the transition's.
+     */
+    move( to, before, after, { source, duration = this.duration } ) {
+        const from = this.start;
         const shownBefore = inView( before, this.perView );
         const shownAfter = inView( after, this.perView );
 
+        window.clearTimeout( this.timer );
+        this.start = to;
+
         if ( duration > 0 ) {
-            this.slides.forEach( ( slide, index ) =>
-                this.place( slide, before[ index ] )
-            );
+            this.slides.forEach( ( slide, index ) => {
+                slide.style.transition = '';
+                this.place( slide, before[ index ] );
+            } );
             this.reflow();
             this.transition.animate( {
                 slides: this.slides,
@@ -352,10 +377,87 @@ export default class Slider {
             this.settle();
         }
 
+        if ( to === from ) {
+            return;
+        }
         if ( source !== 'autoplay' ) {
             this.announce( shownAfter );
         }
         this.dispatch( 'change', { start: to, previous: from, source } );
+    }
+
+    /**
+     * One slide plus the gap along the track, in px: how far a drag has to
+     * go to move one slot.
+     *
+     * @return {number} Pixels.
+     */
+    slotSize() {
+        const [ slide ] = this.slides;
+        const style = window.getComputedStyle( this.track );
+
+        return this.vertical
+            ? slide.offsetHeight + ( parseFloat( style.rowGap ) || 0 )
+            : slide.offsetWidth + ( parseFloat( style.columnGap ) || 0 );
+    }
+
+    /**
+     * Shows the slides dragged `shift` slots towards the end side, held
+     * back past the ends without loop.
+     *
+     * @param {number} shift
+     * @return {number} The shift shown.
+     */
+    drag( shift ) {
+        const { state } = this;
+        const shown = resist( this.start, shift, state );
+        const base = dragSlots( state.count, this.start, shown, state.loop );
+
+        window.clearTimeout( this.timer );
+        this.timer = null;
+        this.slides.forEach( ( slide, index ) => {
+            slide.style.transition = 'none';
+            this.place( slide, base[ index ] + shown );
+        } );
+
+        return shown;
+    }
+
+    /**
+     * Ends a drag at `shift`: moves on by the slides (and steps) it went
+     * or was flicked, or snaps back, animating from where the slides are.
+     *
+     * @param {number} shift    The shift drag() last showed.
+     * @param {number} velocity Pointer speed towards the next slide, px/ms.
+     */
+    release( shift, velocity ) {
+        const { state } = this;
+        const from = this.start;
+        const steps = releaseSteps( -shift, velocity, state.size );
+        const to = normalize( from + steps, state );
+        const delta = state.loop ? steps : to - from;
+        const base = dragSlots(
+            state.count,
+            from,
+            shift,
+            state.loop,
+            Math.max( 0, -delta )
+        );
+        // The rest of the way: a short distance takes part of the duration.
+        const remaining = Math.min(
+            1,
+            Math.max( 0.3, Math.abs( delta + shift ) )
+        );
+
+        this.move(
+            to,
+            base.map( ( slot ) => slot + shift ),
+            base.map( ( slot ) => slot - delta ),
+            {
+                source: 'drag',
+                duration: Math.round( this.duration * remaining ),
+            }
+        );
     }
 
     /**

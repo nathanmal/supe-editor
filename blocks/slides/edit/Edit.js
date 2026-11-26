@@ -16,6 +16,7 @@ import { layoutOutput, perViewAt, viewRange } from '../shared/layout';
 import AddImages from './AddImages';
 import ControlsPanel from './ControlsPanel';
 import ImageDefaultsPanel from './ImageDefaultsPanel';
+import InteractionPanel from './InteractionPanel';
 import LayoutPanel from './LayoutPanel';
 import PlaybackPanel from './PlaybackPanel';
 import SlideList from './SlideList';
@@ -174,6 +175,11 @@ export default function Edit( { attributes, setAttributes, clientId, name } ) {
                 <TransitionPanel
                     config={ config }
                     transition={ attributes.transition }
+                    setAttributes={ setAttributes }
+                />
+                <InteractionPanel
+                    config={ config }
+                    drag={ attributes.drag }
                     setAttributes={ setAttributes }
                 />
                 <ControlsPanel

@@ -207,3 +207,89 @@ export function currentIndicator( starts, start ) {
         ? exact
         : Math.max( 0, starts.filter( ( item ) => item < start ).length - 1 );
 }
+
+/**
+ * The slots slides are dragged from: at rest, or (dragging back, `shift`
+ * > 0, or about to move back `back` slides) with enough slides lined up
+ * before the view to fill the gap. Same arrangement while dragging and on
+ * release, so nothing visible jumps.
+ *
+ * @param {number}  count
+ * @param {number}  start
+ * @param {number}  shift  Slots the slides are dragged towards the end side.
+ * @param {boolean} loop
+ * @param {number}  [back] Slides the release will move back.
+ * @return {number[]} Slot by slide index, before adding `shift`.
+ */
+export function dragSlots( count, start, shift, loop, back = 0 ) {
+    const lead =
+        shift > 0 || back > 0 ? Math.max( 1, Math.ceil( shift ), back ) : 0;
+
+    return moveSlots( count, start, -lead, loop ).before;
+}
+
+/**
+ * A drag past the ends (without loop) moves a third as far, so it feels
+ * held back.
+ *
+ * @param {number}  start
+ * @param {number}  shift         Slots dragged towards the end side.
+ * @param {Object}  state
+ * @param {number}  state.count
+ * @param {number}  state.perView
+ * @param {boolean} state.loop
+ * @return {number} The shift to show.
+ */
+export function resist( start, shift, { count, perView, loop } ) {
+    if ( loop ) {
+        return shift;
+    }
+
+    const last = maxStart( count, perView );
+    let position = start - shift;
+
+    if ( position < 0 ) {
+        position *= 0.3;
+    } else if ( position > last ) {
+        position = last + ( position - last ) * 0.3;
+    }
+
+    return start - position;
+}
+
+/**
+ * How far a released drag moves: nowhere unless it went `threshold` of a
+ * slide or was flicked; otherwise the nearest whole number of slides
+ * (at least one), in whole steps. A flick back the other way cancels.
+ *
+ * @param {number} forward          Slots dragged towards the next slide
+ *                                  (negative: towards the previous).
+ * @param {number} velocity         Pointer speed towards the next slide,
+ *                                  px/ms.
+ * @param {number} size             Slides per step.
+ * @param {Object} [opts]
+ * @param {number} [opts.threshold] Part of a slide that counts as a move.
+ * @param {number} [opts.flick]     Speed that counts as a flick, px/ms.
+ * @return {number} Slides to move; negative is backward.
+ */
+export function releaseSteps(
+    forward,
+    velocity,
+    size,
+    { threshold = 0.2, flick = 0.3 } = {}
+) {
+    const direction = Math.sign( forward );
+    const speed = velocity * direction;
+
+    if (
+        direction === 0 ||
+        speed < -flick ||
+        ( Math.abs( forward ) < threshold && speed <= flick )
+    ) {
+        return 0;
+    }
+
+    const slides = Math.max( 1, Math.round( Math.abs( forward ) ) );
+
+    return direction * Math.max( 1, Math.round( slides / size ) ) * size;
+}

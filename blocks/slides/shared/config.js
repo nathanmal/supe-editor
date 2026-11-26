@@ -25,6 +25,10 @@ export const DEFAULTS = Object.freeze( {
     loop: false,
     step: 'slide',
     keyboard: true,
+    drag: Object.freeze( {
+        touch: true,
+        mouse: false,
+    } ),
     autoplay: Object.freeze( {
         enabled: false,
         delay: 5000,
@@ -75,6 +79,7 @@ function milliseconds( value, [ min, max ], fallback ) {
  * @return {Object} The config, every key present.
  */
 export function configFrom( attributes ) {
+    const drag = isObject( attributes.drag ) ? attributes.drag : {};
     const autoplay = isObject( attributes.autoplay ) ? attributes.autoplay : {};
     const transition = isObject( attributes.transition )
         ? attributes.transition
@@ -85,6 +90,10 @@ export function configFrom( attributes ) {
         loop: bool( attributes.loop, DEFAULTS.loop ),
         step: oneOf( attributes.step, STEPS, DEFAULTS.step ),
         keyboard: bool( attributes.keyboard, DEFAULTS.keyboard ),
+        drag: {
+            touch: bool( drag.touch, DEFAULTS.drag.touch ),
+            mouse: bool( drag.mouse, DEFAULTS.drag.mouse ),
+        },
         autoplay: {
             enabled: bool( autoplay.enabled, DEFAULTS.autoplay.enabled ),
             delay: milliseconds(
