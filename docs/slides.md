@@ -1,7 +1,7 @@
 # Slides Block — Plan
 
-**Status:** Phases 1 (structure) and 2 (editing) done 2026-11-26; phase 3
-(layout) next.
+**Status:** Phases 1 (structure), 2 (editing) and 3 (layout) done
+2026-11-26; phase 4 (engine) next.
 Captures the design decisions made on 2026-11-04; update this doc as phases
 land (and log them in `PROGRESS.md`).
 
@@ -186,11 +186,11 @@ supe/slides                       ← settings: type, playback, transition, layo
   "perView": { "desktop": 3, "tablet": 2, "mobile": 1 },
   "gap":     { "desktop": "var:preset|spacing|30" },
   "height": {
-    "target": "slider | slide",
     "desktop": { "mode": "ratio", "value": "16/9" },
     "tablet":  { "mode": "vh",    "value": 60 },
     "mobile":  { "mode": "auto" }
   },
+  "heightTarget": "slider | slide",
   "drag": { "touch": true, "mouse": false },
   "keyboard": true,
   "imageDefaults": { "size": "large", "fit": "cover", "lightbox": false }
@@ -198,13 +198,26 @@ supe/slides                       ← settings: type, playback, transition, layo
 ```
 
 Validated in PHP before being written to the wrapper as
-`data-supe-slides='{…}'` (non-responsive values) and as responsive CSS
-variables (`perView`, `gap`, `height`).
+`data-supe-slides='{…}'` (non-responsive values, phase 4) and as responsive
+CSS variables (`perView`, `gap`, `height`). `heightTarget` is its own
+attribute (not a key inside `height`) so `height` stays a plain responsive
+value `ResponsiveControl` handles as-is; absent = `slider`.
+
+**Layout (phase 3, done):** `Supe\Editor\Blocks\Slides\Layout` (container
+`supe.editor.slides`) registers `--supe-slides-per-view` (int 1–12),
+`-gap` (spacing), `-h` (length) and `-ar` (ratio) with `StyleGenerator` on
+`init`; `render.php` writes the inline `-d/-t/-m` values and
+`is-height-slide`. `blocks/slides/shared/layout.js` is the portable JS mirror
+(editor preview, headless), and both run `tests/fixtures/slides-layout.json`.
+The responsive-variable machinery itself is now ported too
+(`supports/_framework/variables.js`, fixture
+`tests/fixtures/responsive-variables.json`).
 
 ### Slides per view
 
 - One setting, labelled **Columns** for left/right transitions and **Rows**
-  for up/down.
+  for up/down (phase 3 ships "Columns" only — direction arrives with the
+  engine in phase 4).
 - Written as responsive variables; the resolved value is
   `--supe-slides-per-view`. **The engine reads it with `getComputedStyle()`**
   on `ResizeObserver` callbacks — JS never needs the breakpoint values.
@@ -225,6 +238,7 @@ variables (`perView`, `gap`, `height`).
   ratio can't combine with a mobile `vh` height.
 - `%` only resolves when the slider's container has a definite height — the
   control shows a note when `%` is chosen.
+- Track: `min-height: 0` so a ratio holds even when content is taller.
 - **Target:**
   - `slider` (default): applies to the viewport; slides fill it
     (divided by rows for vertical).
@@ -233,7 +247,10 @@ variables (`perView`, `gap`, `height`).
     `perView × slide height + gaps`: CSS `calc()` covers `px`/`vh`; for
     `ratio`, either container query units (`container-type: inline-size` on
     the root, slide height `calc(100cqw / ratio)`) or the engine measures the
-    first slide. `auto` isn't offered for `slide` target.
+    first slide. `auto` and `%` aren't offered for the `slide` target.
+  - Per-slide CSS: the track uses `align-items: flex-start` (a stretched
+    height overrides `aspect-ratio`), slides get `min-height: 0` and
+    `overflow: hidden` so content can't grow them.
 
 ---
 
@@ -372,11 +389,14 @@ blocks/slides/engine/
 ## Editor
 
 - **No editing UI in the canvas** — it only ever shows the design. The
-  canvas shows **one slide at a time**: the one holding the selection (other
-  slides hidden by a `<style>` rule scoped to this track's direct children,
-  `#block-{track} > .supe-slides__slide:not(#block-{active})`, so nested
-  sliders keep their own state). Active slide = local state, never saved.
-  No animation, no autoplay.
+  canvas previews the real layout (per view, gap, height — the root carries
+  the same variables as the front end, and the device preview's media
+  queries pick the viewport) and shows **the view holding the selected
+  slide**: that slide plus the next `perView − 1`, shifted back to stay full
+  at the end (`perViewAt()` / `viewRange()` in `shared/layout.js`). Other
+  slides are hidden by a `<style>` rule scoped to this track's direct
+  children, so nested sliders keep their own state. Active slide = local
+  state, never saved. No animation, no autoplay.
 - **Sidebar, on the slider block** (2026-11-26, replacing the first
   in-canvas navigator bar):
   - **Slides** panel: type as a segmented [Images | Content] toggle.
@@ -392,6 +412,10 @@ blocks/slides/engine/
   - The rows' click target is a `div[role=button]`, not a `<button>`:
     browsers won't start a drag that begins on a button (why the first
     navigator's tabs couldn't be dragged).
+  - **Layout** panel: one viewport switcher (synced with the device
+    preview) for Columns (`RangeControl`), Gap (core spacing control, one
+    side), "Height applies to" [Slider | Each slide], and Height
+    (`HeightControl`: mode + px/vh/% number or ratio presets / custom).
   - Image defaults panel (images type).
 - Selecting a block inside a slide (canvas or List View) shows that slide.
 - Both slide types have a "Slide name" field (`metadata.name`).
@@ -449,7 +473,9 @@ scripts for `viewScriptModule`. Add `enshrined/svg-sanitize` to
    select, show all; canvas follows selection), type toggle, multi-image add (gallery flow), image settings (size,
    fit, focal point, alt, caption + position, link), parent image defaults,
    slide name field. Lightbox toggle left for phase 7.
-3. **Layout** — responsive per view, gap, height (all modes, both targets).
+3. **Layout** ✅ — responsive per view, gap, height (all modes, both
+   targets), Layout panel, canvas preview of the current view; responsive
+   variables ported to the portable JS.
 4. **Engine** — index/loop math, step, `slide` + `fade`, autoplay, keyboard,
    accessibility, reduced motion.
 5. **Controls** — `slides-controls` areas, prev/next/indicators/pause blocks,

@@ -42,8 +42,8 @@ function slideLabel( slide, position, media ) {
  * @param {Object}   props
  * @param {string}   props.trackClientId
  * @param {string}   props.type
- * @param {Array}    props.slides        The track's slide blocks.
- * @param {number}   props.activeIndex   The slide shown in the canvas.
+ * @param {Array}    props.slides         The track's slide blocks.
+ * @param {string[]} props.shownClientIds The slides the canvas shows.
  * @param {Function} props.setActiveId
  * @param {boolean}  props.showAll
  * @param {Function} props.setShowAll
@@ -52,7 +52,7 @@ export default function SlideList( {
     trackClientId,
     type,
     slides,
-    activeIndex,
+    shownClientIds,
     setActiveId,
     showAll,
     setShowAll,
@@ -86,6 +86,8 @@ export default function SlideList( {
             trackClientId,
             to
         );
+        // Show the moved slide in its new place in the canvas.
+        setActiveId( slides[ from ].clientId );
     };
 
     const rowDragProps = ( index ) => ( {
@@ -180,7 +182,9 @@ export default function SlideList( {
                             image?.media_details?.sizes?.thumbnail
                                 ?.source_url ?? image?.source_url;
                         const label = slideLabel( slide, index + 1, image );
-                        const isShown = ! showAll && index === activeIndex;
+                        const isShown = shownClientIds.includes(
+                            slide.clientId
+                        );
 
                         return (
                             <li

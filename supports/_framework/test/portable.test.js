@@ -3,7 +3,7 @@ import { join } from 'path';
 
 // These modules are shared with headless front ends, which have no
 // WordPress packages to import.
-const PORTABLE = [ 'sanitize.js', 'upgrade.js', 'render.js' ];
+const PORTABLE = [ 'sanitize.js', 'upgrade.js', 'render.js', 'variables.js' ];
 
 describe( 'portable modules', () => {
     it.each( PORTABLE )( '%s imports nothing from WordPress', ( file ) => {

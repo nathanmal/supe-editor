@@ -1,0 +1,180 @@
+{
+    "description": "Slides layout cases shared by PHPUnit (tests/Unit/Blocks/Slides/LayoutTest.php) and Jest (blocks/slides/shared/test/layout.test.js): what the slider's perView / gap / height / heightTarget attributes render to on its root. Style keys are in output order.",
+    "cases": [
+        {
+            "label": "nothing set",
+            "attributes": {},
+            "expected": {
+                "classes": [],
+                "styles": {}
+            }
+        },
+        {
+            "label": "per view and gap across viewports",
+            "attributes": {
+                "perView": {
+                    "desktop": 3,
+                    "mobile": 1
+                },
+                "gap": {
+                    "desktop": "var:preset|spacing|30",
+                    "tablet": "1rem"
+                }
+            },
+            "expected": {
+                "classes": [],
+                "styles": {
+                    "--supe-slides-per-view-d": "3",
+                    "--supe-slides-per-view-t": "initial",
+                    "--supe-slides-per-view-m": "1",
+                    "--supe-slides-gap-d": "var(--wp--preset--spacing--30)",
+                    "--supe-slides-gap-t": "1rem",
+                    "--supe-slides-gap-m": "initial"
+                }
+            }
+        },
+        {
+            "label": "a zero gap is written in px so the width calc stays valid",
+            "attributes": {
+                "gap": {
+                    "desktop": "0",
+                    "tablet": 0,
+                    "mobile": " 0 "
+                }
+            },
+            "expected": {
+                "classes": [],
+                "styles": {
+                    "--supe-slides-gap-d": "0px",
+                    "--supe-slides-gap-t": "0px",
+                    "--supe-slides-gap-m": "0px"
+                }
+            }
+        },
+        {
+            "label": "each height mode writes the other variable as auto",
+            "attributes": {
+                "height": {
+                    "desktop": {
+                        "mode": "ratio",
+                        "value": "16/9"
+                    },
+                    "tablet": {
+                        "mode": "vh",
+                        "value": 60
+                    },
+                    "mobile": {
+                        "mode": "auto"
+                    }
+                }
+            },
+            "expected": {
+                "classes": [],
+                "styles": {
+                    "--supe-slides-h-d": "auto",
+                    "--supe-slides-h-t": "60vh",
+                    "--supe-slides-h-m": "auto",
+                    "--supe-slides-ar-d": "16 / 9",
+                    "--supe-slides-ar-t": "auto",
+                    "--supe-slides-ar-m": "auto"
+                }
+            }
+        },
+        {
+            "label": "height per slide, numbers as strings and decimals",
+            "attributes": {
+                "heightTarget": "slide",
+                "perView": {
+                    "desktop": "2"
+                },
+                "height": {
+                    "desktop": {
+                        "mode": "px",
+                        "value": "400"
+                    },
+                    "mobile": {
+                        "mode": "%",
+                        "value": 33.5
+                    }
+                }
+            },
+            "expected": {
+                "classes": [
+                    "is-height-slide"
+                ],
+                "styles": {
+                    "--supe-slides-per-view-d": "2",
+                    "--supe-slides-per-view-t": "initial",
+                    "--supe-slides-per-view-m": "initial",
+                    "--supe-slides-h-d": "400px",
+                    "--supe-slides-h-t": "initial",
+                    "--supe-slides-h-m": "33.5%",
+                    "--supe-slides-ar-d": "auto",
+                    "--supe-slides-ar-t": "initial",
+                    "--supe-slides-ar-m": "auto"
+                }
+            }
+        },
+        {
+            "label": "invalid values are skipped; a viewport's height pair stays together",
+            "attributes": {
+                "heightTarget": "sideways",
+                "perView": {
+                    "desktop": 0,
+                    "tablet": 13,
+                    "mobile": true
+                },
+                "gap": {
+                    "desktop": "red",
+                    "tablet": "1rem;color:red"
+                },
+                "height": {
+                    "desktop": {
+                        "mode": "px",
+                        "value": -5
+                    },
+                    "tablet": {
+                        "mode": "ratio",
+                        "value": "3/2"
+                    },
+                    "mobile": {
+                        "mode": "ratio",
+                        "value": "0/1"
+                    }
+                }
+            },
+            "expected": {
+                "classes": [],
+                "styles": {
+                    "--supe-slides-h-d": "initial",
+                    "--supe-slides-h-t": "auto",
+                    "--supe-slides-h-m": "initial",
+                    "--supe-slides-ar-d": "initial",
+                    "--supe-slides-ar-t": "3 / 2",
+                    "--supe-slides-ar-m": "initial"
+                }
+            }
+        },
+        {
+            "label": "malformed shapes render nothing",
+            "attributes": {
+                "perView": 3,
+                "gap": "1rem",
+                "height": {
+                    "desktop": "400px",
+                    "tablet": {
+                        "mode": "bogus",
+                        "value": 1
+                    },
+                    "mobile": {
+                        "mode": "px"
+                    }
+                }
+            },
+            "expected": {
+                "classes": [],
+                "styles": {}
+            }
+        }
+    ]
+}

@@ -214,7 +214,9 @@ variables per block, plus the stylesheet for the site's breakpoints.
 expected classes/styles, including version edge cases, and the expected
 stylesheet for given breakpoints). PHPUnit and Jest both run every case, so
 the two implementations can't drift apart unnoticed. Responsive variables
-(`registerVariables()`) aren't ported yet — that comes with the Slides block.
+(`registerVariables()` / `variableStyles()`) are ported in
+`supports/_framework/variables.js` (`stylesheet()` takes them as a third
+argument), tested against `tests/fixtures/responsive-variables.json`.
 
 ---
 

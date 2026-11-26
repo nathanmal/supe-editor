@@ -9,6 +9,7 @@ use Supe\Core\Support\PackageAssets;
 use Supe\Editor\Admin\BlocksPage;
 use Supe\Editor\Blocks\BlockCategory;
 use Supe\Editor\Blocks\BlockRegistrar;
+use Supe\Editor\Blocks\Slides\Layout;
 use Supe\Editor\Editor\EditorAssets;
 use Supe\Editor\Editor\HeaderBehavior;
 use Supe\Editor\Editor\PageTemplateMode;
@@ -69,6 +70,7 @@ final class Module extends AbstractModule {
         $this->singleton( 'supe.editor.breakpoints',    fn( $c ) => new Breakpoints() );
         $this->singleton( 'supe.editor.sanitizer',      fn( $c ) => new ValueSanitizer() );
         $this->singleton( 'supe.editor.styles',         fn( $c ) => new StyleGenerator( $c->make( 'supe.editor.breakpoints' ), $c->make( 'supe.editor.sanitizer' ) ) );
+        $this->singleton( 'supe.editor.slides',         fn( $c ) => new Layout( $c->make( 'supe.editor.styles' ), $c->make( 'supe.editor.sanitizer' ) ) );
         $this->singleton( 'supe.editor.supports',       fn( $c ) => new SupportRegistry( SUPE_EDITOR_DIR . 'supports/', $c->make( 'supe.editor.sanitizer' ), $c->make( 'supe.editor.styles' ) ) );
         $this->singleton( 'supe.editor.renderer',       fn( $c ) => new Renderer( $c->make( 'supe.editor.supports' ), $c->make( 'supe.editor.styles' ) ) );
         $this->singleton( 'supe.editor.support_assets', fn( $c ) => new SupportAssets( SUPE_EDITOR_DIR . 'build/', SUPE_EDITOR_DIR . 'bootstrap.php', $c->make( 'supe.editor.breakpoints' ) ) );
@@ -81,6 +83,7 @@ final class Module extends AbstractModule {
         $this->make( 'supe.editor.registrar' )->register();
         $this->make( 'supe.editor.breakpoints' )->register();
         $this->make( 'supe.editor.styles' )->register();
+        $this->make( 'supe.editor.slides' )->register();
         $this->make( 'supe.editor.supports' )->register();
         $this->make( 'supe.editor.renderer' )->register();
         $this->make( 'supe.editor.support_assets' )->register();

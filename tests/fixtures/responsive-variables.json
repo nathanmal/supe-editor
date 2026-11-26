@@ -1,0 +1,53 @@
+{
+    "description": "Responsive variable cases shared by PHPUnit (tests/Unit/Supports/Responsive/StyleGeneratorTest.php) and Jest (supports/_framework/test/variables.test.js): a block's inline declarations for a variable value, and the stylesheet rules for registered variables.",
+    "styles": [
+        {
+            "label": "unset viewports are initial",
+            "name": "x-per-view",
+            "type": { "type": "int", "min": 1, "max": 12 },
+            "values": { "desktop": 3, "tablet": 99, "mobile": "1" },
+            "expected": {
+                "--x-per-view-d": "3",
+                "--x-per-view-t": "initial",
+                "--x-per-view-m": "1"
+            }
+        },
+        {
+            "label": "spacing presets resolve",
+            "name": "x-gap",
+            "type": "spacing",
+            "values": { "tablet": "var:preset|spacing|20" },
+            "expected": {
+                "--x-gap-d": "initial",
+                "--x-gap-t": "var(--wp--preset--spacing--20)",
+                "--x-gap-m": "initial"
+            }
+        },
+        {
+            "label": "nothing valid renders nothing",
+            "name": "x-gap",
+            "type": "spacing",
+            "values": { "desktop": "red", "mobile": null },
+            "expected": {}
+        },
+        {
+            "label": "no values renders nothing",
+            "name": "x-h",
+            "type": "length",
+            "values": {},
+            "expected": {}
+        }
+    ],
+    "stylesheet": [
+        {
+            "label": "two variables on one selector, one on another",
+            "breakpoints": { "tablet": 900, "mobile": 480 },
+            "variables": {
+                "x-per-view": { "selector": ".wp-block-x", "type": "int" },
+                "x-gap": { "selector": ".wp-block-x", "type": "spacing" },
+                "y-h": { "selector": ".wp-block-y", "type": "length" }
+            },
+            "expected": ".wp-block-x{--x-per-view:var(--x-per-view-d);--x-gap:var(--x-gap-d)}.wp-block-y{--y-h:var(--y-h-d)}@media (max-width:900px){.wp-block-x{--x-per-view:var(--x-per-view-t,var(--x-per-view-d));--x-gap:var(--x-gap-t,var(--x-gap-d))}.wp-block-y{--y-h:var(--y-h-t,var(--y-h-d))}}@media (max-width:480px){.wp-block-x{--x-per-view:var(--x-per-view-m,var(--x-per-view-t,var(--x-per-view-d)));--x-gap:var(--x-gap-m,var(--x-gap-t,var(--x-gap-d)))}.wp-block-y{--y-h:var(--y-h-m,var(--y-h-t,var(--y-h-d)))}}"
+        }
+    ]
+}

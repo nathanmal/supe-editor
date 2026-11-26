@@ -17,6 +17,19 @@
         "imageDefaults": {
             "type": "object",
             "default": {}
+        },
+        "perView": {
+            "type": "object"
+        },
+        "gap": {
+            "type": "object"
+        },
+        "height": {
+            "type": "object"
+        },
+        "heightTarget": {
+            "type": "string",
+            "enum": [ "slider", "slide" ]
         }
     },
     "providesContext": {

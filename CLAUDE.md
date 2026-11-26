@@ -34,7 +34,7 @@ Organized by the package's three areas — editor customization, supports, block
 src/                     PHP (Supe\Editor\*), one class per file
   Module.php             binds services in the container and registers them (boot())
   SharedComponents.php   registers the shared components script
-  Blocks/                BlockRegistrar, BlockCategory, Slides/Markup (shared by the slides render.php files)
+  Blocks/                BlockRegistrar, BlockCategory, Slides/Markup (shared by the slides render.php files), Slides/Layout (responsive layout variables, `supe.editor.slides`)
   Editor/                EditorAssets, HeaderBehavior, PageTemplateMode
   Supports/              SupportRegistry, Renderer, Abstract*Support, SupportAssets
     Responsive/          Breakpoints, StyleGenerator, ValueSanitizer, Viewport

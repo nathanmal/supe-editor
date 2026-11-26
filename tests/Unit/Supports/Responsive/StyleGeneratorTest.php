@@ -117,6 +117,32 @@ final class StyleGeneratorTest extends TestCase {
         $this->styles->enqueueInEditor();
     }
 
+    /**
+     * Shared with Jest (supports/_framework/test/variables.test.js).
+     */
+    public function test_responsive_variable_fixtures(): void {
+        $fixtures = json_decode( (string) file_get_contents( dirname( __DIR__, 3 ) . '/fixtures/responsive-variables.json' ), true );
+        $this->registered = true;
+        Functions\when( 'wp_enqueue_style' )->justReturn( null );
+
+        foreach ( $fixtures['styles'] as $case ) {
+            $this->styles->registerVariables( '.wp-block-x', [ $case['name'] => $case['type'] ] );
+
+            self::assertSame( $case['expected'], $this->styles->variableStyles( $case['name'], $case['values'] ), $case['label'] );
+        }
+
+        foreach ( $fixtures['stylesheet'] as $case ) {
+            Functions\when( 'get_option' )->justReturn( $case['breakpoints'] );
+            $styles = new StyleGenerator( new Breakpoints(), new ValueSanitizer() );
+
+            foreach ( $case['variables'] as $name => $variable ) {
+                $styles->registerVariables( $variable['selector'], [ $name => $variable['type'] ] );
+            }
+
+            self::assertSame( $case['expected'], $styles->css(), $case['label'] );
+        }
+    }
+
     public function test_inline_joins_declarations(): void {
         self::assertSame( '--a:1;--b:2px', StyleGenerator::inline( [ '--a' => '1', '--b' => '2px' ] ) );
     }

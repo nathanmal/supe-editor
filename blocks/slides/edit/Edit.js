@@ -7,11 +7,14 @@ import {
 } from '@wordpress/block-editor';
 import { ToolbarButton } from '@wordpress/components';
 import { useSelect } from '@wordpress/data';
-import { useEffect, useState } from '@wordpress/element';
+import { useEffect, useRef, useState } from '@wordpress/element';
 import { __ } from '@wordpress/i18n';
+import { useViewport } from '@supe-editor/components';
 
+import { layoutOutput, perViewAt, viewRange } from '../shared/layout';
 import AddImages from './AddImages';
 import ImageDefaultsPanel from './ImageDefaultsPanel';
+import LayoutPanel from './LayoutPanel';
 import SlideList from './SlideList';
 import TypePanel from './TypePanel';
 import TypePicker from './TypePicker';
@@ -19,9 +22,10 @@ import TypePicker from './TypePicker';
 /**
  * The slider's root. Until a type is chosen it shows the variation picker;
  * after that it holds the locked track (controls areas come with phase 5).
- * The canvas shows one slide at a time — the one holding the selection —
- * and the sidebar lists the slides (SlideList); no editing UI is drawn in
- * the canvas.
+ * The canvas previews the real layout (per view, gap, height for the device
+ * preview's viewport) showing the view that holds the selected slide; the
+ * sidebar lists the slides (SlideList). No editing UI is drawn in the
+ * canvas.
  *
  * @param {Object}   props
  * @param {Object}   props.attributes
@@ -69,10 +73,34 @@ export default function Edit( { attributes, setAttributes, clientId, name } ) {
         0,
         slides.findIndex( ( slide ) => slide.clientId === activeId )
     );
-    const activeSlide = slides[ activeIndex ];
 
+    // The view holding the active slide, at the previewed viewport. It
+    // stays put while the active slide is still in it, so a reorder shows
+    // the slides changing places rather than the view jumping.
+    const [ viewport ] = useViewport();
+    const viewStart = useRef( null );
+    const [ firstShown, lastShown ] = viewRange(
+        slides.length,
+        activeIndex,
+        perViewAt( attributes.perView, viewport ),
+        viewStart.current
+    );
+    viewStart.current = firstShown;
+    const shownSlides = showAll
+        ? []
+        : slides.slice( firstShown, lastShown + 1 );
+
+    const layout = layoutOutput( attributes );
     const blockProps = useBlockProps( {
-        className: type ? `supe-slides is-type-${ type }` : 'supe-slides',
+        className: [
+            'supe-slides',
+            type && `is-type-${ type }`,
+            ...layout.classes,
+            showAll && 'is-showing-all',
+        ]
+            .filter( Boolean )
+            .join( ' ' ),
+        style: layout.styles,
     } );
     const { children, ...innerBlocksProps } = useInnerBlocksProps( blockProps, {
         renderAppender: false,
@@ -116,12 +144,18 @@ export default function Edit( { attributes, setAttributes, clientId, name } ) {
                         trackClientId={ trackClientId }
                         type={ type }
                         slides={ slides }
-                        activeIndex={ activeIndex }
+                        shownClientIds={ shownSlides.map(
+                            ( slide ) => slide.clientId
+                        ) }
                         setActiveId={ setActiveId }
                         showAll={ showAll }
                         setShowAll={ setShowAll }
                     />
                 ) }
+                <LayoutPanel
+                    attributes={ attributes }
+                    setAttributes={ setAttributes }
+                />
                 { type === 'images' && (
                     <ImageDefaultsPanel
                         imageDefaults={ imageDefaults }
@@ -130,11 +164,15 @@ export default function Edit( { attributes, setAttributes, clientId, name } ) {
                 ) }
             </InspectorControls>
             <div { ...innerBlocksProps }>
-                { ! showAll && activeSlide && (
-                    // Hides every other slide of this track only (direct
-                    // children), so nested sliders keep their own state.
+                { shownSlides.length > 0 && (
+                    // Hides the slides outside the view, in this track only
+                    // (direct children), so nested sliders keep their own.
                     <style>
-                        { `#block-${ trackClientId } > .supe-slides__slide:not(#block-${ activeSlide.clientId }){display:none}` }
+                        { `#block-${ trackClientId } > .supe-slides__slide${ shownSlides
+                            .map(
+                                ( slide ) => `:not(#block-${ slide.clientId })`
+                            )
+                            .join( '' ) }{display:none}` }
                     </style>
                 ) }
                 { children }

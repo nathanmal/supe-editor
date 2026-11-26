@@ -104,6 +104,36 @@ final class SlidesTest extends TestCase {
         self::assertStringNotContainsString( 'Hidden', $html );
     }
 
+    public function test_layout_settings_become_variables_on_the_root(): void {
+        $html = do_blocks(
+            '<!-- wp:supe/slides {"type":"content","perView":{"desktop":3,"mobile":1},"gap":{"desktop":"var:preset|spacing|30"},"heightTarget":"slide","height":{"desktop":{"mode":"ratio","value":"4/3"}}} -->'
+            . '<!-- wp:supe/slides-track --><!-- wp:supe/slide --><!-- /wp:supe/slide --><!-- /wp:supe/slides-track --><!-- /wp:supe/slides -->'
+        );
+
+        $processor = new \WP_HTML_Tag_Processor( $html );
+        self::assertTrue( $processor->next_tag( 'section' ) );
+        self::assertTrue( $processor->has_class( 'is-height-slide' ) );
+
+        $style = (string) $processor->get_attribute( 'style' );
+        self::assertStringContainsString( '--supe-slides-per-view-d:3;--supe-slides-per-view-t:initial;--supe-slides-per-view-m:1', $style );
+        self::assertStringContainsString( '--supe-slides-gap-d:var(--wp--preset--spacing--30)', $style );
+        self::assertStringContainsString( '--supe-slides-ar-d:4 / 3', $style );
+
+        self::assertTrue( wp_style_is( 'supe-responsive', 'enqueued' ) );
+        self::assertStringContainsString(
+            '.wp-block-supe-slides{--supe-slides-per-view:var(--supe-slides-per-view-d);',
+            implode( '', wp_styles()->get_data( 'supe-responsive', 'after' ) ?: [] )
+        );
+    }
+
+    public function test_without_layout_settings_the_root_has_no_style(): void {
+        $html = do_blocks( $this->slides( 'content', [ '<!-- wp:supe/slide --><!-- /wp:supe/slide -->' ] ) );
+
+        $processor = new \WP_HTML_Tag_Processor( $html );
+        self::assertTrue( $processor->next_tag( 'section' ) );
+        self::assertNull( $processor->get_attribute( 'style' ) );
+    }
+
     public function test_renders_nothing_without_a_type_or_slides(): void {
         self::assertSame( '', trim( do_blocks( $this->slides( '', [ '<!-- wp:supe/slide --><!-- /wp:supe/slide -->' ] ) ) ) );
         self::assertSame( '', trim( do_blocks( $this->slides( 'images', [ '<!-- wp:supe/image-slide /-->' ] ) ) ) );

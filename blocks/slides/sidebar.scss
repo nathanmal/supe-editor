@@ -114,3 +114,16 @@
     right: 16px;
     top: 16px;
 }
+
+// LayoutPanel: core's 16px rhythm between its controls (and the height
+// control's fields); the viewport switcher sits tight above the first.
+.supe-slides-layout,
+.supe-slides-layout__height {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.supe-slides-layout > .supe-viewport-switcher {
+    margin-bottom: -8px;
+}

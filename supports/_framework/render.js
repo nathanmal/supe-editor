@@ -14,6 +14,7 @@
  */
 import { sanitize } from './sanitize';
 import { upgrade } from './upgrade';
+import { variableRules } from './variables';
 
 /** Viewports in cascade order, with their name suffixes. */
 const VIEWPORTS = [
@@ -119,14 +120,17 @@ export function supportRules( metadata ) {
 }
 
 /**
- * The shared stylesheet for a set of supports: desktop rules as-is, tablet
- * and mobile rules inside `max-width` media queries.
+ * The shared stylesheet: supports' rules, then responsive variables' rules
+ * (like StyleGenerator::css()); desktop rules as-is, tablet and mobile
+ * rules inside `max-width` media queries.
  *
  * @param {Object[]} supports    Decoded support.json of each support, in load order.
  * @param {Object}   breakpoints `{ tablet, mobile }` max widths in px.
+ * @param {Object}   [variables] Responsive variables by name: `{ selector, type }`,
+ *                               in registration order (see variables.js).
  * @return {string} CSS.
  */
-export function stylesheet( supports, breakpoints ) {
+export function stylesheet( supports, breakpoints, variables = {} ) {
     const rules = Object.fromEntries(
         VIEWPORTS.map( ( [ viewport ] ) => [ viewport, [] ] )
     );
@@ -137,6 +141,12 @@ export function stylesheet( supports, breakpoints ) {
         ) ) {
             rules[ viewport ].push( ...viewportRules );
         }
+    }
+
+    for ( const [ viewport, viewportRules ] of Object.entries(
+        variableRules( variables )
+    ) ) {
+        rules[ viewport ].push( ...viewportRules );
     }
 
     return VIEWPORTS.map( ( [ viewport ] ) => {

@@ -1,21 +1,52 @@
 /**
  * Front end and editor. Without the engine (no JS, or before it loads) the
  * track is a horizontal scroll-snap strip, so every slide stays reachable.
+ *
+ * Layout comes from responsive variables on the root (Blocks\Slides\Layout):
+ *   --supe-slides-per-view  slides side by side (default 1)
+ *   --supe-slides-gap       space between slides (default 0)
+ *   --supe-slides-h / -ar   height / aspect ratio — of the track, or of each
+ *                           slide with `.is-height-slide` (default auto)
  */
 .supe-slides {
     position: relative;
 }
 
 .supe-slides__track {
+    aspect-ratio: var(--supe-slides-ar, auto);
     display: flex;
+    gap: var(--supe-slides-gap, 0px);
+    height: var(--supe-slides-h, auto);
+    // Keep the ratio even when a slide's content is taller.
+    min-height: 0;
     overflow-x: auto;
     overscroll-behavior-x: contain;
     scroll-snap-type: x mandatory;
 
+    // Each slide's width: per-view columns minus the gaps between them.
+    --supe-slides-columns: var(--supe-slides-per-view, 1);
+    --supe-slides-gaps: calc((var(--supe-slides-columns) - 1) * var(--supe-slides-gap, 0px));
+
     > .supe-slides__slide {
         box-sizing: border-box;
-        flex: 0 0 100%;
+        flex: 0 0 calc((100% - var(--supe-slides-gaps)) / var(--supe-slides-columns));
         min-width: 0;
         scroll-snap-align: start;
+    }
+}
+
+// Height per slide: the track sizes to its slides instead. Slides aren't
+// stretched to the tallest one (a stretched height overrides the aspect
+// ratio), and content can't grow them past their height.
+.supe-slides.is-height-slide > .supe-slides__track {
+    align-items: flex-start;
+    aspect-ratio: auto;
+    height: auto;
+
+    > .supe-slides__slide {
+        aspect-ratio: var(--supe-slides-ar, auto);
+        height: var(--supe-slides-h, auto);
+        min-height: 0;
+        overflow: hidden;
     }
 }
