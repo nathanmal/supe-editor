@@ -2,17 +2,18 @@
     "$schema": "https://schemas.wp.org/trunk/block.json",
     "apiVersion": 3,
     "name": "supe/container-background",
-    "version": "0.2.0",
+    "version": "0.3.0",
     "title": "Background",
     "category": "supe",
     "icon": "format-image",
-    "description": "A container's background: an image or a looping video under an optional overlay.",
+    "description": "A container's background: an image, a looping video or a fader under an optional overlay.",
     "textdomain": "supe-editor",
     "parent": [ "supe-container/container" ],
+    "allowedBlocks": [ "supe/fader" ],
     "attributes": {
         "type": {
             "type": "string",
-            "enum": [ "image", "video" ],
+            "enum": [ "image", "video", "block" ],
             "default": "image"
         },
         "mediaId": {

@@ -21,7 +21,7 @@ final class ContainerBackground {
 
     public const DEFAULT_OPACITY = 50;
 
-    public const TYPES = [ 'image', 'video' ];
+    public const TYPES = [ 'image', 'video', 'block' ];
 
     /** The video's view script module, enqueued by render.php (see BlockRegistrar::ON_DEMAND_MODULES). */
     public const VIEW_MODULE = 'supe-container-background-view-script-module';
@@ -34,7 +34,8 @@ final class ContainerBackground {
 
     /**
      * The background's type: `image` (also for a missing or unknown type,
-     * as saved before video existed) or `video`.
+     * as saved before video existed), `video`, or `block` (its inner block,
+     * a Fader).
      *
      * @param array<string, mixed> $attributes
      */

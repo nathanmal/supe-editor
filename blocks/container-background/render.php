@@ -1,7 +1,8 @@
 <?php
 /**
  * Container background: an image (full size with its srcset) or a looping
- * video (muted, inline, poster), positioned by its focal point, under an
+ * video (muted, inline, poster), positioned by its focal point, or a block
+ * (its inner Fader, made to fill the layer in style.scss), under an
  * optional overlay. Decorative, so the media and overlay are hidden from
  * assistive tech; a video may add a pause button, which isn't. Renders
  * nothing without valid media — the container then looks as it would
@@ -32,7 +33,15 @@ $supe_position = Markup::objectPosition( $attributes['focalPoint'] ?? null );
 $supe_style    = null === $supe_position ? '' : 'object-position:' . $supe_position;
 $supe_button   = '';
 
-if ( 'video' === $supe_type ) {
+if ( 'block' === $supe_type ) {
+    // The Fader renders (and enqueues its script) itself; an empty one
+    // renders nothing, and so does the background.
+    if ( '' === trim( $content ) ) {
+        return;
+    }
+
+    $supe_media = $content;
+} elseif ( 'video' === $supe_type ) {
     $supe_src = $supe_id && wp_attachment_is( 'video', $supe_id ) ? wp_get_attachment_url( $supe_id ) : false;
     if ( ! $supe_src ) {
         return;
@@ -83,7 +92,7 @@ $supe_overlay = ContainerBackground::overlay( $attributes );
 printf(
     '<div %1$s><div class="wp-block-supe-container-background__media" aria-hidden="true">%2$s</div>%3$s%4$s</div>',
     get_block_wrapper_attributes( [ 'class' => 'is-' . $supe_type ] ),
-    $supe_media, // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- core image markup / escaped above.
+    $supe_media, // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- core image markup / escaped above / rendered inner blocks.
     null === $supe_overlay
         ? ''
         : '<span class="wp-block-supe-container-background__overlay" style="' . esc_attr( ContainerBackground::style( $supe_overlay ) ) . '" aria-hidden="true"></span>',

@@ -66,7 +66,7 @@ export default function Edit( { clientId } ) {
 
     return (
         <>
-            <InspectorControls>
+            <InspectorControls group="styles">
                 <BackgroundPanel
                     clientId={ clientId }
                     background={ background }

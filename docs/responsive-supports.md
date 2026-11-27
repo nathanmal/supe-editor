@@ -66,6 +66,11 @@ Blocks opt in from `block.json`:
 "supports": { "supe": { "spacing": true } }
 ```
 
+A support's panel goes in the Styles tab. A block can put it in the Settings
+tab instead with `{ "tab": "settings" }` in place of `true` (the Container
+does this for `layout` and `spacing`, since layout is its main job). Any truthy
+value enables the support, in PHP and JS (`_framework/panel-group.js`).
+
 Core blocks are opted in server-side (see [Core Blocks](#core-blocks)).
 
 ---

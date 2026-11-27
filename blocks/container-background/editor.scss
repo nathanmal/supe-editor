@@ -3,6 +3,17 @@
     background: color-mix(in srgb, currentcolor 12%, transparent);
 }
 
+// A fader emptied inside a background shows its own prompt: clickable,
+// though the layer under the content isn't.
+.wp-block-supe-container-background .components-placeholder {
+    pointer-events: auto;
+}
+
+// Fader inside a background: its note in the sidebar.
+.supe-container-background-notice {
+    margin: 0 16px 16px;
+}
+
 // Video panel (sidebar). Admin UI: admin colors, not the theme's.
 .supe-container-background-poster {
     margin-bottom: 16px;

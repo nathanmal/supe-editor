@@ -32,7 +32,8 @@ final class ContainerBackgroundTest extends TestCase {
         self::assertSame( 'video', ContainerBackground::type( [ 'type' => 'video' ] ) );
         self::assertSame( 'image', ContainerBackground::type( [ 'type' => 'image' ] ) );
         self::assertSame( 'image', ContainerBackground::type( [] ), 'Saved before types existed.' );
-        self::assertSame( 'image', ContainerBackground::type( [ 'type' => 'block' ] ), 'Not a type yet.' );
+        self::assertSame( 'block', ContainerBackground::type( [ 'type' => 'block' ] ) );
+        self::assertSame( 'image', ContainerBackground::type( [ 'type' => 'slides' ] ), 'Not a type.' );
         self::assertSame( 'image', ContainerBackground::type( [ 'type' => [ 'video' ] ] ) );
     }
 }

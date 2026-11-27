@@ -14,38 +14,74 @@ import {
 import { store as coreStore } from '@wordpress/core-data';
 import { useDispatch, useRegistry, useSelect } from '@wordpress/data';
 import { useState } from '@wordpress/element';
-import { __ } from '@wordpress/i18n';
+import { __, _n, sprintf } from '@wordpress/i18n';
 import { Icon, video as videoIcon } from '@wordpress/icons';
 
+import { faderImage } from '../fader/edit/fader-image';
 import { thumbnailOf } from '../shared/use-media';
+import useMediaSelect from '../shared/use-media-select';
 import { withDefaultMinHeight } from './min-height';
 
 export const BACKGROUND = 'supe/container-background';
 
+const FADER = 'supe/fader';
 const IMAGE = [ 'image' ];
 const VIDEO = [ 'video' ];
 
 /**
- * @param {boolean} isVideo
- * @param {boolean} hasMedia
- * @return {string} The background's kind, for the panel.
+ * @param {Object} background             The background block.
+ * @param {Object} background.attributes
+ * @param {Array}  background.innerBlocks
+ * @return {string} What it is, for the panel.
  */
-const label = ( isVideo, hasMedia ) => {
-    if ( isVideo ) {
-        return hasMedia
+const label = ( { attributes, innerBlocks } ) => {
+    if ( attributes.type === 'block' ) {
+        const count = innerBlocks[ 0 ]?.innerBlocks.length ?? 0;
+
+        return count
+            ? sprintf(
+                  /* translators: %d: number of images. */
+                  _n(
+                      'Fader (%d image)',
+                      'Fader (%d images)',
+                      count,
+                      'supe-editor'
+                  ),
+                  count
+              )
+            : __( 'Fader (no images)', 'supe-editor' );
+    }
+    if ( attributes.type === 'video' ) {
+        return attributes.mediaId
             ? __( 'Video', 'supe-editor' )
             : __( 'Video (none chosen)', 'supe-editor' );
     }
-    return hasMedia
+    return attributes.mediaId
         ? __( 'Image', 'supe-editor' )
         : __( 'Image (none chosen)', 'supe-editor' );
 };
 
 /**
- * Adds, shows and removes the Container's background. Choosing an image or
- * a video inserts the background block first in the Container (locked in place) and
- * selects it, so its overlay settings are right there; cancelling the media
- * modal adds nothing. A Container without a min height gets 400px (desktop),
+ * The attachment to show as the background's thumbnail: the image, a
+ * video's poster, a fader's first image.
+ *
+ * @param {?Object} background
+ * @return {number|undefined} Attachment ID.
+ */
+const thumbnailIdOf = ( background ) => {
+    const { type, mediaId, posterId } = background?.attributes ?? {};
+    if ( type === 'block' ) {
+        return background.innerBlocks[ 0 ]?.innerBlocks[ 0 ]?.attributes.id;
+    }
+    return type === 'video' ? posterId : mediaId;
+};
+
+/**
+ * Adds, shows and removes the Container's background. Choosing an image, a
+ * video or a fader's images inserts the background block first in the
+ * Container (locked in place) and selects it, so its overlay settings are
+ * right there; cancelling the media modal adds nothing. A fader goes inside
+ * its background (locked there too) with the chosen images. A Container without a min height gets 400px (desktop),
  * like Cover, so the background shows before there is content.
  *
  * @param {Object}  props
@@ -58,9 +94,7 @@ export default function BackgroundPanel( { clientId, background } ) {
     const { insertBlock, removeBlock, selectBlock, updateBlockAttributes } =
         useDispatch( blockEditorStore );
     const isVideo = background?.attributes.type === 'video';
-    const mediaId = background?.attributes.mediaId;
-    // A video's thumbnail is its poster.
-    const thumbnailId = isVideo ? background?.attributes.posterId : mediaId;
+    const thumbnailId = thumbnailIdOf( background );
     const thumbnail = useSelect(
         ( select ) =>
             thumbnailId
@@ -69,7 +103,7 @@ export default function BackgroundPanel( { clientId, background } ) {
         [ thumbnailId ]
     );
 
-    const add = ( type ) => ( media ) =>
+    const insert = ( block ) =>
         registry.batch( () => {
             const supe = withDefaultMinHeight(
                 registry
@@ -81,20 +115,33 @@ export default function BackgroundPanel( { clientId, background } ) {
                 updateBlockAttributes( clientId, { supe } );
             }
 
-            insertBlock(
-                createBlock( BACKGROUND, {
-                    type,
-                    mediaId: media.id,
-                    lock: { move: true },
-                } ),
-                0,
-                clientId
-            );
+            insertBlock( block, 0, clientId );
         } );
+
+    const add = ( type ) => ( media ) =>
+        insert(
+            createBlock( BACKGROUND, {
+                type,
+                mediaId: media.id,
+                lock: { move: true },
+            } )
+        );
+
+    const addFader = useMediaSelect( ( images ) =>
+        insert(
+            createBlock( BACKGROUND, { type: 'block', lock: { move: true } }, [
+                createBlock(
+                    FADER,
+                    { lock: { move: true, remove: true } },
+                    [ images ].flat().map( faderImage )
+                ),
+            ] )
+        )
+    );
 
     return (
         <PanelBody
-            title={ __( 'Background', 'supe-editor' ) }
+            title={ __( 'Background media', 'supe-editor' ) }
             className="supe-container-background-panel"
         >
             { background ? (
@@ -111,7 +158,7 @@ export default function BackgroundPanel( { clientId, background } ) {
                                 { isVideo && <Icon icon={ videoIcon } /> }
                             </span>
                         ) }
-                        <span>{ label( isVideo, !! mediaId ) }</span>
+                        <span>{ label( background ) }</span>
                     </Flex>
                     <Flex justify="flex-start" gap={ 2 }>
                         <Button
@@ -151,7 +198,7 @@ export default function BackgroundPanel( { clientId, background } ) {
                         { __( 'None', 'supe-editor' ) }
                     </p>
                     <MediaUploadCheck>
-                        <Flex justify="flex-start" gap={ 2 }>
+                        <Flex justify="flex-start" gap={ 2 } wrap>
                             <MediaUpload
                                 allowedTypes={ IMAGE }
                                 onSelect={ add( 'image' ) }
@@ -175,6 +222,21 @@ export default function BackgroundPanel( { clientId, background } ) {
                                         onClick={ open }
                                     >
                                         { __( 'Add video', 'supe-editor' ) }
+                                    </Button>
+                                ) }
+                            />
+                            <MediaUpload
+                                allowedTypes={ IMAGE }
+                                multiple
+                                gallery
+                                onSelect={ addFader }
+                                render={ ( { open } ) => (
+                                    <Button
+                                        variant="secondary"
+                                        size="compact"
+                                        onClick={ open }
+                                    >
+                                        { __( 'Add fader', 'supe-editor' ) }
                                     </Button>
                                 ) }
                             />

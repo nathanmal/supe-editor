@@ -5,7 +5,8 @@
  *    `coreBlocks`, turns off the core features a support replaces on blocks
  *    that opt in themselves, and adds the `supe` attribute (PHP does the same
  *    on the server, see SupportRegistry).
- *  - `editor.BlockEdit` — each enabled support's panel in the Styles tab.
+ *  - `editor.BlockEdit` — each enabled support's panel, in the Styles tab
+ *    unless the block asks for Settings (see panelGroup()).
  *  - `editor.BlockListBlock` — the support's classes and CSS variables on the
  *    canvas, rendered by the same code as headless front ends (render.js);
  *    the generated stylesheet is already loaded in the editor canvas.
@@ -18,6 +19,7 @@ import { getBlockType } from '@wordpress/blocks';
 import { createHigherOrderComponent } from '@wordpress/compose';
 import { InspectorControls } from '@wordpress/block-editor';
 import { withoutReplacedCoreSupports } from './core-supports';
+import { panelGroup } from './panel-group';
 import { supportOutput } from './render';
 import { VERSION_KEY, supportVersion, upgrade } from './upgrade';
 
@@ -120,9 +122,8 @@ function withSupportsAttribute( settings, name ) {
 const withSupportPanels = createHigherOrderComponent(
     ( BlockEdit ) => ( props ) => {
         const { attributes, setAttributes, isSelected, name } = props;
-        const enabled = isSelected
-            ? enabledSupports( getBlockType( name )?.supports )
-            : [];
+        const blockSupports = getBlockType( name )?.supports;
+        const enabled = isSelected ? enabledSupports( blockSupports ) : [];
 
         if ( ! enabled.length ) {
             return <BlockEdit { ...props } />;
@@ -168,7 +169,9 @@ const withSupportPanels = createHigherOrderComponent(
 
                         return (
                             <InspectorControls
-                                group="styles"
+                                group={ panelGroup(
+                                    blockSupports[ ATTRIBUTE ][ supportName ]
+                                ) }
                                 key={ supportName }
                             >
                                 <Panel

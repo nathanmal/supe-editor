@@ -2,7 +2,9 @@ import {
     BlockControls,
     InspectorControls,
     MediaReplaceFlow,
+    store as blockEditorStore,
     useBlockProps,
+    useInnerBlocksProps,
     // eslint-disable-next-line @wordpress/no-unsafe-wp-apis
     __experimentalColorGradientSettingsDropdown as ColorGradientSettingsDropdown,
     // eslint-disable-next-line @wordpress/no-unsafe-wp-apis
@@ -26,6 +28,8 @@ import SelectParentButton from '../shared/SelectParentButton';
 import { thumbnailOf } from '../shared/use-media';
 import ControlIcon from '../slides/shared/ControlIcon';
 import { icons } from '../slides/shared/controls';
+import metadata from './block.json';
+import BlockPanel from './edit/BlockPanel';
 import FocalPoint from './edit/FocalPoint';
 import VideoPanel from './edit/VideoPanel';
 import { DEFAULT_OPACITY, fromStored, overlay, toStored } from './overlay';
@@ -59,12 +63,14 @@ const toStyle = ( declarations ) =>
         : undefined;
 
 /**
- * The background layer as on the front end (image or playing video +
- * overlay under the container's content, and a video's pause button if
- * on), with the media settings and overlay in the sidebar, Replace in the
- * toolbar, and a way back to the container beside the block card's title.
- * Added and removed from the Container's Background panel; the type is
- * chosen there and kept (Replace picks the same kind of media).
+ * The background layer as on the front end (image, playing video or a
+ * block — a Fader — + overlay under the container's content, and a video's
+ * pause button if on), with the media settings and overlay in the sidebar,
+ * Replace in the toolbar (image / video), and a way back to the container
+ * beside the block card's title. Added and removed from the Container's
+ * Background panel; the type is chosen there and kept (Replace picks the
+ * same kind of media). A block background's block is its only inner block,
+ * inside the media wrapper.
  *
  * @param {Object}   props
  * @param {Object}   props.attributes
@@ -81,8 +87,9 @@ export default function Edit( { attributes, setAttributes, clientId } ) {
         overlayGradient,
     } = attributes;
     const isVideo = attributes.type === 'video';
+    const isBlock = attributes.type === 'block';
     const overlayOpacity = attributes.overlayOpacity ?? DEFAULT_OPACITY;
-    const { src, poster, posterThumbnail } = useSelect(
+    const { src, poster, posterThumbnail, inner } = useSelect(
         ( select ) => {
             const { getMedia } = select( coreStore );
             const posterMedia = posterId ? getMedia( posterId ) : null;
@@ -91,9 +98,10 @@ export default function Edit( { attributes, setAttributes, clientId } ) {
                 src: mediaId ? getMedia( mediaId )?.source_url : null,
                 poster: posterMedia?.source_url ?? null,
                 posterThumbnail: thumbnailOf( posterMedia ),
+                inner: select( blockEditorStore ).getBlocks( clientId )[ 0 ],
             };
         },
-        [ mediaId, posterId ]
+        [ mediaId, posterId, clientId ]
     );
     const reducedMotion = useReducedMotion();
     const colorSettings = useMultipleOriginColorsAndGradients();
@@ -102,12 +110,24 @@ export default function Edit( { attributes, setAttributes, clientId } ) {
     const overlayStyle = overlay( attributes );
     const blockProps = useBlockProps( {
         className: [
-            isVideo ? 'is-video' : 'is-image',
-            ! mediaId && 'is-empty',
+            `is-${ isVideo || isBlock ? attributes.type : 'image' }`,
+            ! ( isBlock ? inner?.innerBlocks.length : mediaId ) && 'is-empty',
         ]
             .filter( Boolean )
             .join( ' ' ),
     } );
+    // Only a block background has inner blocks (its one block, added with
+    // it); the wrapper is the media layer either way.
+    const { children: innerBlocks, ...mediaProps } = useInnerBlocksProps(
+        {
+            className: 'wp-block-supe-container-background__media',
+            'aria-hidden': isBlock ? undefined : true,
+        },
+        {
+            allowedBlocks: metadata.allowedBlocks,
+            renderAppender: false,
+        }
+    );
     const position = focalPoint
         ? {
               objectPosition: `${ focalPoint.x * 100 }% ${
@@ -129,22 +149,24 @@ export default function Edit( { attributes, setAttributes, clientId } ) {
 
     return (
         <>
-            <BlockControls group="other">
-                <MediaReplaceFlow
-                    mediaId={ mediaId }
-                    accept={ isVideo ? 'video/*' : 'image/*' }
-                    allowedTypes={ allowedTypes }
-                    onSelect={ onSelectMedia }
-                    name={ ( () => {
-                        if ( mediaId ) {
-                            return __( 'Replace', 'supe-editor' );
-                        }
-                        return isVideo
-                            ? __( 'Choose video', 'supe-editor' )
-                            : __( 'Choose image', 'supe-editor' );
-                    } )() }
-                />
-            </BlockControls>
+            { ! isBlock && (
+                <BlockControls group="other">
+                    <MediaReplaceFlow
+                        mediaId={ mediaId }
+                        accept={ isVideo ? 'video/*' : 'image/*' }
+                        allowedTypes={ allowedTypes }
+                        onSelect={ onSelectMedia }
+                        name={ ( () => {
+                            if ( mediaId ) {
+                                return __( 'Replace', 'supe-editor' );
+                            }
+                            return isVideo
+                                ? __( 'Choose video', 'supe-editor' )
+                                : __( 'Choose image', 'supe-editor' );
+                        } )() }
+                    />
+                </BlockControls>
+            ) }
             <InspectorControls>
                 <SelectParentButton
                     clientId={ clientId }
@@ -152,14 +174,16 @@ export default function Edit( { attributes, setAttributes, clientId } ) {
                     label={ __( 'Select container', 'supe-editor' ) }
                     icon={ group }
                 />
-                { isVideo ? (
+                { isBlock && <BlockPanel inner={ inner } /> }
+                { isVideo && (
                     <VideoPanel
                         attributes={ attributes }
                         setAttributes={ setAttributes }
                         src={ src }
                         posterSrc={ posterThumbnail }
                     />
-                ) : (
+                ) }
+                { ! isVideo && ! isBlock && (
                     <PanelBody title={ __( 'Image', 'supe-editor' ) }>
                         { src ? (
                             <FocalPoint
@@ -266,10 +290,7 @@ export default function Edit( { attributes, setAttributes, clientId } ) {
                 </ToolsPanel>
             </InspectorControls>
             <div { ...blockProps }>
-                <div
-                    className="wp-block-supe-container-background__media"
-                    aria-hidden="true"
-                >
+                <div { ...mediaProps }>
                     { src && isVideo && (
                         <video
                             className="wp-block-supe-container-background__video"
@@ -282,7 +303,7 @@ export default function Edit( { attributes, setAttributes, clientId } ) {
                             playsInline
                         />
                     ) }
-                    { src && ! isVideo && (
+                    { src && ! isVideo && ! isBlock && (
                         <img
                             className="wp-block-supe-container-background__image"
                             src={ src }
@@ -290,6 +311,7 @@ export default function Edit( { attributes, setAttributes, clientId } ) {
                             style={ position }
                         />
                     ) }
+                    { innerBlocks }
                 </div>
                 { overlayStyle && (
                     <span

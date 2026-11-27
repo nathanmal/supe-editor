@@ -1,8 +1,8 @@
 # Container Block — Plan
 
-**Status:** Phases 1 (layout + colors), 2 (responsive layout, gap, min
-height), 3 (image background + overlay, Hero) and 4 (video background)
-done 2026-11-27. Next: phase 5 (Fader as a background). Update this doc as phases land (and log them in
+**Status:** Phases 1–5 done 2026-11-27: layout + colors, responsive layout
+/ gap / min height, image background + overlay (Hero), video background,
+Fader background. Left: phase 6 (fixed / parallax), not scheduled. Update this doc as phases land (and log them in
 `PROGRESS.md`).
 
 **Depends on:** [`responsive-supports.md`](responsive-supports.md) phases 1–4
@@ -35,7 +35,7 @@ Container with nothing set renders exactly as today.
 | Overlay | Belongs to the background block: color or gradient + opacity; no overlay without a background |
 | Container markup | `save()` unchanged; the background frame is pure CSS (`:has(> .wp-block-supe-container-background)`), layout classes are added at render time by core |
 | Background rendering | Dynamic (`render.php`), so its markup can change without validation errors |
-| Editor | All settings in the sidebar; the canvas shows the design. Fader keeps its own empty-state prompt |
+| Editor | All settings in the sidebar; the canvas shows the design. Fader keeps its own empty-state prompt. Settings tab: Responsive layout + Responsive spacing; Styles tab: color panels, core Layout (wrap), **Background media**, Responsive dimensions |
 | Video motion | No `autoplay` attribute; a view script plays it (muted, loop, inline) when motion is allowed and it's on screen. Reduced motion or no script → poster. A pause button is not added (opt-in later, if ever) |
 
 ---
@@ -163,10 +163,10 @@ Both supports follow `responsive-supports.md`'s recipe: `support.json`
 ```
 supe-container/container
  ├─ supe/container-background   ← first child, parent: Container only, inserter: false, lock: { move }
- │    type: image (phase 3) | video (phase 4) | block   ("enum" grows with each phase)
+ │    type: image (phase 3) | video (phase 4) | block (phase 5)
  │    image:  mediaId, focalPoint
  │    video:  mediaId, posterId, focalPoint, pauseButton
- │    block:  one inner block (allowedBlocks: supe/fader)
+ │    block:  one inner block (block.json allowedBlocks: supe/fader), locked { move, remove }
  │    overlayColor, overlayGradient   ← `var:preset|color|slug` / `var:preset|gradient|slug` or a custom value
  │    overlayOpacity                  ← 0–100, default 50
  └─ …content blocks
@@ -229,9 +229,17 @@ Markup (`render.php`):
   calls `wp_enqueue_script_module( ContainerBackground::VIEW_MODULE )`.
 - Overlay: a `<span>` after the media (not `::after`: inline styles carry
   the per-block color and opacity).
-- Fader in the slot: a rule makes it fill the layer
-  (`height: 100%`, its aspect ratio / min height ignored) — the Container's
-  min height and content decide the size.
+- Block background (phase 5): render.php outputs the inner blocks
+  (`$content`) as the media — the Fader renders itself and enqueues its own
+  script; an empty Fader renders nothing, so the background doesn't either.
+  `.wp-block-supe-container-background__media > *` makes it fill the layer:
+  `height: 100%`, `aspect-ratio: auto`, `min-height: 0`, `margin: 0`,
+  `border-radius: 0`, all `!important` because core supports write them
+  inline (**gotcha:** an aspect ratio also writes `height: unset` inline —
+  without `!important` on height the Fader kept its images' shape, 480px in
+  a 400px Container). The Container's min height and content decide the
+  size. The background's save is now `<InnerBlocks.Content />` (image /
+  video backgrounds still serialize as self-closing comments).
 - Being absolute, the background takes no part in flex/grid flow or gap. The
   one leak is flow/constrained spacing: the first content block follows the
   background, so it would get the block-gap top margin —
@@ -251,17 +259,22 @@ in the order just keeps List View and the CSS predictable.
 
 Workflow (as built in phase 3, `blocks/container/BackgroundPanel.js`):
 
-1. Select the Container → sidebar **Background** panel: "None", **Add
-   image** and **Add video** (phase 5 adds Add fader).
+1. Select the Container → **Background media** panel (Styles tab): "None", **Add
+   image**, **Add video** and **Add fader**.
 2. Each opens the media modal for its kind; picking one inserts the
    background block at index 0 (`lock: { move: true }`, `type` set) and
    selects it. Cancelling adds nothing. The type stays: to switch, remove
-   and add again (Replace picks the same kind).
+   and add again (Replace picks the same kind). Add fader uses the gallery
+   flow (pick several, reorder) and inserts the background with a Fader
+   (`lock: { move, remove }`) holding the images (`useMediaSelect`, since
+   the gallery fires `onSelect` twice).
 3. The background's sidebar has **Image** (focal point + reset) and
    **Overlay** (a core-style tools panel: color/gradient dropdown, opacity
    0–100 in steps of 5, disabled until there's a color or gradient) — a
    video has **Video** instead of Image (focal point over a video preview,
-   poster image choose / replace / remove, Pause button toggle) — plus a
+   poster image choose / replace / remove, Pause button toggle), and a Fader
+   background has **Fader** (image count, **Edit images and timing**
+   selects the Fader; no Replace in the toolbar) — plus a
    "Select container" icon (`blocks/shared/SelectParentButton`). Replace /
    Choose image is in the toolbar (`MediaReplaceFlow`). Text color is set
    on the Container.
@@ -270,6 +283,12 @@ Workflow (as built in phase 3, `blocks/container/BackgroundPanel.js`):
    **Remove** (after a confirm).
 5. The canvas plays the video (muted, looping; not with reduced motion)
    and shows the pause button where it'll be.
+6. A Fader inside a background (an `editor.BlockEdit` filter from the
+   background's `index.js`, only when its parent is a background) gets
+   **Select background** beside its block card title and a note that its
+   own aspect ratio, min height and margins don't apply there. Its Images
+   and Timing panels (and Play preview) work as usual. Emptied, its own
+   media prompt shows in the layer and stays clickable.
 
 - Picked theme colors / gradients are stored as preset references
   (`toStored()` / `fromStored()` in `overlay.js`).
@@ -325,8 +344,8 @@ An optional `motion` setting on image backgrounds: `none` (default) /
    Background panel, frame CSS, focal point, overlay. Hero variation.
 4. ✅ **Background: video** — poster, view script (reduced motion, off-screen
    pause, hidden tab), opt-in pause button, view module only for videos.
-5. **Background: Fader** — block type, fill rule, Fader inside a Container
-   with responsive min height.
+5. ✅ **Background: Fader** — `block` type with a locked Fader, fill rule,
+   Add fader (gallery), Select background + note on the Fader.
 6. *Later:* fixed / parallax image backgrounds (see above).
 
 ## Open Questions

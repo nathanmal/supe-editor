@@ -45,6 +45,20 @@
     width: 100%;
 }
 
+// A block background (a Fader) fills the layer: the Container's min height
+// and content set the size, so the block's own aspect ratio, min height,
+// margins and corners (inline styles from core supports — an aspect ratio
+// also writes `height: unset`) give way.
+.wp-block-supe-container-background__media > * {
+    aspect-ratio: auto !important;
+    border-radius: 0 !important;
+    height: 100% !important;
+    margin: 0 !important;
+    max-width: none;
+    min-height: 0 !important;
+    width: 100%;
+}
+
 .wp-block-supe-container-background__pause {
     align-items: center;
     background: var(--supe-container-background-control-background, rgb(0 0 0 / 50%));

@@ -86,9 +86,10 @@ final class ContainerTest extends TestCase {
         self::assertFalse( $block->supports['layout']['allowOrientation'] );
         self::assertFalse( $block->supports['layout']['allowJustification'] );
         self::assertFalse( $block->supports['layout']['allowVerticalAlignment'] );
-        self::assertTrue( $block->supports['supe']['layout'] );
+        // Layout and spacing panels go in the Settings tab.
+        self::assertSame( [ 'tab' => 'settings' ], $block->supports['supe']['layout'] );
         self::assertTrue( $block->supports['supe']['dimensions'] );
-        self::assertTrue( $block->supports['supe']['spacing'] );
+        self::assertSame( [ 'tab' => 'settings' ], $block->supports['supe']['spacing'] );
     }
 
     public function test_responsive_layout_and_min_height_render_onto_the_wrapper(): void {
@@ -235,6 +236,52 @@ final class ContainerTest extends TestCase {
         self::assertStringContainsString( 'wp-block-supe-container-background__media', $html );
         self::assertStringNotContainsString( '__overlay', $html );
         self::assertStringNotContainsString( 'onload', $html );
+    }
+
+    public function test_a_fader_background_renders_the_fader_in_the_layer(): void {
+        $first  = self::factory()->attachment->create_upload_object( DIR_TESTDATA . '/images/canola.jpg' );
+        $second = self::factory()->attachment->create_upload_object( DIR_TESTDATA . '/images/canola.jpg' );
+
+        $html = do_blocks(
+            '<!-- wp:supe-container/container --><div class="wp-block-supe-container-container">'
+            . '<!-- wp:supe/container-background {"type":"block","overlayColor":"#000","lock":{"move":true}} -->'
+            . '<!-- wp:supe/fader {"duration":4000,"style":{"dimensions":{"aspectRatio":"16/9"}},"lock":{"move":true,"remove":true}} -->'
+            . '<!-- wp:supe/fader-image {"id":' . $first . '} /--><!-- wp:supe/fader-image {"id":' . $second . '} /-->'
+            . '<!-- /wp:supe/fader --><!-- /wp:supe/container-background -->'
+            . '<!-- wp:paragraph --><p>On top</p><!-- /wp:paragraph -->'
+            . '</div><!-- /wp:supe-container/container -->'
+        );
+
+        $processor = new \WP_HTML_Tag_Processor( $html );
+        self::assertTrue( $processor->next_tag( [ 'class_name' => 'wp-block-supe-container-background' ] ) );
+        self::assertTrue( $processor->has_class( 'is-block' ) );
+        self::assertTrue( $processor->next_tag( [ 'class_name' => 'wp-block-supe-container-background__media' ] ) );
+        self::assertSame( 'true', $processor->get_attribute( 'aria-hidden' ) );
+        self::assertTrue( $processor->next_tag() );
+        self::assertTrue( $processor->has_class( 'supe-fader' ), 'The fader is the layer\'s media.' );
+        self::assertNotNull( $processor->get_attribute( 'data-supe-fader' ) );
+        self::assertTrue( $processor->next_tag( [ 'class_name' => 'is-active' ] ), 'First image showing.' );
+        self::assertTrue( $processor->next_tag( [ 'class_name' => 'wp-block-supe-container-background__overlay' ] ) );
+        self::assertTrue( $processor->next_tag( 'p' ), 'The content follows the background.' );
+        self::assertContains( 'supe-fader-view-script-module', wp_script_modules()->get_queue() );
+        self::assertNotContains( ContainerBackground::VIEW_MODULE, wp_script_modules()->get_queue(), 'No video.' );
+    }
+
+    public function test_an_empty_fader_background_renders_nothing(): void {
+        $html = do_blocks(
+            '<!-- wp:supe/container-background {"type":"block","overlayColor":"#000"} --><!-- wp:supe/fader /--><!-- /wp:supe/container-background -->'
+            . '<!-- wp:supe/container-background {"type":"block"} /-->'
+            . '<!-- wp:supe/container-background {"type":"block"} --><!-- wp:supe/fader --><!-- wp:supe/fader-image {"id":999999} /--><!-- /wp:supe/fader --><!-- /wp:supe/container-background -->'
+        );
+
+        self::assertStringNotContainsString( 'wp-block-supe-container-background', $html );
+    }
+
+    public function test_the_background_allows_only_the_fader(): void {
+        $type = \WP_Block_Type_Registry::get_instance()->get_registered( 'supe/container-background' );
+
+        self::assertSame( [ 'supe/fader' ], $type->allowed_blocks );
+        self::assertSame( [ 'image', 'video', 'block' ], $type->attributes['type']['enum'] );
     }
 
     /**

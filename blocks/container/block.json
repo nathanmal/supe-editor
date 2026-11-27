@@ -36,9 +36,9 @@
             "allowVerticalAlignment": false
         },
         "supe": {
-            "layout": true,
+            "layout": { "tab": "settings" },
             "dimensions": true,
-            "spacing": true
+            "spacing": { "tab": "settings" }
         }
     },
     "textdomain": "supe-editor",
