@@ -1,0 +1,13 @@
+/**
+ * SpacingSizeControl: core's slider keeps its 16px bottom margin inside each
+ * row, so the side icon and the custom-value toggle (centered on the row)
+ * sat 8px below the track. The margin moves to the row: same spacing between
+ * rows, everything centered on the slider.
+ */
+.supe-spacing-size-control .spacing-sizes-control__wrapper {
+    margin-bottom: 16px;
+
+    .components-range-control {
+        margin-bottom: 0;
+    }
+}

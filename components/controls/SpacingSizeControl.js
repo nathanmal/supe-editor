@@ -2,6 +2,7 @@
 // wrapper means an API change only needs fixing here.
 // eslint-disable-next-line @wordpress/no-unsafe-wp-apis
 import { __experimentalSpacingSizesControl as CoreSpacingSizesControl } from '@wordpress/block-editor';
+import './spacing-size-control.scss';
 
 /**
  * Padding/margin-style control: the theme's spacing presets first, with
@@ -21,10 +22,12 @@ export default function SpacingSizeControl( {
     ...props
 } ) {
     return (
-        <CoreSpacingSizesControl
-            minimumCustomValue={ allowNegative ? -Infinity : 0 }
-            allowReset={ false }
-            { ...props }
-        />
+        <div className="supe-spacing-size-control">
+            <CoreSpacingSizesControl
+                minimumCustomValue={ allowNegative ? -Infinity : 0 }
+                allowReset={ false }
+                { ...props }
+            />
+        </div>
     );
 }
