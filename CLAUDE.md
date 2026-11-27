@@ -34,7 +34,7 @@ Organized by the package's three areas — editor customization, supports, block
 src/                     PHP (Supe\Editor\*), one class per file
   Module.php             binds services in the container and registers them (boot())
   SharedComponents.php   registers the shared components script
-  Blocks/                BlockRegistrar, BlockCategory, Fader (fader timing + first image), Slides/Markup (shared by the slides render.php files), Slides/Layout (responsive layout variables, `supe.editor.slides`), Slides/Config (engine config → `data-supe-slides`), Slides/Controls (control cells, arrow sets, icons), Slides/Posts (post slides, `supe.editor.slides.posts`)
+  Blocks/                BlockRegistrar, BlockCategory, ContainerBackground (overlay style), Fader (fader timing + first image), Slides/Markup (shared by the slides render.php files), Slides/Layout (responsive layout variables, `supe.editor.slides`), Slides/Config (engine config → `data-supe-slides`), Slides/Controls (control cells, arrow sets, icons), Slides/Posts (post slides, `supe.editor.slides.posts`)
   Editor/                EditorAssets, HeaderBehavior, PageTemplateMode, SvgUploads (SVG uploads, sanitized; `supe.editor.svg`)
   Supports/              SupportRegistry, Renderer, Abstract*Support, SupportAssets
     Responsive/          Breakpoints, StyleGenerator, ValueSanitizer, Viewport

@@ -1,0 +1,65 @@
+{
+    "description": "Container background overlay cases shared by PHPUnit (tests/Unit/Blocks/ContainerBackgroundTest.php) and Jest (blocks/container-background/test/overlay.test.js): block attributes → overlay declarations (null = no overlay).",
+    "overlay": [
+        {
+            "label": "preset color, default opacity",
+            "attributes": { "overlayColor": "var:preset|color|contrast" },
+            "expected": { "background-color": "var(--wp--preset--color--contrast)", "opacity": "0.5" }
+        },
+        {
+            "label": "custom color and opacity",
+            "attributes": { "overlayColor": "#000000", "overlayOpacity": 33 },
+            "expected": { "background-color": "#000000", "opacity": "0.33" }
+        },
+        {
+            "label": "rgba color, opacity clamped",
+            "attributes": { "overlayColor": "rgba(0, 0, 0, 0.4)", "overlayOpacity": 140 },
+            "expected": { "background-color": "rgba(0, 0, 0, 0.4)", "opacity": "1" }
+        },
+        {
+            "label": "zero opacity",
+            "attributes": { "overlayColor": "#fff", "overlayOpacity": 0 },
+            "expected": { "background-color": "#fff", "opacity": "0" }
+        },
+        {
+            "label": "a gradient wins over a color",
+            "attributes": { "overlayColor": "#000", "overlayGradient": "linear-gradient(180deg, rgba(0,0,0,0) 0%, #000 100%)", "overlayOpacity": 80 },
+            "expected": { "background-image": "linear-gradient(180deg, rgba(0,0,0,0) 0%, #000 100%)", "opacity": "0.8" }
+        },
+        {
+            "label": "preset gradient",
+            "attributes": { "overlayGradient": "var:preset|gradient|vivid-cyan-blue-to-vivid-purple" },
+            "expected": { "background-image": "var(--wp--preset--gradient--vivid-cyan-blue-to-vivid-purple)", "opacity": "0.5" }
+        },
+        {
+            "label": "a color preset used as a gradient is ignored",
+            "attributes": { "overlayGradient": "var:preset|color|contrast", "overlayColor": "#111" },
+            "expected": { "background-color": "#111", "opacity": "0.5" }
+        },
+        {
+            "label": "CSS injection in a color",
+            "attributes": { "overlayColor": "#000;position:fixed" },
+            "expected": null
+        },
+        {
+            "label": "a url in a gradient",
+            "attributes": { "overlayGradient": "linear-gradient(url(https://example.com/x.png))" },
+            "expected": null
+        },
+        {
+            "label": "a named color is not accepted",
+            "attributes": { "overlayColor": "red" },
+            "expected": null
+        },
+        {
+            "label": "nothing set",
+            "attributes": { "overlayOpacity": 70 },
+            "expected": null
+        },
+        {
+            "label": "opacity that isn't a number",
+            "attributes": { "overlayColor": "#000", "overlayOpacity": "90" },
+            "expected": { "background-color": "#000", "opacity": "0.5" }
+        }
+    ]
+}

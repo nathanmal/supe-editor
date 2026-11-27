@@ -1,0 +1,43 @@
+// Background panel (sidebar). Admin UI: admin colors, not the theme's.
+
+.supe-container-background-panel {
+
+    .components-flex + .components-flex {
+        margin-top: 12px;
+    }
+
+    &__thumbnail {
+        background: #f0f0f0;
+        border-radius: 2px;
+        display: block;
+        height: 40px;
+        object-fit: cover;
+        width: 40px;
+    }
+
+    &__none {
+        color: #757575;
+    }
+}
+
+// Canvas: a Container holding only its background (no content yet) has no
+// height of its own, since the background is laid out under the content.
+// Give it a placeholder height so the image shows, and center the "+" over
+// it instead of core's bottom-right corner. A min height set on the block
+// (an !important rule) still wins.
+
+.wp-block-supe-container-container.is-background-only {
+    min-height: 300px;
+
+    > .block-list-appender.block-list-appender {
+        align-items: center;
+        display: flex;
+        inset: 0;
+        justify-content: center;
+        pointer-events: none;
+
+        > * {
+            pointer-events: auto;
+        }
+    }
+}

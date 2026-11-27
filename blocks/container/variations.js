@@ -1,5 +1,5 @@
 import { __, _x } from '@wordpress/i18n';
-import { grid, group, row, stack } from '@wordpress/icons';
+import { cover, grid, group, row, stack } from '@wordpress/icons';
 
 /**
  * Layout presets, like core Group's. Only the default one is in the inserter
@@ -7,6 +7,11 @@ import { grid, group, row, stack } from '@wordpress/icons';
  * icons); the others are switches in the sidebar and transforms in the
  * toolbar. A Container saved without a layout (before 0.2.0) is flow and
  * matches none of them.
+ *
+ * Hero is a starting point rather than a layout: a full-width Stack with a
+ * min height, content centered, white text and a background with a 50%
+ * black overlay (the image is chosen from the toolbar). Inserter only; once
+ * inserted it's a Stack.
  */
 const variations = [
     {
@@ -49,6 +54,51 @@ const variations = [
         scope: [ 'block', 'transform' ],
         isActive: ( attributes ) => attributes.layout?.type === 'grid',
         icon: grid,
+    },
+    {
+        name: 'container-hero',
+        title: __( 'Hero', 'supe-editor' ),
+        description: __(
+            'A full-width section with a background image under an overlay.',
+            'supe-editor'
+        ),
+        attributes: {
+            align: 'full',
+            layout: { type: 'flex', orientation: 'vertical' },
+            style: { color: { text: '#ffffff' } },
+            supe: {
+                layout: { v: 1, justify: { desktop: 'center' } },
+                dimensions: { v: 1, minHeight: { desktop: '60vh' } },
+                spacing: {
+                    v: 1,
+                    padding: {
+                        desktop: {
+                            top: 'var:preset|spacing|60',
+                            right: 'var:preset|spacing|40',
+                            bottom: 'var:preset|spacing|60',
+                            left: 'var:preset|spacing|40',
+                        },
+                    },
+                },
+            },
+        },
+        innerBlocks: [
+            [
+                'supe/container-background',
+                {
+                    lock: { move: true },
+                    overlayColor: '#000000',
+                    overlayOpacity: 50,
+                },
+            ],
+            [ 'core/heading', { placeholder: __( 'Heading', 'supe-editor' ) } ],
+            [
+                'core/paragraph',
+                { placeholder: __( 'Write something…', 'supe-editor' ) },
+            ],
+        ],
+        scope: [ 'inserter' ],
+        icon: cover,
     },
 ];
 

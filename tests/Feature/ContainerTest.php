@@ -113,4 +113,50 @@ final class ContainerTest extends TestCase {
         self::assertStringContainsString( '.has-supe-mh{min-height:var(--supe-mh)!important}', $css );
         self::assertLessThan( strpos( $css, '.has-supe-mt{' ), strpos( $css, '.has-supe-g{' ) );
     }
+
+    public function test_a_background_renders_its_image_under_an_overlay(): void {
+        $id = self::factory()->attachment->create_upload_object( DIR_TESTDATA . '/images/canola.jpg' );
+
+        $html = do_blocks(
+            '<!-- wp:supe-container/container {"layout":{"type":"constrained"}} --><div class="wp-block-supe-container-container">'
+            . '<!-- wp:supe/container-background {"mediaId":' . $id . ',"focalPoint":{"x":0.2,"y":0.8},"overlayColor":"var:preset|color|contrast","overlayOpacity":70,"lock":{"move":true}} /-->'
+            . '<!-- wp:paragraph --><p>On top</p><!-- /wp:paragraph -->'
+            . '</div><!-- /wp:supe-container/container -->'
+        );
+
+        $processor = new \WP_HTML_Tag_Processor( $html );
+        self::assertTrue( $processor->next_tag( [ 'class_name' => 'wp-block-supe-container-background' ] ) );
+        self::assertSame( 'true', $processor->get_attribute( 'aria-hidden' ) );
+        self::assertTrue( $processor->next_tag( [ 'class_name' => 'wp-block-supe-container-background__media' ] ) );
+        self::assertTrue( $processor->next_tag( 'img' ) );
+        self::assertSame( '', $processor->get_attribute( 'alt' ) );
+        self::assertNotNull( $processor->get_attribute( 'srcset' ) );
+        self::assertStringContainsString( '100vw', (string) $processor->get_attribute( 'sizes' ) );
+        self::assertStringContainsString( 'object-position:20% 80%', (string) $processor->get_attribute( 'style' ) );
+        self::assertTrue( $processor->next_tag( [ 'class_name' => 'wp-block-supe-container-background__overlay' ] ) );
+        self::assertSame( 'background-color:var(--wp--preset--color--contrast);opacity:0.7', $processor->get_attribute( 'style' ) );
+        self::assertTrue( $processor->next_tag( 'p' ), 'The content follows the background.' );
+        self::assertTrue( wp_style_is( 'supe-container-background-style', 'enqueued' ) );
+    }
+
+    public function test_a_background_without_an_image_renders_nothing(): void {
+        $html = do_blocks(
+            '<!-- wp:supe-container/container --><div class="wp-block-supe-container-container">'
+            . '<!-- wp:supe/container-background {"overlayColor":"#000"} /-->'
+            . '<!-- wp:supe/container-background {"mediaId":999999,"overlayColor":"#000"} /-->'
+            . '</div><!-- /wp:supe-container/container -->'
+        );
+
+        self::assertStringNotContainsString( 'wp-block-supe-container-background', $html );
+    }
+
+    public function test_an_unsafe_overlay_is_left_out(): void {
+        $id = self::factory()->attachment->create_upload_object( DIR_TESTDATA . '/images/canola.jpg' );
+
+        $html = do_blocks( '<!-- wp:supe/container-background {"mediaId":' . $id . ',"overlayColor":"#000\\u0022 onload=\\u0022alert(1)"} /-->' );
+
+        self::assertStringContainsString( 'wp-block-supe-container-background__media', $html );
+        self::assertStringNotContainsString( '__overlay', $html );
+        self::assertStringNotContainsString( 'onload', $html );
+    }
 }

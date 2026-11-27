@@ -1,8 +1,9 @@
 # Container Block — Plan
 
-**Status:** Phases 1 (layout + colors) and 2 (responsive layout, gap, min
-height) done 2026-11-27. Next: phase 3 (image background + overlay). Update
-this doc as phases land (and log them in `PROGRESS.md`).
+**Status:** Phases 1 (layout + colors), 2 (responsive layout, gap, min
+height) and 3 (image background + overlay, Hero) done 2026-11-27. Next:
+phase 4 (video background). Update this doc as phases land (and log them in
+`PROGRESS.md`).
 
 **Depends on:** [`responsive-supports.md`](responsive-supports.md) phases 1–4
 (done); this plan adds two supports to it (its phase 8, "more supports").
@@ -70,9 +71,12 @@ support's `!important` rules override them.
   *Row* (flex, nowrap), *Stack* (flex vertical) and *Grid* are `block` +
   `transform` scope only — in the inserter they sat next to Group's Row /
   Stack / Grid with the same names and icons. Stack keeps core's
-  `orientation: vertical` (the desktop direction); phase 3 adds
-  *Hero* (constrained, min height 60vh, image background with a 50% black
-  overlay, white text). No variation picker in the canvas — the "+"
+  `orientation: vertical` (the desktop direction). *Hero* (phase 3,
+  inserter only, no `isActive` — once inserted it's a Stack): full width,
+  Stack with content centered (`supe.layout` justify center), min height
+  60vh, padding 60 / 40 presets, white text, a background with a 50%
+  black overlay and no image yet (chosen from its toolbar), an empty
+  heading and paragraph. No variation picker in the canvas — the "+"
   appender stays the empty state.
 - **Content position:** no own control (2026-11-26). A flex Stack places
   the content (and with `supe.layout` can do it per viewport); revisit only
@@ -158,35 +162,59 @@ Both supports follow `responsive-supports.md`'s recipe: `support.json`
 
 ```
 supe-container/container
- ├─ supe/container-background   ← first child, parent: Container only, inserter: false
- │    type: image | video | block
+ ├─ supe/container-background   ← first child, parent: Container only, inserter: false, lock: { move }
+ │    type: image (phase 3) | video | block   ("enum" grows with each phase)
  │    image:  mediaId, focalPoint
  │    video:  mediaId, posterId, focalPoint
  │    block:  one inner block (allowedBlocks: supe/fader)
- │    overlay: { color | gradient, opacity 0–100 (default 50) }
+ │    overlayColor, overlayGradient   ← `var:preset|color|slug` / `var:preset|gradient|slug` or a custom value
+ │    overlayOpacity                  ← 0–100, default 50
  └─ …content blocks
 ```
 
+`Supe\Editor\Blocks\ContainerBackground::overlay()` turns the overlay
+attributes into declarations (preset → `var(--wp--preset--…)`, custom values
+only if they look like a hex/rgb/hsl color or a CSS gradient — no `url`, no
+`;`; a gradient wins over a color; no color/gradient → no overlay);
+`blocks/container-background/overlay.js` mirrors it for the editor, both
+running `tests/fixtures/container-background.json`.
+
 ### Front end
 
-- `.wp-block-supe-container-background` (the selector Container's CSS keys
-  on): `position: absolute; inset: 0; z-index: -1; overflow: hidden`, with
-  `border-radius: inherit`. The Container, via `:has()`, gets
-  `position: relative; isolation: isolate` so the background stays inside
-  it and under its content, whatever the layout type.
-- Media: `object-fit: cover`, focal point → `object-position`. Images via
-  `wp_get_attachment_image( 'full' )` (srcset; `sizes="100vw"` when the
-  Container is full width). Video: `<video muted loop playsinline
+Markup (`render.php`):
+
+```html
+<div class="wp-block-supe-container-background" aria-hidden="true">
+  <div class="wp-block-supe-container-background__media"><img alt="" sizes="100vw" srcset="…" style="object-position:20% 80%"></div>
+  <span class="wp-block-supe-container-background__overlay" style="background-color:var(--wp--preset--color--contrast);opacity:0.7"></span>
+</div>
+```
+
+- All the CSS is the background block's `style.scss` (the Container has
+  none, and it only loads where a background renders).
+  `.wp-block-supe-container-container:has(> .wp-block-supe-container-background)`
+  gets `position: relative; isolation: isolate`; the background is
+  `position: absolute; inset: 0; z-index: -1; overflow: hidden;
+  border-radius: inherit; pointer-events: none`, with `max-width: none` and
+  `margin: 0` against constrained layouts' child rules. So it fills the
+  padding box under the content (and over the Container's own background
+  color), whatever the layout type.
+- Media: `object-fit: cover`, focal point → `object-position`
+  (`Slides\Markup::objectPosition()`), `wp_get_attachment_image( 'full' )`
+  with `sizes="100vw"` and an empty alt (decorative; the wrapper is
+  `aria-hidden`). Video: `<video muted loop playsinline
   preload="metadata" poster>` + script module `view.js`.
-- Overlay: `::after` of the background (`opacity` from the setting,
-  color/gradient as preset vars or custom values, sanitized).
+- Overlay: a `<span>` after the media (not `::after`: inline styles carry
+  the per-block color and opacity).
 - Fader in the slot: a rule makes it fill the layer
   (`height: 100%`, its aspect ratio / min height ignored) — the Container's
   min height and content decide the size.
 - Being absolute, the background takes no part in flex/grid flow or gap. The
   one leak is flow/constrained spacing: the first content block follows the
   background, so it would get the block-gap top margin —
-  `.wp-block-supe-container-background + * { margin-block-start: 0 }`.
+  `.wp-block-supe-container-container > .wp-block-supe-container-background + :not(…)`
+  sets it to 0 (three classes, so it beats `.has-supe-g.is-layout-flow>*+*`
+  without `!important`).
 - Empty background (no media chosen, empty fader) renders nothing; the
   Container then looks as it would without one.
 
@@ -198,30 +226,41 @@ Anything dropped into a Container is content, the first block included.
 a Container, so the only way to get one is the Background panel. Being first
 in the order just keeps List View and the CSS predictable.
 
-Workflow:
+Workflow (as built in phase 3, `blocks/container/BackgroundPanel.js`):
 
-1. Select the Container → sidebar **Background** panel, which shows
-   "None" by default.
-2. Pick **Image**, **Video** or **Fader**. The background block is inserted
-   at index 0, and for image/video the media modal opens straight away.
-   Fader shows its own "Choose the images…" placeholder in the layer.
-3. The overlay controls (color/gradient, opacity) appear in the background
-   block's sidebar, which is selected after insert. Text color is set on
-   the Container.
-4. To change the type, pick another one in the panel (it replaces the
-   background after a confirm if it has content); **None** removes it the
-   same way.
+1. Select the Container → sidebar **Background** panel: "None" and an
+   **Add image** button (phases 4–5 add Add video / Add fader).
+2. Add image opens the media modal; picking an image inserts the
+   background block at index 0 (`lock: { move: true }`) and selects it.
+   Cancelling adds nothing.
+3. The background's sidebar has **Image** (focal point + reset) and
+   **Overlay** (a core-style tools panel: color/gradient dropdown, opacity
+   0–100 in steps of 5, disabled until there's a color or gradient), plus a
+   "Select container" icon (`blocks/shared/SelectParentButton`). Replace /
+   Choose image is in the toolbar (`MediaReplaceFlow`). Text color is set
+   on the Container.
+4. With a background, the Container's panel shows its thumbnail, **Edit
+   background** (selects it) and **Remove** (after a confirm).
 
-- The background is locked against moving; Container's edit puts it back
-  first if content is dragged above it.
-- Image/video open the media modal straight away; Fader shows its own
-  placeholder in the layer.
-- Background block sidebar: media (replace, focal point), poster for video,
-  overlay (core `PanelColorGradientSettings` + opacity `RangeControl`). The
-  Container's panel has "Edit background" (selects it); the background has a
-  "Select container" icon (`blocks/shared/SelectParentButton`).
-- In the canvas the layer sits under the content like the front end; it's
-  selected from List View or those buttons, since the content covers it.
+- Picked theme colors / gradients are stored as preset references
+  (`toStored()` / `fromStored()` in `overlay.js`).
+- Container's edit moves anything dragged above the background back below
+  it (`moveBlocksToPosition( …, 1 )` on the blocks before it — the
+  background itself is locked); the "+" appender counts content only.
+- In the canvas the layer sits under the content like the front end
+  (`pointer-events: none`), so it's selected from List View, the
+  Container's panel, or the breadcrumb. Without an image it shows a light
+  `currentcolor` fill (editor only) under its overlay.
+- **Gotcha:** `ColorGradientSettingsDropdown` always wraps itself in a
+  `ToolsPanelItem`, which renders nothing outside a `ToolsPanel` — hence
+  the Overlay tools panel instead of a `PanelBody`.
+- A Container with a background and no content has no height (the layer
+  sizes to the content). In the editor it gets `is-background-only`: a
+  300px placeholder height and the "+" centered over the image, since
+  core only centers the appender while it's the only child. Adding a
+  background also sets the Container's min height to 400px (desktop, like
+  Cover) when none is set at any viewport, in the same undo step; the
+  placeholder covers the case where it's removed afterwards.
 
 ---
 
@@ -253,7 +292,7 @@ An optional `motion` setting on image backgrounds: `none` (default) /
    `supe.layout` (gap, direction, justify, align; keyword value type), with
    fixtures (PHP/JS parity), panels, canvas preview. Opted in on Container;
    core's flex controls turned off there.
-3. **Background: image + overlay** — `supe/container-background`, the
+3. ✅ **Background: image + overlay** — `supe/container-background`, the
    Background panel, frame CSS, focal point, overlay. Hero variation.
 4. **Background: video** — poster, view script (reduced motion, off-screen
    pause, hidden tab).

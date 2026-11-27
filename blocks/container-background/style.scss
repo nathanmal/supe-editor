@@ -1,0 +1,45 @@
+/**
+ * A container with a background becomes the frame for it: the background
+ * fills the container (padding box, rounded like it) under its content, and
+ * takes no part in the container's flow, flex or grid layout. The Container
+ * itself has no styles; these load with the background block.
+ */
+.wp-block-supe-container-container:has(> .wp-block-supe-container-background) {
+    isolation: isolate;
+    position: relative;
+}
+
+.wp-block-supe-container-container > .wp-block-supe-container-background {
+    border-radius: inherit;
+    inset: 0;
+    margin: 0;
+    // Constrained layouts give children a max width.
+    max-width: none;
+    overflow: hidden;
+    pointer-events: none;
+    position: absolute;
+    z-index: -1;
+}
+
+// The first content block follows the background: no block gap above it, as
+// for a first child (beats `.has-supe-g.is-layout-flow>*+*`).
+.wp-block-supe-container-container > .wp-block-supe-container-background + :not(.wp-block-supe-container-background) {
+    margin-block-start: 0;
+}
+
+.wp-block-supe-container-background__media {
+    height: 100%;
+    width: 100%;
+}
+
+.wp-block-supe-container-background__image {
+    display: block;
+    height: 100%;
+    object-fit: cover;
+    width: 100%;
+}
+
+.wp-block-supe-container-background__overlay {
+    inset: 0;
+    position: absolute;
+}
