@@ -1,0 +1,109 @@
+{
+    "description": "Layout support cases shared by PHPUnit (tests/Unit/Supports/SupportFixturesTest.php) and Jest (supports/_framework/test/render.test.js): what a stored `supe.layout` value renders to, the stylesheet, and the core features it replaces.",
+    "replaces": {
+        "spacing": [
+            "blockGap"
+        ]
+    },
+    "render": [
+        {
+            "label": "gap, a mobile column and alignment",
+            "value": {
+                "v": 1,
+                "gap": {
+                    "desktop": "var:preset|spacing|40",
+                    "mobile": "1rem"
+                },
+                "direction": {
+                    "mobile": "column"
+                },
+                "justify": {
+                    "desktop": "space-between"
+                },
+                "align": {
+                    "mobile": "stretch"
+                }
+            },
+            "expected": {
+                "classes": [
+                    "has-supe-g",
+                    "has-supe-g-m",
+                    "has-supe-fd-m",
+                    "has-supe-jc",
+                    "has-supe-ai-m"
+                ],
+                "styles": {
+                    "--supe-g": "var(--wp--preset--spacing--40)",
+                    "--supe-g-m": "1rem",
+                    "--supe-fd-m": "column",
+                    "--supe-jc": "space-between",
+                    "--supe-ai-m": "stretch"
+                }
+            }
+        },
+        {
+            "label": "keywords outside the allowed lists are dropped",
+            "value": {
+                "v": 1,
+                "direction": {
+                    "desktop": "row-reverse",
+                    "tablet": "row"
+                },
+                "justify": {
+                    "mobile": "space-around"
+                },
+                "align": {
+                    "desktop": "baseline;color:red"
+                }
+            },
+            "expected": {
+                "classes": [
+                    "has-supe-fd-t"
+                ],
+                "styles": {
+                    "--supe-fd-t": "row"
+                }
+            }
+        },
+        {
+            "label": "zero gap",
+            "value": {
+                "v": 1,
+                "gap": {
+                    "tablet": 0
+                }
+            },
+            "expected": {
+                "classes": [
+                    "has-supe-g-t"
+                ],
+                "styles": {
+                    "--supe-g-t": "0"
+                }
+            }
+        },
+        {
+            "label": "a newer version renders nothing",
+            "value": {
+                "v": 2,
+                "gap": {
+                    "desktop": "1rem"
+                }
+            },
+            "expected": {
+                "classes": [],
+                "styles": {}
+            }
+        }
+    ],
+    "stylesheet": [
+        {
+            "label": "default breakpoints",
+            "breakpoints": {
+                "tablet": 1024,
+                "mobile": 600
+            },
+            "css": ".has-supe-g{gap:var(--supe-g)!important}.has-supe-g.is-layout-flow>*+*{margin-block-start:var(--supe-g)}.has-supe-g.is-layout-constrained>*+*{margin-block-start:var(--supe-g)}.has-supe-fd.is-layout-flex{flex-direction:var(--supe-fd)!important}.has-supe-jc.is-layout-flex{justify-content:var(--supe-jc)!important}.has-supe-ai.is-layout-flex{align-items:var(--supe-ai)!important}@media (max-width:1024px){.has-supe-g-t{gap:var(--supe-g-t)!important}.has-supe-g-t.is-layout-flow>*+*{margin-block-start:var(--supe-g-t)}.has-supe-g-t.is-layout-constrained>*+*{margin-block-start:var(--supe-g-t)}.has-supe-fd-t.is-layout-flex{flex-direction:var(--supe-fd-t)!important}.has-supe-jc-t.is-layout-flex{justify-content:var(--supe-jc-t)!important}.has-supe-ai-t.is-layout-flex{align-items:var(--supe-ai-t)!important}}@media (max-width:600px){.has-supe-g-m{gap:var(--supe-g-m)!important}.has-supe-g-m.is-layout-flow>*+*{margin-block-start:var(--supe-g-m)}.has-supe-g-m.is-layout-constrained>*+*{margin-block-start:var(--supe-g-m)}.has-supe-fd-m.is-layout-flex{flex-direction:var(--supe-fd-m)!important}.has-supe-jc-m.is-layout-flex{justify-content:var(--supe-jc-m)!important}.has-supe-ai-m.is-layout-flex{align-items:var(--supe-ai-m)!important}}"
+        }
+    ]
+}

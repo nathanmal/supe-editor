@@ -1,5 +1,11 @@
 {
-    "description": "Spacing support cases shared by PHPUnit (tests/Unit/Supports/SpacingSupportTest.php) and Jest (supports/_framework/test/render.test.js): what a stored `supe.spacing` value renders to, and the stylesheet for given breakpoints.",
+    "description": "Spacing support cases shared by PHPUnit (tests/Unit/Supports/SupportFixturesTest.php) and Jest (supports/_framework/test/render.test.js): what a stored `supe.spacing` value renders to, the stylesheet for given breakpoints, and the core features it replaces.",
+    "replaces": {
+        "spacing": [
+            "padding",
+            "margin"
+        ]
+    },
     "render": [
         {
             "label": "preset and custom values across viewports",

@@ -1,8 +1,8 @@
 # Container Block — Plan
 
-**Status:** Phase 1 (layout + colors) done 2026-11-26. Next: phase 2
-(responsive supports). Update this doc as phases land (and log them in
-`PROGRESS.md`).
+**Status:** Phases 1 (layout + colors) and 2 (responsive layout, gap, min
+height) done 2026-11-27. Next: phase 3 (image background + overlay). Update
+this doc as phases land (and log them in `PROGRESS.md`).
 
 **Depends on:** [`responsive-supports.md`](responsive-supports.md) phases 1–4
 (done); this plan adds two supports to it (its phase 8, "more supports").
@@ -24,7 +24,7 @@ Container with nothing set renders exactly as today.
 | One block | Layout and background both live on Container — no separate cover-like block |
 | Name | Stays `supe-container/container` (saved content references it) |
 | Layout type | Core `layout` support (flow / constrained / flex / grid), so theme.json content/wide sizes and `alignwide`/`alignfull` children work as in Group |
-| Responsive layout | New `supe.layout` support owns the flex arrangement for every viewport (desktop default, tablet/mobile overrides): direction, justify, align, plus one gap value (replaces core `blockGap`). Core's orientation/justification/vertical-alignment controls are turned off on Container; core keeps the layout type, content widths, wrap and grid settings |
+| Responsive layout | New `supe.layout` support: direction, justify, align (flex only) and one gap value (replaces core `blockGap`), desktop default + tablet/mobile overrides, one panel. The desktop direction is core's `layout.orientation` (shown and edited in the same panel), so variations, movers and drop indicators keep working. Core's orientation/justification/vertical-alignment controls are turned off on Container; core keeps the layout type, content widths, wrap and grid settings |
 | Scope | Build only what gives clear value; anything else stays core (wrap and grid columns aren't responsive in v1) |
 | Min height | New responsive `supe.dimensions` support (`minHeight`), replacing core `dimensions.minHeight` |
 | Spacing | `supe.spacing` (already on) |
@@ -41,19 +41,25 @@ Container with nothing set renders exactly as today.
 
 ## Layout
 
-`block.json` uses core layout with Group's setup (phase 1):
+`block.json` uses core layout with Group's setup:
 
 ```json
-"layout": { "allowSizingOnChildren": true }
+"layout": {
+  "allowSizingOnChildren": true,
+  "allowOrientation": false,
+  "allowJustification": false,
+  "allowVerticalAlignment": false
+}
 ```
 
 No `allowSwitching`: like Group, the type is changed through the
-variations (sidebar switcher / toolbar transforms). Phase 2 adds
-`"allowOrientation": false, "allowJustification": false,
-"allowVerticalAlignment": false`, which hide core's flex controls (sidebar and toolbar) so direction
-and alignment have one home, `supe.layout`. Core still writes `display:
-flex`, its wrap toggle (which can't be hidden) and its defaults (row, wrap,
-`align-items: center`); the support's `!important` rules override them.
+variations (sidebar switcher / toolbar transforms). The `allow*: false`
+flags (phase 2) hide core's flex controls in the sidebar and toolbar, so
+direction and alignment have one home, the Responsive layout panel. Core
+still writes `display: flex`, the orientation (`is-vertical`), its wrap
+toggle (the one control left in its Layout panel; it can't be hidden) and
+its defaults (row: `align-items: center`; vertical: `flex-start`); the
+support's `!important` rules override them.
 
 - **No `default.type` change for existing content:** without a stored
   `layout`, the Container is `flow` and matches no variation. Page 27 (the
@@ -63,8 +69,8 @@ flex`, its wrap toggle (which can't be hidden) and its defaults (row, wrap,
   *Container* (constrained, `isDefault`) is the only one in the inserter;
   *Row* (flex, nowrap), *Stack* (flex vertical) and *Grid* are `block` +
   `transform` scope only — in the inserter they sat next to Group's Row /
-  Stack / Grid with the same names and icons. Phase 2 moves Stack's
-  direction from core's `orientation` to `supe.layout`; phase 3 adds
+  Stack / Grid with the same names and icons. Stack keeps core's
+  `orientation: vertical` (the desktop direction); phase 3 adds
   *Hero* (constrained, min height 60vh, image background with a 50% black
   overlay, white text). No variation picker in the canvas — the "+"
   appender stays the empty state.
@@ -84,28 +90,45 @@ store only what they override, one viewport switcher in the panel.
 "supe": { "layout": {
   "v": 1,
   "gap":       { "desktop": "var:preset|spacing|40", "mobile": "var:preset|spacing|20" },
-  "direction": { "desktop": "row", "mobile": "column" },
+  "direction": { "mobile": "column" },
   "justify":   { "desktop": "space-between", "mobile": "flex-start" },
   "align":     { "desktop": "center", "mobile": "stretch" }
 } }
 ```
 
+- **Desktop direction = core `layout.orientation`.** The panel shows it as
+  the Desktop value of Direction and writes it back to `layout`
+  (`vertical`, or unset for row), so the Row / Stack variations, block
+  movers and drop indicators follow it. Only tablet/mobile directions are
+  stored in the support (a stored desktop one would still render, but the
+  panel never writes it). Panels get the block's `attributes` /
+  `setAttributes` for this (`registerSupport()`).
+
 - **Stored in CSS terms** (`justify` = `justify-content`, main axis;
   `align` = `align-items`, cross axis), not core's "justification" — core
   swaps which CSS property that means when the orientation is vertical, and
   with direction changing per viewport that would make one value mean
-  different things on different screens. The panel labels follow the
-  direction in effect at the selected viewport (row: "Horizontal" /
-  "Vertical"; column: the other way round), with the usual icons.
+  different things on different screens. The Justify / Align icons and
+  labels follow the direction in effect at the selected viewport (row:
+  Left…Right for Justify, Top…Bottom for Align; column: the other way
+  round). Clicking the selected option clears it.
 - `gap`: **one value** for row and column gap, all viewports; `replaces`
-  core `spacing.blockGap`. Applies to flow/constrained too (as the block
-  gap margin, like core) — or flex/grid `gap`.
-- `direction` / `justify` / `align` apply only when the layout is flex; the
-  panel hides them otherwise.
-- **New in the framework:** a keyword value type (a fixed list per
-  property) in `ValueSanitizer` + `sanitize.js`, with fixtures. The rest —
-  sparse viewport values, inline variables, generated media queries,
-  versioning, canvas preview — is the existing spacing machinery.
+  core `spacing.blockGap`. Flex/grid: `gap` (`!important`). Flow /
+  constrained: the children's `margin-block-start` from the second child
+  on (`.has-supe-g.is-layout-flow>*+*`), **not** `!important`, so a child's
+  own inline margin still wins, as with core's block gap. `layout` loads
+  before `spacing`, so a child's responsive margin comes later in the
+  stylesheet too.
+- `direction` / `justify` / `align` rules are scoped to `.is-layout-flex`,
+  and the panel hides them for other layout types, so values left over
+  from a Row/Stack do nothing in a Grid.
+- **New in the framework** (`responsive-supports.md`): a `keyword` value
+  type (`{ "type": "keyword", "values": [ … ] }`) in `ValueSanitizer` +
+  `sanitize.js`; property `type` can be an options object; a property can
+  have several `rules` (`css`, a `selector` suffix, `important`) instead of
+  one `css`. The rest — sparse viewport values, inline variables,
+  generated media queries, versioning, canvas preview — is the existing
+  spacing machinery.
 - Not in v1: responsive wrap, grid columns, child `order` (ROADMAP
   "Responsive layout"). Core's grid with a minimum column width already
   reflows on its own.
@@ -115,11 +138,15 @@ store only what they override, one viewport switcher in the panel.
 ### `supe.dimensions`
 
 ```json
-"supe": { "dimensions": { "v": 1, "minHeight": { "desktop": "60vh", "mobile": "auto" } } }
+"supe": { "dimensions": { "v": 1, "minHeight": { "desktop": "60vh", "mobile": "0" } } }
 ```
 
-`type: length` (`ValueSanitizer::length()`); `replaces` core
-`dimensions.minHeight`. The Fader could opt in later instead of core's.
+Sanitized as `spacing` (`0`, px / em / rem / % / vh / vw, or a spacing
+preset; `length` only allows px / % / vh, which the slider relies on). `0`
+drops an inherited min height on a smaller viewport. `replaces` core
+`dimensions.minHeight`. Panel: one `UnitControl` (px, vh, vw, rem, em, %)
+with the inherited value as placeholder. The Fader could opt in later
+instead of core's.
 
 Both supports follow `responsive-supports.md`'s recipe: `support.json`
 (`"version": 1`) + `support.php`, `index.js` + `Panel`, fixtures in
@@ -222,7 +249,7 @@ An optional `motion` setting on image backgrounds: `none` (default) /
 1. ✅ **Layout + colors** — core `layout` and `color` supports on Container,
    variations, Container's saved markup unchanged (page 27 valid).
    `tests/Feature/ContainerTest.php`.
-2. **Responsive supports** — `supe.dimensions` (min height) and
+2. ✅ **Responsive supports** — `supe.dimensions` (min height) and
    `supe.layout` (gap, direction, justify, align; keyword value type), with
    fixtures (PHP/JS parity), panels, canvas preview. Opted in on Container;
    core's flex controls turned off there.

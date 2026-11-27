@@ -22,7 +22,7 @@ const INTEGER = /^[+-]?(?:0|[1-9]\d*)$/;
  * (`{ type: 'int', min: 1, max: 12 }`).
  *
  * Types: spacing, margin (spacing plus negatives and `auto`), length, ratio,
- * int.
+ * int, keyword (one of the option's `values`).
  *
  * @param {*}             value
  * @param {string|Object} type
@@ -45,6 +45,11 @@ export function sanitize( value, type ) {
                 value,
                 options.min ?? 0,
                 options.max ?? Number.MAX_SAFE_INTEGER
+            );
+        case 'keyword':
+            return keyword(
+                value,
+                Array.isArray( options.values ) ? options.values : []
             );
         default:
             return null;
@@ -175,6 +180,25 @@ export function int( raw, min = 0, max = Number.MAX_SAFE_INTEGER ) {
 
     // `-0` → '0', as PHP prints it.
     return String( number === 0 ? 0 : number );
+}
+
+/**
+ * One of the allowed keywords (e.g. `column` for flex-direction), or null.
+ * Only lowercase `[a-z-]` keywords can be allowed, so whatever comes back is
+ * safe in CSS.
+ *
+ * @param {*}     raw
+ * @param {Array} values Allowed keywords.
+ * @return {string|null} The keyword, or null.
+ */
+export function keyword( raw, values ) {
+    const value = normalize( raw );
+
+    if ( value === null || ! /^[a-z-]+$/.test( value ) ) {
+        return null;
+    }
+
+    return values.includes( value ) ? value : null;
 }
 
 /**

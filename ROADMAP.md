@@ -39,7 +39,7 @@ The editor has little responsive support beyond core's `clamp()` fluid values; t
 - [x] Phases 2–4: editor wiring (Styles panel, live canvas preview), spacing controls, Callout + Container opted in.
 - [ ] Responsive visibility (hide on desktop / tablet / mobile).
 - [ ] Responsive typography (font size, line height per viewport; works alongside `clamp()`).
-- [ ] Responsive layout (flex direction / stacking, grid columns, order, alignment, gap) — `supe.layout` + `supe.dimensions` planned in `docs/container.md`.
+- [x] Responsive layout: gap + flex direction / alignment (`supe.layout`) and min height (`supe.dimensions`), on Container — `docs/container.md` (2026-11-27). Not yet: wrap, grid columns, child order.
 - [ ] Keep the editor's device preview widths (~780 / 360px) consistent with the site breakpoints.
 - [ ] Opt core blocks in together with the core spacing bridge (core padding/margin hidden and migrated) — a block never has both.
 - [ ] Possibly move header behavior into the supports framework (it's attributes + render-time markup on `core/group`).

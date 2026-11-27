@@ -31,9 +31,10 @@ final class SupportRegistry {
     /**
      * Supports to load, in order. Explicit rather than discovered so load
      * order is obvious; switch to globbing supports/{name}/support.json if
-     * the list grows.
+     * the list grows. Load order is stylesheet order: spacing comes after
+     * layout, so a child's own margin wins over its parent's gap.
      */
-    public const SUPPORTS = [ 'spacing' ];
+    public const SUPPORTS = [ 'layout', 'dimensions', 'spacing' ];
 
     public const ATTRIBUTE = 'supe';
 

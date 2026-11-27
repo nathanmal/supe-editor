@@ -49,6 +49,13 @@
         [ "int leading zero", "int", "07", null ],
         [ "int boolean", "int", true, null ],
         [ "int empty", "int", "", null ],
+        [ "keyword", { "type": "keyword", "values": [ "row", "column" ] }, "column", "column" ],
+        [ "keyword normalized", { "type": "keyword", "values": [ "row", "column" ] }, " Column ", "column" ],
+        [ "keyword not allowed", { "type": "keyword", "values": [ "row", "column" ] }, "row-reverse", null ],
+        [ "keyword with CSS in it", { "type": "keyword", "values": [ "row", "column" ] }, "row;color:red", null ],
+        [ "keyword allowed but unsafe", { "type": "keyword", "values": [ "a;b" ] }, "a;b", null ],
+        [ "keyword without values", "keyword", "row", null ],
+        [ "keyword that is a number", { "type": "keyword", "values": [ "1" ] }, 1, null ],
         [ "unknown type", "color", "red", null ]
     ]
 }

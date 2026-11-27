@@ -33,7 +33,9 @@ const supports = new Map();
  * @param {Object}   metadata             Decoded support.json.
  * @param {Object}   options
  * @param {Function} options.Panel        Receives `{ value, onChange }`: the support's value in its
- *                                        current shape, and a setter taking the next value.
+ *                                        current shape, and a setter taking the next value — plus
+ *                                        the block's `attributes` and `setAttributes`, for panels
+ *                                        that depend on (or edit) a core setting.
  * @param {Object}   [options.migrations] See upgrade(); must match the support's PHP migrations().
  */
 export function registerSupport( metadata, { Panel, migrations = {} } ) {
@@ -169,7 +171,12 @@ const withSupportPanels = createHigherOrderComponent(
                                 group="styles"
                                 key={ supportName }
                             >
-                                <Panel value={ value } onChange={ onChange } />
+                                <Panel
+                                    value={ value }
+                                    onChange={ onChange }
+                                    attributes={ attributes }
+                                    setAttributes={ setAttributes }
+                                />
                             </InspectorControls>
                         );
                     }

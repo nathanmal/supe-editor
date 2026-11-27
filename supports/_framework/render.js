@@ -10,7 +10,9 @@
  *
  * Generated names: `supe-{var}{side}` for desktop, `-t` / `-m` suffixes for
  * tablet / mobile, e.g. `has-supe-pt-m` + `--supe-pt-m: 1rem`.
- * Rules are `!important` so a block's own value wins like an inline style.
+ * Rules are `!important` so a block's own value wins like an inline style,
+ * unless a property's rule says otherwise (`rules`, see
+ * AbstractResponsiveSupport).
  */
 import { sanitize } from './sanitize';
 import { upgrade } from './upgrade';
@@ -103,15 +105,18 @@ export function supportRules( metadata ) {
 
     for ( const [ , config ] of properties( metadata ) ) {
         for ( const [ key, side ] of targets( config ) ) {
-            const cssProperty =
-                key === '' ? config.css : `${ config.css }-${ key }`;
-
             for ( const [ viewport, suffix ] of VIEWPORTS ) {
                 const name = generatedName( config, side, suffix );
 
-                rules[ viewport ].push(
-                    `.has-${ name }{${ cssProperty }:var(--${ name })!important}`
-                );
+                for ( const rule of config.rules ) {
+                    const cssProperty =
+                        key === '' ? rule.css : `${ rule.css }-${ key }`;
+                    const important = rule.important ? '!important' : '';
+
+                    rules[ viewport ].push(
+                        `.has-${ name }${ rule.selector }{${ cssProperty }:var(--${ name })${ important }}`
+                    );
+                }
             }
         }
     }
@@ -165,11 +170,12 @@ export function stylesheet( supports, breakpoints, variables = {} ) {
 }
 
 /**
- * The support's properties with their metadata validated. `css` and `var`
- * end up verbatim in generated CSS, so anything unexpected is skipped.
+ * The support's properties with their metadata validated. `var` and each
+ * rule's `css` and `selector` end up verbatim in generated CSS, so anything
+ * unexpected is skipped.
  *
  * @param {Object} metadata
- * @return {Array} [ property, { css, var, sides, type } ] pairs.
+ * @return {Array} [ property, { var, sides, type, rules } ] pairs.
  */
 function properties( metadata ) {
     const entries = isObject( metadata?.properties )
@@ -180,18 +186,44 @@ function properties( metadata ) {
         .filter(
             ( [ , config ] ) =>
                 isObject( config ) &&
-                /^[a-z-]+$/.test( String( config.css ?? '' ) ) &&
                 /^[a-z0-9]+$/.test( String( config.var ?? '' ) )
         )
         .map( ( [ property, config ] ) => [
             property,
             {
-                css: config.css,
                 var: config.var,
                 sides: Boolean( config.sides ),
-                type: String( config.type ?? 'spacing' ),
+                type: isObject( config.type )
+                    ? config.type
+                    : String( config.type ?? 'spacing' ),
+                rules: rulesOf( config ),
             },
-        ] );
+        ] )
+        .filter( ( [ , config ] ) => config.rules.length );
+}
+
+/**
+ * A property's valid rules: its `rules`, or one rule for its `css`.
+ *
+ * @param {Object} config
+ * @return {Array} { css, selector, important } rules.
+ */
+function rulesOf( config ) {
+    const rules = Array.isArray( config.rules )
+        ? config.rules
+        : [ { css: config.css } ];
+
+    return rules
+        .map( ( rule ) => ( {
+            css: typeof rule?.css === 'string' ? rule.css : '',
+            selector: typeof rule?.selector === 'string' ? rule.selector : '',
+            important: ! isObject( rule ) || rule.important !== false,
+        } ) )
+        .filter(
+            ( { css, selector } ) =>
+                /^[a-z-]+$/.test( css ) &&
+                /^[a-z0-9 .>+~*:()_-]*$/.test( selector )
+        );
 }
 
 /**

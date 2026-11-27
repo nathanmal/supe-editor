@@ -384,6 +384,24 @@ imports it; PHP reads it with `wp_json_file_decode()`.
 }
 ```
 
+A property's `type` is a ValueSanitizer type name or its options
+(`{ "type": "keyword", "values": [ "row", "column" ] }`). Instead of one
+`css`, a property can list `rules`, each with `css`, an optional `selector`
+appended to the generated class (no commas or braces) and `important`
+(default true):
+
+```json
+"gap": { "var": "g", "type": "spacing", "rules": [
+  { "css": "gap" },
+  { "selector": ".is-layout-flow>*+*", "css": "margin-block-start", "important": false }
+] }
+```
+
+→ `.has-supe-g{gap:var(--supe-g)!important}.has-supe-g.is-layout-flow>*+*{margin-block-start:var(--supe-g)}`.
+Panels receive `{ value, onChange, attributes, setAttributes }`; the last
+two are for panels tied to a core setting (the layout panel reads the
+layout type and writes core's orientation).
+
 ### `support.php` — returns the support, no autoloading
 
 `supports/` folders stay lowercase (matching `blocks/`), which PSR-4 can't
@@ -495,7 +513,11 @@ allowed:
 6. **Settings page** — `ResponsivePage` for breakpoints, with the preview-width
    warning.
 7. ~~Core spacing bridge~~ — merged into phase 5.
-8. **More supports** — gap, visibility, … using the same framework.
+8. **More supports** — `layout` (gap + flex direction / justify / align)
+   and `dimensions` (min height) done 2026-11-27 for the Container
+   (`container.md`), adding the `keyword` value type, typed options in
+   `type` and multi-rule properties (`rules`) to the framework. Next:
+   visibility, …
 
 ---
 

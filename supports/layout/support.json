@@ -1,0 +1,59 @@
+{
+    "name": "layout",
+    "title": "Responsive layout",
+    "version": 1,
+    "responsive": true,
+    "properties": {
+        "gap": {
+            "var": "g",
+            "type": "spacing",
+            "rules": [
+                { "css": "gap" },
+                {
+                    "selector": ".is-layout-flow>*+*",
+                    "css": "margin-block-start",
+                    "important": false
+                },
+                {
+                    "selector": ".is-layout-constrained>*+*",
+                    "css": "margin-block-start",
+                    "important": false
+                }
+            ]
+        },
+        "direction": {
+            "var": "fd",
+            "type": { "type": "keyword", "values": [ "row", "column" ] },
+            "rules": [
+                { "selector": ".is-layout-flex", "css": "flex-direction" }
+            ]
+        },
+        "justify": {
+            "var": "jc",
+            "type": {
+                "type": "keyword",
+                "values": [
+                    "flex-start",
+                    "center",
+                    "flex-end",
+                    "space-between"
+                ]
+            },
+            "rules": [
+                { "selector": ".is-layout-flex", "css": "justify-content" }
+            ]
+        },
+        "align": {
+            "var": "ai",
+            "type": {
+                "type": "keyword",
+                "values": [ "flex-start", "center", "flex-end", "stretch" ]
+            },
+            "rules": [ { "selector": ".is-layout-flex", "css": "align-items" } ]
+        }
+    },
+    "replaces": {
+        "spacing": [ "blockGap" ]
+    },
+    "coreBlocks": []
+}

@@ -28,7 +28,14 @@ use Supe\Editor\Supports\Responsive\Viewport;
  *
  * Property metadata: `css` (CSS property), `var` (short name used in
  * generated names), `sides` (top/right/bottom/left values), `type`
- * (ValueSanitizer type).
+ * (ValueSanitizer type name, or its options, e.g. `{ "type": "keyword",
+ * "values": [ "row", "column" ] }`).
+ *
+ * A property can set more than one CSS property, or scope them, with
+ * `rules` in place of `css`: each rule has `css`, an optional `selector`
+ * appended to the class (`.is-layout-flex`, `.is-layout-flow>*+*`; no
+ * commas, no braces) and `important` (default true; false lets inline
+ * styles on the matched elements win, e.g. a child's own margin).
  */
 abstract class AbstractResponsiveSupport extends AbstractSupport {
 
@@ -53,7 +60,7 @@ abstract class AbstractResponsiveSupport extends AbstractSupport {
             foreach ( Viewport::cases() as $viewport ) {
                 $viewportValue = $byViewport[ $viewport->value ] ?? null;
 
-                foreach ( $this->targets( $config ) as $key => $side ) {
+                foreach ( self::targets( $config ) as $key => $side ) {
                     $raw = '' === $key
                         ? $viewportValue
                         : ( is_array( $viewportValue ) ? ( $viewportValue[ $key ] ?? null ) : null );
@@ -82,13 +89,19 @@ abstract class AbstractResponsiveSupport extends AbstractSupport {
         $rules = self::emptyRules();
 
         foreach ( $this->properties() as $config ) {
-            foreach ( $this->targets( $config ) as $key => $side ) {
-                $cssProperty = '' === $key ? $config['css'] : $config['css'] . '-' . $key;
-
+            foreach ( self::targets( $config ) as $key => $side ) {
                 foreach ( Viewport::cases() as $viewport ) {
                     $name = $this->generatedName( $config, $side, $viewport );
 
-                    $rules[ $viewport->value ][] = sprintf( '.has-%1$s{%2$s:var(--%1$s)!important}', $name, $cssProperty );
+                    foreach ( $config['rules'] as $rule ) {
+                        $rules[ $viewport->value ][] = sprintf(
+                            '.has-%1$s%2$s{%3$s:var(--%1$s)%4$s}',
+                            $name,
+                            $rule['selector'],
+                            '' === $key ? $rule['css'] : $rule['css'] . '-' . $key,
+                            $rule['important'] ? '!important' : ''
+                        );
+                    }
                 }
             }
         }
@@ -97,31 +110,63 @@ abstract class AbstractResponsiveSupport extends AbstractSupport {
     }
 
     /**
-     * The support's properties with their metadata validated. `css` and `var`
-     * end up verbatim in generated CSS, so anything unexpected is skipped.
+     * The support's properties with their metadata validated. `var` and each
+     * rule's `css` and `selector` end up verbatim in generated CSS, so
+     * anything unexpected is skipped.
      *
-     * @return array<string, array{css: string, var: string, sides: bool, type: string}>
+     * @return array<string, array{var: string, sides: bool, type: string|array<string, mixed>, rules: list<array{css: string, selector: string, important: bool}>}>
      */
     protected function properties(): array {
         $properties = [];
 
         foreach ( (array) ( $this->metadata['properties'] ?? [] ) as $property => $config ) {
-            if ( ! is_array( $config )
-                || ! preg_match( '/^[a-z-]+$/', (string) ( $config['css'] ?? '' ) )
-                || ! preg_match( '/^[a-z0-9]+$/', (string) ( $config['var'] ?? '' ) )
-            ) {
+            if ( ! is_array( $config ) || ! preg_match( '/^[a-z0-9]+$/', (string) ( $config['var'] ?? '' ) ) ) {
+                continue;
+            }
+
+            $rules = self::rulesOf( $config );
+
+            if ( [] === $rules ) {
                 continue;
             }
 
             $properties[ (string) $property ] = [
-                'css'   => $config['css'],
                 'var'   => $config['var'],
                 'sides' => (bool) ( $config['sides'] ?? false ),
-                'type'  => (string) ( $config['type'] ?? 'spacing' ),
+                'type'  => is_array( $config['type'] ?? null ) ? $config['type'] : (string) ( $config['type'] ?? 'spacing' ),
+                'rules' => $rules,
             ];
         }
 
         return $properties;
+    }
+
+    /**
+     * A property's valid rules: its `rules`, or one rule for its `css`.
+     *
+     * @param  array<string, mixed> $config
+     * @return list<array{css: string, selector: string, important: bool}>
+     */
+    private static function rulesOf( array $config ): array {
+        $rules = is_array( $config['rules'] ?? null ) ? $config['rules'] : [ [ 'css' => $config['css'] ?? null ] ];
+        $valid = [];
+
+        foreach ( $rules as $rule ) {
+            $css      = is_array( $rule ) && is_string( $rule['css'] ?? null ) ? $rule['css'] : '';
+            $selector = is_array( $rule ) && is_string( $rule['selector'] ?? null ) ? $rule['selector'] : '';
+
+            if ( ! preg_match( '/^[a-z-]+$/', $css ) || ! preg_match( '/^[a-z0-9 .>+~*:()_-]*$/', $selector ) ) {
+                continue;
+            }
+
+            $valid[] = [
+                'css'       => $css,
+                'selector'  => $selector,
+                'important' => false !== ( $rule['important'] ?? true ),
+            ];
+        }
+
+        return $valid;
     }
 
     /**
@@ -131,7 +176,7 @@ abstract class AbstractResponsiveSupport extends AbstractSupport {
      * @param  array{sides: bool} $config
      * @return array<string, string>
      */
-    private function targets( array $config ): array {
+    private static function targets( array $config ): array {
         return $config['sides'] ? self::SIDES : [ '' => '' ];
     }
 

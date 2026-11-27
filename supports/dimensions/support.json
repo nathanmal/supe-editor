@@ -1,0 +1,17 @@
+{
+    "name": "dimensions",
+    "title": "Responsive dimensions",
+    "version": 1,
+    "responsive": true,
+    "properties": {
+        "minHeight": {
+            "css": "min-height",
+            "var": "mh",
+            "type": "spacing"
+        }
+    },
+    "replaces": {
+        "dimensions": [ "minHeight" ]
+    },
+    "coreBlocks": []
+}

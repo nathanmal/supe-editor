@@ -26,9 +26,9 @@ final class ValueSanitizer {
      * it (`['type' => 'int', 'min' => 1, 'max' => 12]`).
      *
      * Types: spacing, margin (spacing plus negatives and `auto`), length,
-     * ratio, int.
+     * ratio, int, keyword (one of the option's `values`).
      *
-     * @param string|array{type: string, min?: int, max?: int} $type
+     * @param string|array{type: string, min?: int, max?: int, values?: list<string>} $type
      */
     public function sanitize( mixed $value, string|array $type ): ?string {
         $options = is_array( $type ) ? $type : [ 'type' => $type ];
@@ -39,6 +39,7 @@ final class ValueSanitizer {
             'length'  => $this->length( $value ),
             'ratio'   => $this->ratio( $value ),
             'int'     => $this->int( $value, $options['min'] ?? 0, $options['max'] ?? PHP_INT_MAX ),
+            'keyword' => $this->keyword( $value, (array) ( $options['values'] ?? [] ) ),
             default   => null,
         };
     }
@@ -132,6 +133,23 @@ final class ValueSanitizer {
         ] );
 
         return false === $int ? null : (string) $int;
+    }
+
+    /**
+     * One of the allowed keywords (e.g. `column` for flex-direction), or
+     * null. Only lowercase `[a-z-]` keywords can be allowed, so whatever
+     * comes back is safe in CSS.
+     *
+     * @param list<mixed> $values
+     */
+    public function keyword( mixed $value, array $values ): ?string {
+        $value = $this->normalize( $value );
+
+        if ( null === $value || ! preg_match( '/^[a-z-]+$/', $value ) ) {
+            return null;
+        }
+
+        return in_array( $value, $values, true ) ? $value : null;
     }
 
     /**

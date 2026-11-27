@@ -1,0 +1,57 @@
+{
+    "description": "Dimensions support cases shared by PHPUnit (tests/Unit/Supports/SupportFixturesTest.php) and Jest (supports/_framework/test/render.test.js): what a stored `supe.dimensions` value renders to, the stylesheet, and the core features it replaces.",
+    "replaces": {
+        "dimensions": [
+            "minHeight"
+        ]
+    },
+    "render": [
+        {
+            "label": "min height per viewport",
+            "value": {
+                "v": 1,
+                "minHeight": {
+                    "desktop": "60vh",
+                    "tablet": "var:preset|spacing|80",
+                    "mobile": "0"
+                }
+            },
+            "expected": {
+                "classes": [
+                    "has-supe-mh",
+                    "has-supe-mh-t",
+                    "has-supe-mh-m"
+                ],
+                "styles": {
+                    "--supe-mh": "60vh",
+                    "--supe-mh-t": "var(--wp--preset--spacing--80)",
+                    "--supe-mh-m": "0"
+                }
+            }
+        },
+        {
+            "label": "auto and negative values are dropped",
+            "value": {
+                "v": 1,
+                "minHeight": {
+                    "desktop": "auto",
+                    "mobile": "-10px"
+                }
+            },
+            "expected": {
+                "classes": [],
+                "styles": {}
+            }
+        }
+    ],
+    "stylesheet": [
+        {
+            "label": "default breakpoints",
+            "breakpoints": {
+                "tablet": 1024,
+                "mobile": 600
+            },
+            "css": ".has-supe-mh{min-height:var(--supe-mh)!important}@media (max-width:1024px){.has-supe-mh-t{min-height:var(--supe-mh-t)!important}}@media (max-width:600px){.has-supe-mh-m{min-height:var(--supe-mh-m)!important}}"
+        }
+    ]
+}
