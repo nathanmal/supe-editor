@@ -1,0 +1,33 @@
+/**
+ * The canvas shows one image (Edit.js hides the others): the first, or the
+ * one being edited. Nothing fades in the editor.
+ */
+.editor-styles-wrapper .supe-fader > .supe-fader__slide {
+    opacity: 1;
+}
+
+.supe-fader .components-placeholder {
+    align-items: center;
+    grid-area: 1 / 1;
+    text-align: center;
+
+    .components-placeholder__label,
+    .components-placeholder__fieldset {
+        justify-content: center;
+    }
+}
+
+// TimingPanel: core's 16px rhythm between its controls.
+.supe-fader-panel {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+// The canvas preview's fade (Edit.js): from transparent to the image.
+@keyframes supe-fader-preview {
+
+    from {
+        opacity: 0;
+    }
+}

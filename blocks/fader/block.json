@@ -1,0 +1,41 @@
+{
+    "$schema": "https://schemas.wp.org/trunk/block.json",
+    "apiVersion": 3,
+    "name": "supe/fader",
+    "version": "0.1.0",
+    "title": "Fader",
+    "category": "supe",
+    "icon": "images-alt2",
+    "description": "Images that fade from one to the next.",
+    "keywords": [ "fade", "crossfade", "images", "slideshow", "gallery" ],
+    "textdomain": "supe-editor",
+    "attributes": {
+        "duration": {
+            "type": "number"
+        },
+        "fade": {
+            "type": "number"
+        }
+    },
+    "allowedBlocks": [ "supe/fader-image" ],
+    "supports": {
+        "align": [ "wide", "full" ],
+        "anchor": true,
+        "html": false,
+        "dimensions": {
+            "aspectRatio": true,
+            "minHeight": true
+        },
+        "__experimentalBorder": {
+            "radius": true
+        },
+        "spacing": {
+            "margin": true
+        }
+    },
+    "editorScript": "file:./index.js",
+    "editorStyle": "file:./index.css",
+    "style": "file:./style-index.css",
+    "viewScriptModule": "file:./view.js",
+    "render": "file:./render.php"
+}

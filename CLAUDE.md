@@ -6,7 +6,7 @@ Package-specific guidance for Claude Code. Package `nathanmal/supe-editor`, whic
 
 This file only adds what's specific to `supe-editor`. When core changes a shared API, the ecosystem file is updated, not this one. Only add something here if it's editor-specific.
 
-Before non-trivial work, read this package's `PROGRESS.md` (current state, open items) and `ROADMAP.md`, plus the relevant plan in `docs/` (`responsive-supports.md`, `slides.md`). Log meaningful changes in `PROGRESS.md` (newest first, terse).
+Before non-trivial work, read this package's `PROGRESS.md` (current state, open items) and `ROADMAP.md`, plus the relevant plan in `docs/` (`responsive-supports.md`, `slides.md`, `fader.md`). Log meaningful changes in `PROGRESS.md` (newest first, terse).
 
 ## Scope
 
@@ -34,7 +34,7 @@ Organized by the package's three areas — editor customization, supports, block
 src/                     PHP (Supe\Editor\*), one class per file
   Module.php             binds services in the container and registers them (boot())
   SharedComponents.php   registers the shared components script
-  Blocks/                BlockRegistrar, BlockCategory, Slides/Markup (shared by the slides render.php files), Slides/Layout (responsive layout variables, `supe.editor.slides`), Slides/Config (engine config → `data-supe-slides`), Slides/Controls (control cells, arrow sets, icons), Slides/Posts (post slides, `supe.editor.slides.posts`)
+  Blocks/                BlockRegistrar, BlockCategory, Fader (fader timing + first image), Slides/Markup (shared by the slides render.php files), Slides/Layout (responsive layout variables, `supe.editor.slides`), Slides/Config (engine config → `data-supe-slides`), Slides/Controls (control cells, arrow sets, icons), Slides/Posts (post slides, `supe.editor.slides.posts`)
   Editor/                EditorAssets, HeaderBehavior, PageTemplateMode, SvgUploads (SVG uploads, sanitized; `supe.editor.svg`)
   Supports/              SupportRegistry, Renderer, Abstract*Support, SupportAssets
     Responsive/          Breakpoints, StyleGenerator, ValueSanitizer, Viewport
@@ -43,6 +43,7 @@ components/              shared editor components (@supe-editor/components) → 
   responsive/            ResponsiveControl, ViewportSwitcher, useViewport, utils (+ Jest)
   controls/              SpacingSizeControl (wraps core's experimental spacing control)
 blocks/{name}/           block source (block.json, index.js, edit.js, save.js, *.scss)
+blocks/shared/           editor pieces shared by several blocks (SortableBlockList, SelectParentButton, AddImages, …) + sidebar.scss
 supports/                block supports → build/supports/index.js
   index.js               imports each support
   _framework/            register-support.js (editor filters); sanitize/upgrade/render.js (portable, no WP imports)

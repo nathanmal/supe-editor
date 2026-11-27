@@ -30,7 +30,7 @@ import {
     withDefaultOption,
 } from '../slides/shared/image-settings';
 import useImageSizeOptions from '../slides/shared/use-image-size-options';
-import useMediaSelect from '../slides/shared/use-media-select';
+import useMediaSelect from '../shared/use-media-select';
 import SelectSliderButton from '../slides/shared/SelectSliderButton';
 import SlideNamePanel from '../slides/shared/SlideNamePanel';
 import ImageLink from './ImageLink';

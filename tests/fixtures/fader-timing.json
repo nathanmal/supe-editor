@@ -1,0 +1,10 @@
+{
+    "description": "Fader timing (Blocks\\Fader::timing() / blocks/fader/timing.js): attributes in, milliseconds out. Run by tests/Unit/Blocks/FaderTest.php and blocks/fader/test/timing.test.js.",
+    "cases": [
+        { "label": "defaults", "attributes": {}, "expected": { "duration": 5000, "fade": 1500 } },
+        { "label": "valid values kept", "attributes": { "duration": 8000, "fade": 400 }, "expected": { "duration": 8000, "fade": 400 } },
+        { "label": "clamped and rounded", "attributes": { "duration": 200, "fade": 99999.6 }, "expected": { "duration": 1000, "fade": 10000 } },
+        { "label": "numeric strings accepted", "attributes": { "duration": " 2500.4 ", "fade": "750" }, "expected": { "duration": 2500, "fade": 750 } },
+        { "label": "non-numbers fall back", "attributes": { "duration": "soon", "fade": true }, "expected": { "duration": 5000, "fade": 1500 } }
+    ]
+}

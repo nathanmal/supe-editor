@@ -1,0 +1,49 @@
+/**
+ * Front end and editor. The images share one grid cell, so the fader is as
+ * tall as its tallest image — or as its aspect ratio / minimum height
+ * (core's dimensions support) — and each image covers it at full width.
+ *
+ * The showing image (`is-active`) fades in above the one before
+ * (`is-previous`), which stays opaque underneath until the fade is done, so
+ * nothing shows through mid-fade. Without the script the first one shows.
+ */
+.supe-fader {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: minmax(0, 1fr);
+    overflow: hidden;
+    position: relative;
+}
+
+.supe-fader > .supe-fader__slide {
+    display: flex;
+    grid-area: 1 / 1;
+    margin: 0;
+    min-height: 0;
+    opacity: 0;
+}
+
+.supe-fader > .supe-fader__slide.is-previous {
+    opacity: 1;
+    z-index: 1;
+}
+
+.supe-fader > .supe-fader__slide.is-active {
+    opacity: 1;
+    transition: opacity var(--supe-fader-fade, 1500ms) ease-in-out;
+    z-index: 2;
+}
+
+.supe-fader__image {
+    display: block;
+    height: 100%;
+    object-fit: cover;
+    width: 100%;
+}
+
+@media (prefers-reduced-motion: reduce) {
+
+    .supe-fader > .supe-fader__slide.is-active {
+        transition: none;
+    }
+}

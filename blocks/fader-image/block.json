@@ -1,0 +1,29 @@
+{
+    "$schema": "https://schemas.wp.org/trunk/block.json",
+    "apiVersion": 3,
+    "name": "supe/fader-image",
+    "version": "0.1.0",
+    "title": "Fader image",
+    "category": "supe",
+    "icon": "format-image",
+    "description": "One of a fader's images.",
+    "textdomain": "supe-editor",
+    "parent": [ "supe/fader" ],
+    "attributes": {
+        "id": {
+            "type": "number"
+        },
+        "alt": {
+            "type": "string"
+        },
+        "focalPoint": {
+            "type": "object"
+        }
+    },
+    "supports": {
+        "html": false,
+        "reusable": false
+    },
+    "editorScript": "file:./index.js",
+    "render": "file:./render.php"
+}

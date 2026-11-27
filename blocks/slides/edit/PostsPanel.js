@@ -181,22 +181,19 @@ export default function PostsPanel( { trackClientId } ) {
                 ) }
 
                 { selecting && ids.length > 0 && (
-                    <ol className="supe-slides-list">
+                    <ol className="supe-block-list">
                         { ids.map( ( id, index ) => {
                             const label = titleOf(
                                 picked.find( ( post ) => post.id === id )
                             );
 
                             return (
-                                <li
-                                    key={ id }
-                                    className="supe-slides-list__row"
-                                >
-                                    <div className="supe-slides-list__select">
-                                        <span className="supe-slides-list__number">
+                                <li key={ id } className="supe-block-list__row">
+                                    <div className="supe-block-list__select">
+                                        <span className="supe-block-list__number">
                                             { index + 1 }
                                         </span>
-                                        <span className="supe-slides-list__name">
+                                        <span className="supe-block-list__name">
                                             { label }
                                         </span>
                                     </div>
