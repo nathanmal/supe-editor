@@ -2,24 +2,31 @@
     "$schema": "https://schemas.wp.org/trunk/block.json",
     "apiVersion": 3,
     "name": "supe/container-background",
-    "version": "0.1.0",
+    "version": "0.2.0",
     "title": "Background",
     "category": "supe",
     "icon": "format-image",
-    "description": "A container's background: an image under an optional overlay.",
+    "description": "A container's background: an image or a looping video under an optional overlay.",
     "textdomain": "supe-editor",
     "parent": [ "supe-container/container" ],
     "attributes": {
         "type": {
             "type": "string",
-            "enum": [ "image" ],
+            "enum": [ "image", "video" ],
             "default": "image"
         },
         "mediaId": {
             "type": "number"
         },
+        "posterId": {
+            "type": "number"
+        },
         "focalPoint": {
             "type": "object"
+        },
+        "pauseButton": {
+            "type": "boolean",
+            "default": false
         },
         "overlayColor": {
             "type": "string"
@@ -41,5 +48,6 @@
     "editorScript": "file:./index.js",
     "editorStyle": "file:./index.css",
     "style": "file:./style-index.css",
+    "viewScriptModule": "file:./view.js",
     "render": "file:./render.php"
 }

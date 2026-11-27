@@ -57,4 +57,15 @@ final class BlockRegistrarTest extends TestCase {
             $registrar->discover()
         );
     }
+
+    public function test_on_demand_blocks_leave_their_view_module_to_render(): void {
+        $registrar = new BlockRegistrar( $this->buildDir );
+        $settings  = [ 'view_script_module_ids' => [ 'module' ], 'title' => 'Block' ];
+
+        self::assertSame(
+            [ 'title' => 'Block' ],
+            $registrar->onDemandModules( $settings, [ 'name' => 'supe/container-background' ] )
+        );
+        self::assertSame( $settings, $registrar->onDemandModules( $settings, [ 'name' => 'supe/fader' ] ) );
+    }
 }

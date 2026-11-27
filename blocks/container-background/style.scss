@@ -3,6 +3,10 @@
  * fills the container (padding box, rounded like it) under its content, and
  * takes no part in the container's flow, flex or grid layout. The Container
  * itself has no styles; these load with the background block.
+ *
+ * The layer has no z-index of its own: its media and overlay go under the
+ * content (`z-index: -1` in the container's isolated stacking context) while
+ * a video's pause button stays above it.
  */
 .wp-block-supe-container-container:has(> .wp-block-supe-container-background) {
     isolation: isolate;
@@ -18,7 +22,6 @@
     overflow: hidden;
     pointer-events: none;
     position: absolute;
-    z-index: -1;
 }
 
 // The first content block follows the background: no block gap above it, as
@@ -27,19 +30,58 @@
     margin-block-start: 0;
 }
 
-.wp-block-supe-container-background__media {
-    height: 100%;
-    width: 100%;
+.wp-block-supe-container-background__media,
+.wp-block-supe-container-background__overlay {
+    inset: 0;
+    position: absolute;
+    z-index: -1;
 }
 
-.wp-block-supe-container-background__image {
+.wp-block-supe-container-background__image,
+.wp-block-supe-container-background__video {
     display: block;
     height: 100%;
     object-fit: cover;
     width: 100%;
 }
 
-.wp-block-supe-container-background__overlay {
-    inset: 0;
+.wp-block-supe-container-background__pause {
+    align-items: center;
+    background: var(--supe-container-background-control-background, rgb(0 0 0 / 50%));
+    border: 0;
+    border-radius: 50%;
+    bottom: 1rem;
+    color: var(--supe-container-background-control-color, #fff);
+    cursor: pointer;
+    display: flex;
+    font-size: 1.25rem;
+    height: 2.5rem;
+    justify-content: center;
+    padding: 0;
+    pointer-events: auto;
     position: absolute;
+    right: 1rem;
+    width: 2.5rem;
+    z-index: 1;
+
+    &[hidden] {
+        display: none;
+    }
+
+    &:focus-visible {
+        outline: 2px solid currentcolor;
+        outline-offset: 2px;
+    }
+
+    // Shows the action: pause while playing, play while paused.
+    &.is-paused .is-pause,
+    &:not(.is-paused) .is-play {
+        display: none;
+    }
+}
+
+.wp-block-supe-container-background__icon {
+    fill: currentcolor;
+    height: 1em;
+    width: 1em;
 }

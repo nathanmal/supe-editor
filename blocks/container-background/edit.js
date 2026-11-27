@@ -9,8 +9,6 @@ import {
     __experimentalUseMultipleOriginColorsAndGradients as useMultipleOriginColorsAndGradients,
 } from '@wordpress/block-editor';
 import {
-    Button,
-    FocalPointPicker,
     PanelBody,
     RangeControl,
     // eslint-disable-next-line @wordpress/no-unsafe-wp-apis
@@ -18,15 +16,19 @@ import {
     // eslint-disable-next-line @wordpress/no-unsafe-wp-apis
     __experimentalToolsPanelItem as ToolsPanelItem,
 } from '@wordpress/components';
+import { useReducedMotion } from '@wordpress/compose';
 import { store as coreStore } from '@wordpress/core-data';
 import { useSelect } from '@wordpress/data';
 import { __ } from '@wordpress/i18n';
 import { group } from '@wordpress/icons';
 
 import SelectParentButton from '../shared/SelectParentButton';
+import { thumbnailOf } from '../shared/use-media';
+import ControlIcon from '../slides/shared/ControlIcon';
+import { icons } from '../slides/shared/controls';
+import FocalPoint from './edit/FocalPoint';
+import VideoPanel from './edit/VideoPanel';
 import { DEFAULT_OPACITY, fromStored, overlay, toStored } from './overlay';
-
-const ALLOWED_TYPES = [ 'image' ];
 
 /**
  * Presets from the multiple-origin lists (theme, default, custom).
@@ -57,11 +59,12 @@ const toStyle = ( declarations ) =>
         : undefined;
 
 /**
- * The background layer as on the front end (image + overlay under the
- * container's content), with the image, focal point and overlay in the
- * sidebar, Replace in the toolbar, and a way back to the container beside
- * the block card's title. Added and removed from the Container's Background
- * panel.
+ * The background layer as on the front end (image or playing video +
+ * overlay under the container's content, and a video's pause button if
+ * on), with the media settings and overlay in the sidebar, Replace in the
+ * toolbar, and a way back to the container beside the block card's title.
+ * Added and removed from the Container's Background panel; the type is
+ * chosen there and kept (Replace picks the same kind of media).
  *
  * @param {Object}   props
  * @param {Object}   props.attributes
@@ -69,22 +72,50 @@ const toStyle = ( declarations ) =>
  * @param {string}   props.clientId
  */
 export default function Edit( { attributes, setAttributes, clientId } ) {
-    const { mediaId, focalPoint, overlayColor, overlayGradient } = attributes;
+    const {
+        mediaId,
+        posterId,
+        focalPoint,
+        pauseButton,
+        overlayColor,
+        overlayGradient,
+    } = attributes;
+    const isVideo = attributes.type === 'video';
     const overlayOpacity = attributes.overlayOpacity ?? DEFAULT_OPACITY;
-    const src = useSelect(
-        ( select ) =>
-            mediaId
-                ? select( coreStore ).getMedia( mediaId )?.source_url
-                : null,
-        [ mediaId ]
+    const { src, poster, posterThumbnail } = useSelect(
+        ( select ) => {
+            const { getMedia } = select( coreStore );
+            const posterMedia = posterId ? getMedia( posterId ) : null;
+
+            return {
+                src: mediaId ? getMedia( mediaId )?.source_url : null,
+                poster: posterMedia?.source_url ?? null,
+                posterThumbnail: thumbnailOf( posterMedia ),
+            };
+        },
+        [ mediaId, posterId ]
     );
+    const reducedMotion = useReducedMotion();
     const colorSettings = useMultipleOriginColorsAndGradients();
     const colors = flatten( colorSettings.colors, 'colors' );
     const gradients = flatten( colorSettings.gradients, 'gradients' );
     const overlayStyle = overlay( attributes );
     const blockProps = useBlockProps( {
-        className: mediaId ? undefined : 'is-empty',
+        className: [
+            isVideo ? 'is-video' : 'is-image',
+            ! mediaId && 'is-empty',
+        ]
+            .filter( Boolean )
+            .join( ' ' ),
     } );
+    const position = focalPoint
+        ? {
+              objectPosition: `${ focalPoint.x * 100 }% ${
+                  focalPoint.y * 100
+              }%`,
+          }
+        : undefined;
+    const allowedTypes = [ isVideo ? 'video' : 'image' ];
 
     const resetOverlay = () =>
         setAttributes( {
@@ -93,22 +124,25 @@ export default function Edit( { attributes, setAttributes, clientId } ) {
             overlayOpacity: DEFAULT_OPACITY,
         } );
 
-    const onSelectImage = ( image ) =>
-        setAttributes( { mediaId: image.id, focalPoint: undefined } );
+    const onSelectMedia = ( media ) =>
+        setAttributes( { mediaId: media.id, focalPoint: undefined } );
 
     return (
         <>
             <BlockControls group="other">
                 <MediaReplaceFlow
                     mediaId={ mediaId }
-                    accept="image/*"
-                    allowedTypes={ ALLOWED_TYPES }
-                    onSelect={ onSelectImage }
-                    name={
-                        mediaId
-                            ? __( 'Replace', 'supe-editor' )
-                            : __( 'Choose image', 'supe-editor' )
-                    }
+                    accept={ isVideo ? 'video/*' : 'image/*' }
+                    allowedTypes={ allowedTypes }
+                    onSelect={ onSelectMedia }
+                    name={ ( () => {
+                        if ( mediaId ) {
+                            return __( 'Replace', 'supe-editor' );
+                        }
+                        return isVideo
+                            ? __( 'Choose video', 'supe-editor' )
+                            : __( 'Choose image', 'supe-editor' );
+                    } )() }
                 />
             </BlockControls>
             <InspectorControls>
@@ -118,44 +152,33 @@ export default function Edit( { attributes, setAttributes, clientId } ) {
                     label={ __( 'Select container', 'supe-editor' ) }
                     icon={ group }
                 />
-                <PanelBody title={ __( 'Image', 'supe-editor' ) }>
-                    { src ? (
-                        <>
-                            <FocalPointPicker
-                                __nextHasNoMarginBottom
-                                label={ __( 'Focal point', 'supe-editor' ) }
-                                help={ __(
-                                    'The part of the image kept in view when the container is a different shape.',
-                                    'supe-editor'
-                                ) }
+                { isVideo ? (
+                    <VideoPanel
+                        attributes={ attributes }
+                        setAttributes={ setAttributes }
+                        src={ src }
+                        posterSrc={ posterThumbnail }
+                    />
+                ) : (
+                    <PanelBody title={ __( 'Image', 'supe-editor' ) }>
+                        { src ? (
+                            <FocalPoint
                                 url={ src }
-                                value={ focalPoint ?? { x: 0.5, y: 0.5 } }
+                                focalPoint={ focalPoint }
                                 onChange={ ( value ) =>
                                     setAttributes( { focalPoint: value } )
                                 }
                             />
-                            { focalPoint && (
-                                <Button
-                                    variant="link"
-                                    onClick={ () =>
-                                        setAttributes( {
-                                            focalPoint: undefined,
-                                        } )
-                                    }
-                                >
-                                    { __( 'Reset focal point', 'supe-editor' ) }
-                                </Button>
-                            ) }
-                        </>
-                    ) : (
-                        <p>
-                            { __(
-                                'Choose an image from the toolbar.',
-                                'supe-editor'
-                            ) }
-                        </p>
-                    ) }
-                </PanelBody>
+                        ) : (
+                            <p>
+                                { __(
+                                    'Choose an image from the toolbar.',
+                                    'supe-editor'
+                                ) }
+                            </p>
+                        ) }
+                    </PanelBody>
+                ) }
                 <ToolsPanel
                     label={ __( 'Overlay', 'supe-editor' ) }
                     panelId={ clientId }
@@ -243,21 +266,28 @@ export default function Edit( { attributes, setAttributes, clientId } ) {
                 </ToolsPanel>
             </InspectorControls>
             <div { ...blockProps }>
-                <div className="wp-block-supe-container-background__media">
-                    { src && (
+                <div
+                    className="wp-block-supe-container-background__media"
+                    aria-hidden="true"
+                >
+                    { src && isVideo && (
+                        <video
+                            className="wp-block-supe-container-background__video"
+                            src={ src }
+                            poster={ poster ?? undefined }
+                            style={ position }
+                            autoPlay={ ! reducedMotion }
+                            muted
+                            loop
+                            playsInline
+                        />
+                    ) }
+                    { src && ! isVideo && (
                         <img
                             className="wp-block-supe-container-background__image"
                             src={ src }
                             alt=""
-                            style={
-                                focalPoint
-                                    ? {
-                                          objectPosition: `${
-                                              focalPoint.x * 100
-                                          }% ${ focalPoint.y * 100 }%`,
-                                      }
-                                    : undefined
-                            }
+                            style={ position }
                         />
                     ) }
                 </div>
@@ -265,7 +295,18 @@ export default function Edit( { attributes, setAttributes, clientId } ) {
                     <span
                         className="wp-block-supe-container-background__overlay"
                         style={ toStyle( overlayStyle ) }
+                        aria-hidden="true"
                     />
+                ) }
+                { isVideo && pauseButton && (
+                    // The front end's button, as a picture of it: clicking
+                    // it selects the background.
+                    <span className="wp-block-supe-container-background__pause">
+                        <ControlIcon
+                            paths={ icons.pause }
+                            className="wp-block-supe-container-background__icon is-pause"
+                        />
+                    </span>
                 ) }
             </div>
         </>

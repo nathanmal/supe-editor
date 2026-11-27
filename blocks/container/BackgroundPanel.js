@@ -15,17 +15,35 @@ import { store as coreStore } from '@wordpress/core-data';
 import { useDispatch, useRegistry, useSelect } from '@wordpress/data';
 import { useState } from '@wordpress/element';
 import { __ } from '@wordpress/i18n';
+import { Icon, video as videoIcon } from '@wordpress/icons';
 
 import { thumbnailOf } from '../shared/use-media';
 import { withDefaultMinHeight } from './min-height';
 
 export const BACKGROUND = 'supe/container-background';
 
-const ALLOWED_TYPES = [ 'image' ];
+const IMAGE = [ 'image' ];
+const VIDEO = [ 'video' ];
 
 /**
- * Adds, shows and removes the Container's background. Choosing an image
- * inserts the background block first in the Container (locked in place) and
+ * @param {boolean} isVideo
+ * @param {boolean} hasMedia
+ * @return {string} The background's kind, for the panel.
+ */
+const label = ( isVideo, hasMedia ) => {
+    if ( isVideo ) {
+        return hasMedia
+            ? __( 'Video', 'supe-editor' )
+            : __( 'Video (none chosen)', 'supe-editor' );
+    }
+    return hasMedia
+        ? __( 'Image', 'supe-editor' )
+        : __( 'Image (none chosen)', 'supe-editor' );
+};
+
+/**
+ * Adds, shows and removes the Container's background. Choosing an image or
+ * a video inserts the background block first in the Container (locked in place) and
  * selects it, so its overlay settings are right there; cancelling the media
  * modal adds nothing. A Container without a min height gets 400px (desktop),
  * like Cover, so the background shows before there is content.
@@ -39,16 +57,19 @@ export default function BackgroundPanel( { clientId, background } ) {
     const registry = useRegistry();
     const { insertBlock, removeBlock, selectBlock, updateBlockAttributes } =
         useDispatch( blockEditorStore );
+    const isVideo = background?.attributes.type === 'video';
     const mediaId = background?.attributes.mediaId;
+    // A video's thumbnail is its poster.
+    const thumbnailId = isVideo ? background?.attributes.posterId : mediaId;
     const thumbnail = useSelect(
         ( select ) =>
-            mediaId
-                ? thumbnailOf( select( coreStore ).getMedia( mediaId ) )
+            thumbnailId
+                ? thumbnailOf( select( coreStore ).getMedia( thumbnailId ) )
                 : null,
-        [ mediaId ]
+        [ thumbnailId ]
     );
 
-    const addImage = ( image ) =>
+    const add = ( type ) => ( media ) =>
         registry.batch( () => {
             const supe = withDefaultMinHeight(
                 registry
@@ -62,8 +83,8 @@ export default function BackgroundPanel( { clientId, background } ) {
 
             insertBlock(
                 createBlock( BACKGROUND, {
-                    type: 'image',
-                    mediaId: image.id,
+                    type,
+                    mediaId: media.id,
                     lock: { move: true },
                 } ),
                 0,
@@ -86,13 +107,11 @@ export default function BackgroundPanel( { clientId, background } ) {
                                 alt=""
                             />
                         ) : (
-                            <span className="supe-container-background-panel__thumbnail" />
+                            <span className="supe-container-background-panel__thumbnail">
+                                { isVideo && <Icon icon={ videoIcon } /> }
+                            </span>
                         ) }
-                        <span>
-                            { mediaId
-                                ? __( 'Image', 'supe-editor' )
-                                : __( 'Image (none chosen)', 'supe-editor' ) }
-                        </span>
+                        <span>{ label( isVideo, !! mediaId ) }</span>
                     </Flex>
                     <Flex justify="flex-start" gap={ 2 }>
                         <Button
@@ -121,7 +140,7 @@ export default function BackgroundPanel( { clientId, background } ) {
                         onCancel={ () => setIsConfirming( false ) }
                     >
                         { __(
-                            'Remove the background, with its image and overlay?',
+                            'Remove the background, with its media and overlay?',
                             'supe-editor'
                         ) }
                     </ConfirmDialog>
@@ -132,19 +151,34 @@ export default function BackgroundPanel( { clientId, background } ) {
                         { __( 'None', 'supe-editor' ) }
                     </p>
                     <MediaUploadCheck>
-                        <MediaUpload
-                            allowedTypes={ ALLOWED_TYPES }
-                            onSelect={ addImage }
-                            render={ ( { open } ) => (
-                                <Button
-                                    variant="secondary"
-                                    size="compact"
-                                    onClick={ open }
-                                >
-                                    { __( 'Add image', 'supe-editor' ) }
-                                </Button>
-                            ) }
-                        />
+                        <Flex justify="flex-start" gap={ 2 }>
+                            <MediaUpload
+                                allowedTypes={ IMAGE }
+                                onSelect={ add( 'image' ) }
+                                render={ ( { open } ) => (
+                                    <Button
+                                        variant="secondary"
+                                        size="compact"
+                                        onClick={ open }
+                                    >
+                                        { __( 'Add image', 'supe-editor' ) }
+                                    </Button>
+                                ) }
+                            />
+                            <MediaUpload
+                                allowedTypes={ VIDEO }
+                                onSelect={ add( 'video' ) }
+                                render={ ( { open } ) => (
+                                    <Button
+                                        variant="secondary"
+                                        size="compact"
+                                        onClick={ open }
+                                    >
+                                        { __( 'Add video', 'supe-editor' ) }
+                                    </Button>
+                                ) }
+                            />
+                        </Flex>
                     </MediaUploadCheck>
                 </>
             ) }

@@ -5,7 +5,6 @@
     "version": "0.3.0",
     "title": "Container",
     "category": "supe",
-    "icon": "smiley",
     "description": "A layout block for other blocks: flow, constrained, row, stack or grid, with optional colors.",
     "keywords": [
         "group",

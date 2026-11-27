@@ -11,10 +11,17 @@ namespace Supe\Editor\Blocks;
  * which `wp-scripts build --blocks-manifest` generates from each
  * build/{block}/block.json. Reading one PHP array instead of a JSON file per
  * block saves the filesystem reads and json_decode() on every request.
+ *
+ * Core enqueues a block's view script module whenever the block renders. The
+ * blocks in ON_DEMAND_MODULES only need theirs for some content (a Container
+ * background only for a video), so their modules stay registered but their
+ * render.php enqueues them when needed.
  */
 class BlockRegistrar {
 
     public const MANIFEST = 'blocks-manifest.php';
+
+    public const ON_DEMAND_MODULES = [ 'supe/container-background' ];
 
     public function __construct(
         private readonly string $buildDir
@@ -22,6 +29,23 @@ class BlockRegistrar {
 
     public function register(): void {
         add_action( 'init', [ $this, 'registerBlocks' ] );
+        add_filter( 'block_type_metadata_settings', [ $this, 'onDemandModules' ], 10, 2 );
+    }
+
+    /**
+     * Leaves the view script modules of ON_DEMAND_MODULES blocks out of
+     * core's automatic enqueue (they're already registered by now).
+     *
+     * @param  array<string, mixed> $settings
+     * @param  array<string, mixed> $metadata
+     * @return array<string, mixed>
+     */
+    public function onDemandModules( array $settings, array $metadata ): array {
+        if ( in_array( $metadata['name'] ?? null, self::ON_DEMAND_MODULES, true ) ) {
+            unset( $settings['view_script_module_ids'] );
+        }
+
+        return $settings;
     }
 
     public function registerBlocks(): void {

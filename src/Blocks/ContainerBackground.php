@@ -8,7 +8,7 @@ namespace Supe\Editor\Blocks;
  * ContainerBackground
  *
  * Decisions for the Container's background layer (supe/container-background,
- * rendered by its render.php): the overlay's inline style. Pure, so it's
+ * rendered by its render.php): its type and the overlay's inline style. Pure, so it's
  * tested without WordPress; blocks/container-background/overlay.js mirrors
  * it for the editor, both running tests/fixtures/container-background.json.
  *
@@ -21,11 +21,28 @@ final class ContainerBackground {
 
     public const DEFAULT_OPACITY = 50;
 
+    public const TYPES = [ 'image', 'video' ];
+
+    /** The video's view script module, enqueued by render.php (see BlockRegistrar::ON_DEMAND_MODULES). */
+    public const VIEW_MODULE = 'supe-container-background-view-script-module';
+
     private const PRESET = '/^var:preset\|(color|gradient)\|([a-z0-9-]+)$/';
 
     private const COLOR = '/^(?:#[0-9a-f]{3,8}|(?:rgb|hsl)a?\([0-9.,%\s\/-]+\)|transparent)$/i';
 
     private const GRADIENT = '/^(?:repeating-)?(?:linear|radial|conic)-gradient\([a-z0-9#%.,()\s\/-]+\)$/i';
+
+    /**
+     * The background's type: `image` (also for a missing or unknown type,
+     * as saved before video existed) or `video`.
+     *
+     * @param array<string, mixed> $attributes
+     */
+    public static function type( array $attributes ): string {
+        $type = $attributes['type'] ?? null;
+
+        return in_array( $type, self::TYPES, true ) ? $type : self::TYPES[0];
+    }
 
     /**
      * The overlay's declarations, or null when it has no color or gradient

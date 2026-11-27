@@ -1,8 +1,8 @@
 # Container Block — Plan
 
 **Status:** Phases 1 (layout + colors), 2 (responsive layout, gap, min
-height) and 3 (image background + overlay, Hero) done 2026-11-27. Next:
-phase 4 (video background). Update this doc as phases land (and log them in
+height), 3 (image background + overlay, Hero) and 4 (video background)
+done 2026-11-27. Next: phase 5 (Fader as a background). Update this doc as phases land (and log them in
 `PROGRESS.md`).
 
 **Depends on:** [`responsive-supports.md`](responsive-supports.md) phases 1–4
@@ -163,9 +163,9 @@ Both supports follow `responsive-supports.md`'s recipe: `support.json`
 ```
 supe-container/container
  ├─ supe/container-background   ← first child, parent: Container only, inserter: false, lock: { move }
- │    type: image (phase 3) | video | block   ("enum" grows with each phase)
+ │    type: image (phase 3) | video (phase 4) | block   ("enum" grows with each phase)
  │    image:  mediaId, focalPoint
- │    video:  mediaId, posterId, focalPoint
+ │    video:  mediaId, posterId, focalPoint, pauseButton
  │    block:  one inner block (allowedBlocks: supe/fader)
  │    overlayColor, overlayGradient   ← `var:preset|color|slug` / `var:preset|gradient|slug` or a custom value
  │    overlayOpacity                  ← 0–100, default 50
@@ -184,9 +184,15 @@ running `tests/fixtures/container-background.json`.
 Markup (`render.php`):
 
 ```html
-<div class="wp-block-supe-container-background" aria-hidden="true">
-  <div class="wp-block-supe-container-background__media"><img alt="" sizes="100vw" srcset="…" style="object-position:20% 80%"></div>
-  <span class="wp-block-supe-container-background__overlay" style="background-color:var(--wp--preset--color--contrast);opacity:0.7"></span>
+<div class="wp-block-supe-container-background is-image">
+  <div class="wp-block-supe-container-background__media" aria-hidden="true"><img alt="" sizes="100vw" srcset="…" style="object-position:20% 80%"></div>
+  <span class="wp-block-supe-container-background__overlay" style="background-color:var(--wp--preset--color--contrast);opacity:0.7" aria-hidden="true"></span>
+</div>
+
+<div class="wp-block-supe-container-background is-video">
+  <div class="wp-block-supe-container-background__media" aria-hidden="true"><video class="wp-block-supe-container-background__video" src="…" poster="…" muted loop playsinline preload="metadata" disablepictureinpicture disableremoteplayback></video></div>
+  <span class="wp-block-supe-container-background__overlay" …></span>
+  <button type="button" class="wp-block-supe-container-background__pause" aria-label="Pause background video" data-label-play="Play background video" hidden>…pause / play icons…</button>
 </div>
 ```
 
@@ -194,16 +200,33 @@ Markup (`render.php`):
   none, and it only loads where a background renders).
   `.wp-block-supe-container-container:has(> .wp-block-supe-container-background)`
   gets `position: relative; isolation: isolate`; the background is
-  `position: absolute; inset: 0; z-index: -1; overflow: hidden;
-  border-radius: inherit; pointer-events: none`, with `max-width: none` and
-  `margin: 0` against constrained layouts' child rules. So it fills the
-  padding box under the content (and over the Container's own background
-  color), whatever the layout type.
+  `position: absolute; inset: 0; overflow: hidden; border-radius: inherit;
+  pointer-events: none`, with `max-width: none` and `margin: 0` against
+  constrained layouts' child rules. It has no z-index of its own (phase 4):
+  its media and overlay are `z-index: -1` (under the content, over the
+  Container's own background color) and a video's pause button `z-index: 1`
+  (over the content, clickable). So it fills the padding box whatever the
+  layout type.
 - Media: `object-fit: cover`, focal point → `object-position`
   (`Slides\Markup::objectPosition()`), `wp_get_attachment_image( 'full' )`
-  with `sizes="100vw"` and an empty alt (decorative; the wrapper is
-  `aria-hidden`). Video: `<video muted loop playsinline
-  preload="metadata" poster>` + script module `view.js`.
+  with `sizes="100vw"` and an empty alt (decorative; the media and overlay
+  are `aria-hidden`, not the wrapper, so the pause button stays reachable).
+- Video (phase 4): media library uploads only (no YouTube/Vimeo — they
+  can't be reliably muted, looped or paused off screen). No `autoplay` in
+  the markup: `view.js` (a script module) plays it while it's on screen in
+  a visible tab, unless the visitor prefers reduced motion (then it stays
+  on its poster, or the first frame) or paused it; if the browser refuses
+  to play (power saving) it stays paused and the button offers Play. Poster
+  optional (`posterId`, must be an image). Plays on phones too.
+- Pause button (opt-in, `pauseButton`): bottom-right, `hidden` until
+  `view.js` runs, label switches Pause / Play background video, icons from
+  the slider's `icons.json` (`Controls::icon( name, class )`). Themeable
+  with `--supe-container-background-control-background` / `-color`. Under
+  reduced motion it shows Play, so visitors can still start the video.
+- The view module is only enqueued for videos: core enqueues a block's
+  `viewScriptModule` whenever it renders, so `BlockRegistrar::ON_DEMAND_MODULES`
+  drops it from the block's settings (it stays registered) and render.php
+  calls `wp_enqueue_script_module( ContainerBackground::VIEW_MODULE )`.
 - Overlay: a `<span>` after the media (not `::after`: inline styles carry
   the per-block color and opacity).
 - Fader in the slot: a rule makes it fill the layer
@@ -228,19 +251,25 @@ in the order just keeps List View and the CSS predictable.
 
 Workflow (as built in phase 3, `blocks/container/BackgroundPanel.js`):
 
-1. Select the Container → sidebar **Background** panel: "None" and an
-   **Add image** button (phases 4–5 add Add video / Add fader).
-2. Add image opens the media modal; picking an image inserts the
-   background block at index 0 (`lock: { move: true }`) and selects it.
-   Cancelling adds nothing.
+1. Select the Container → sidebar **Background** panel: "None", **Add
+   image** and **Add video** (phase 5 adds Add fader).
+2. Each opens the media modal for its kind; picking one inserts the
+   background block at index 0 (`lock: { move: true }`, `type` set) and
+   selects it. Cancelling adds nothing. The type stays: to switch, remove
+   and add again (Replace picks the same kind).
 3. The background's sidebar has **Image** (focal point + reset) and
    **Overlay** (a core-style tools panel: color/gradient dropdown, opacity
-   0–100 in steps of 5, disabled until there's a color or gradient), plus a
+   0–100 in steps of 5, disabled until there's a color or gradient) — a
+   video has **Video** instead of Image (focal point over a video preview,
+   poster image choose / replace / remove, Pause button toggle) — plus a
    "Select container" icon (`blocks/shared/SelectParentButton`). Replace /
    Choose image is in the toolbar (`MediaReplaceFlow`). Text color is set
    on the Container.
-4. With a background, the Container's panel shows its thumbnail, **Edit
-   background** (selects it) and **Remove** (after a confirm).
+4. With a background, the Container's panel shows its thumbnail (a video's
+   poster, else a video icon), **Edit background** (selects it) and
+   **Remove** (after a confirm).
+5. The canvas plays the video (muted, looping; not with reduced motion)
+   and shows the pause button where it'll be.
 
 - Picked theme colors / gradients are stored as preset references
   (`toStored()` / `fromStored()` in `overlay.js`).
@@ -294,8 +323,8 @@ An optional `motion` setting on image backgrounds: `none` (default) /
    core's flex controls turned off there.
 3. ✅ **Background: image + overlay** — `supe/container-background`, the
    Background panel, frame CSS, focal point, overlay. Hero variation.
-4. **Background: video** — poster, view script (reduced motion, off-screen
-   pause, hidden tab).
+4. ✅ **Background: video** — poster, view script (reduced motion, off-screen
+   pause, hidden tab), opt-in pause button, view module only for videos.
 5. **Background: Fader** — block type, fill rule, Fader inside a Container
    with responsive min height.
 6. *Later:* fixed / parallax image backgrounds (see above).

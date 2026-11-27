@@ -53,11 +53,14 @@ final class Controls {
         return self::svg( self::icons()['arrows'][ self::arrowSet( $set ) ] ?? '' );
     }
 
-    /** The pause or play icon. */
-    public static function icon( string $name ): string {
+    /**
+     * The pause or play icon (also the Container background's pause button,
+     * with its own class).
+     */
+    public static function icon( string $name, string $class = 'supe-slides__icon' ): string {
         $paths = self::icons()[ $name ] ?? null;
 
-        return is_string( $paths ) ? self::svg( $paths, 'supe-slides__icon is-' . $name ) : '';
+        return is_string( $paths ) ? self::svg( $paths, $class . ' is-' . $name ) : '';
     }
 
     /**

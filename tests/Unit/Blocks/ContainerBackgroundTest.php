@@ -27,4 +27,12 @@ final class ContainerBackgroundTest extends TestCase {
             ContainerBackground::style( [ 'background-color' => '#000', 'opacity' => '0.5' ] )
         );
     }
+
+    public function test_type_defaults_to_image(): void {
+        self::assertSame( 'video', ContainerBackground::type( [ 'type' => 'video' ] ) );
+        self::assertSame( 'image', ContainerBackground::type( [ 'type' => 'image' ] ) );
+        self::assertSame( 'image', ContainerBackground::type( [] ), 'Saved before types existed.' );
+        self::assertSame( 'image', ContainerBackground::type( [ 'type' => 'block' ] ), 'Not a type yet.' );
+        self::assertSame( 'image', ContainerBackground::type( [ 'type' => [ 'video' ] ] ) );
+    }
 }

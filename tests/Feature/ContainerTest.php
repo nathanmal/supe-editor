@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Supe\Editor\Tests\Feature;
 
+use Supe\Editor\Blocks\ContainerBackground;
 use Yoast\WPTestUtils\WPIntegration\TestCase;
 
 /**
@@ -12,6 +13,12 @@ use Yoast\WPTestUtils\WPIntegration\TestCase;
  * render time.
  */
 final class ContainerTest extends TestCase {
+
+    public function set_up(): void {
+        parent::set_up();
+
+        wp_dequeue_script_module( ContainerBackground::VIEW_MODULE );
+    }
 
     /**
      * @return array<string, array{0: string, 1: string}>
@@ -126,8 +133,9 @@ final class ContainerTest extends TestCase {
 
         $processor = new \WP_HTML_Tag_Processor( $html );
         self::assertTrue( $processor->next_tag( [ 'class_name' => 'wp-block-supe-container-background' ] ) );
-        self::assertSame( 'true', $processor->get_attribute( 'aria-hidden' ) );
+        self::assertTrue( $processor->has_class( 'is-image' ) );
         self::assertTrue( $processor->next_tag( [ 'class_name' => 'wp-block-supe-container-background__media' ] ) );
+        self::assertSame( 'true', $processor->get_attribute( 'aria-hidden' ) );
         self::assertTrue( $processor->next_tag( 'img' ) );
         self::assertSame( '', $processor->get_attribute( 'alt' ) );
         self::assertNotNull( $processor->get_attribute( 'srcset' ) );
@@ -135,8 +143,77 @@ final class ContainerTest extends TestCase {
         self::assertStringContainsString( 'object-position:20% 80%', (string) $processor->get_attribute( 'style' ) );
         self::assertTrue( $processor->next_tag( [ 'class_name' => 'wp-block-supe-container-background__overlay' ] ) );
         self::assertSame( 'background-color:var(--wp--preset--color--contrast);opacity:0.7', $processor->get_attribute( 'style' ) );
+        self::assertSame( 'true', $processor->get_attribute( 'aria-hidden' ) );
         self::assertTrue( $processor->next_tag( 'p' ), 'The content follows the background.' );
         self::assertTrue( wp_style_is( 'supe-container-background-style', 'enqueued' ) );
+        self::assertNotContains( ContainerBackground::VIEW_MODULE, wp_script_modules()->get_queue(), 'Only videos need the script.' );
+    }
+
+    public function test_a_video_background_renders_a_muted_looping_video(): void {
+        $video  = $this->video();
+        $poster = self::factory()->attachment->create_upload_object( DIR_TESTDATA . '/images/canola.jpg' );
+
+        $html = do_blocks(
+            '<!-- wp:supe/container-background {"type":"video","mediaId":' . $video . ',"posterId":' . $poster . ',"focalPoint":{"x":0.25,"y":0.5},"overlayColor":"#000"} /-->'
+        );
+
+        $processor = new \WP_HTML_Tag_Processor( $html );
+        self::assertTrue( $processor->next_tag( [ 'class_name' => 'wp-block-supe-container-background' ] ) );
+        self::assertTrue( $processor->has_class( 'is-video' ) );
+        self::assertTrue( $processor->next_tag( [ 'class_name' => 'wp-block-supe-container-background__media' ] ) );
+        self::assertSame( 'true', $processor->get_attribute( 'aria-hidden' ) );
+        self::assertTrue( $processor->next_tag( 'video' ) );
+        self::assertSame( wp_get_attachment_url( $video ), $processor->get_attribute( 'src' ) );
+        self::assertSame( wp_get_attachment_image_url( $poster, 'full' ), $processor->get_attribute( 'poster' ) );
+        self::assertSame( 'object-position:25% 50%', $processor->get_attribute( 'style' ) );
+        foreach ( [ 'muted', 'loop', 'playsinline' ] as $attribute ) {
+            self::assertTrue( $processor->get_attribute( $attribute ), $attribute );
+        }
+        self::assertNull( $processor->get_attribute( 'autoplay' ), 'view.js starts it (reduced motion).' );
+        self::assertNull( $processor->get_attribute( 'controls' ) );
+        self::assertSame( 'metadata', $processor->get_attribute( 'preload' ) );
+        self::assertTrue( $processor->next_tag( [ 'class_name' => 'wp-block-supe-container-background__overlay' ] ) );
+        self::assertStringNotContainsString( '__pause', $html, 'No pause button unless turned on.' );
+        self::assertContains( ContainerBackground::VIEW_MODULE, wp_script_modules()->get_queue() );
+    }
+
+    public function test_a_video_background_can_have_a_pause_button(): void {
+        $html = do_blocks( '<!-- wp:supe/container-background {"type":"video","mediaId":' . $this->video() . ',"pauseButton":true} /-->' );
+
+        $processor = new \WP_HTML_Tag_Processor( $html );
+        self::assertTrue( $processor->next_tag( 'video' ) );
+        self::assertNull( $processor->get_attribute( 'poster' ) );
+        self::assertTrue( $processor->next_tag( 'button' ) );
+        self::assertTrue( $processor->has_class( 'wp-block-supe-container-background__pause' ) );
+        self::assertSame( 'Pause background video', $processor->get_attribute( 'aria-label' ) );
+        self::assertSame( 'Play background video', $processor->get_attribute( 'data-label-play' ) );
+        self::assertTrue( $processor->get_attribute( 'hidden' ), 'Shown by view.js.' );
+        self::assertNull( $processor->get_attribute( 'aria-hidden' ) );
+        self::assertTrue( $processor->next_tag( [ 'class_name' => 'is-pause' ] ) );
+        self::assertTrue( $processor->next_tag( [ 'class_name' => 'is-play' ] ) );
+    }
+
+    public function test_a_video_background_needs_a_video(): void {
+        $image = self::factory()->attachment->create_upload_object( DIR_TESTDATA . '/images/canola.jpg' );
+
+        $html = do_blocks(
+            '<!-- wp:supe/container-background {"type":"video","mediaId":' . $image . '} /-->'
+            . '<!-- wp:supe/container-background {"type":"video"} /-->'
+            . '<!-- wp:supe/container-background {"mediaId":' . $this->video() . '} /-->'
+        );
+
+        self::assertStringNotContainsString( 'wp-block-supe-container-background', $html, 'An image as a video, nothing, a video as an image.' );
+        self::assertNotContains( ContainerBackground::VIEW_MODULE, wp_script_modules()->get_queue() );
+    }
+
+    public function test_an_image_poster_is_required_for_the_poster(): void {
+        $video = $this->video();
+
+        $html = do_blocks( '<!-- wp:supe/container-background {"type":"video","mediaId":' . $video . ',"posterId":' . $this->video() . '} /-->' );
+
+        $processor = new \WP_HTML_Tag_Processor( $html );
+        self::assertTrue( $processor->next_tag( 'video' ) );
+        self::assertNull( $processor->get_attribute( 'poster' ) );
     }
 
     public function test_a_background_without_an_image_renders_nothing(): void {
@@ -158,5 +235,16 @@ final class ContainerTest extends TestCase {
         self::assertStringContainsString( 'wp-block-supe-container-background__media', $html );
         self::assertStringNotContainsString( '__overlay', $html );
         self::assertStringNotContainsString( 'onload', $html );
+    }
+
+    /**
+     * A video attachment (no real file is needed for its URL).
+     */
+    private function video(): int {
+        return self::factory()->attachment->create_object(
+            'clip.mp4',
+            0,
+            [ 'post_mime_type' => 'video/mp4', 'post_type' => 'attachment' ]
+        );
     }
 }
