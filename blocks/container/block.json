@@ -2,14 +2,37 @@
     "$schema": "https://schemas.wp.org/trunk/block.json",
     "apiVersion": 3,
     "name": "supe-container/container",
-    "version": "0.1.0",
+    "version": "0.2.0",
     "title": "Container",
     "category": "supe",
     "icon": "smiley",
-    "description": "A wrapper for other blocks that follows the theme's styles.",
+    "description": "A layout block for other blocks: flow, constrained, row, stack or grid, with optional colors.",
+    "keywords": [
+        "group",
+        "section",
+        "wrapper",
+        "row",
+        "stack",
+        "grid",
+        "layout"
+    ],
     "supports": {
         "align": [ "wide", "full" ],
+        "anchor": true,
         "html": false,
+        "color": {
+            "background": true,
+            "gradients": true,
+            "link": true,
+            "text": true,
+            "__experimentalDefaultControls": {
+                "background": true,
+                "text": true
+            }
+        },
+        "layout": {
+            "allowSizingOnChildren": true
+        },
         "supe": {
             "spacing": true
         }

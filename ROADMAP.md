@@ -39,7 +39,7 @@ The editor has little responsive support beyond core's `clamp()` fluid values; t
 - [x] Phases 2–4: editor wiring (Styles panel, live canvas preview), spacing controls, Callout + Container opted in.
 - [ ] Responsive visibility (hide on desktop / tablet / mobile).
 - [ ] Responsive typography (font size, line height per viewport; works alongside `clamp()`).
-- [ ] Responsive layout (flex direction / stacking, grid columns, order, alignment, gap).
+- [ ] Responsive layout (flex direction / stacking, grid columns, order, alignment, gap) — `supe.layout` + `supe.dimensions` planned in `docs/container.md`.
 - [ ] Keep the editor's device preview widths (~780 / 360px) consistent with the site breakpoints.
 - [ ] Opt core blocks in together with the core spacing bridge (core padding/margin hidden and migrated) — a block never has both.
 - [ ] Possibly move header behavior into the supports framework (it's attributes + render-time markup on `core/group`).
@@ -50,6 +50,7 @@ Blocks that use the custom/responsive supports, referenced by `supe-theme`, with
 
 - [x] Slides block (`supe/slides`): image/content/post slideshows with responsive layout, control blocks, lightbox — planned in `docs/slides.md` (all planned phases, 0–9, done; ideas left under "Deferred").
 - [x] Fader block (`supe/fader`): images crossfading in place, a simpler sibling of the slider — `docs/fader.md` (2026-11-26).
+- [ ] Container as the layout block (core layout + colors, responsive gap / overrides / min height) with an optional background layer (image, video, Fader) under an overlay — `docs/container.md`.
 - [ ] Decide on the front-end script approach for blocks (Interactivity API vs plain JS shareable with Next.js).
 - [ ] More blocks beyond `Callout`/`Container`, including a dynamic (server-rendered) example using `render.php`, per the pattern in this module's `README.md`.
 

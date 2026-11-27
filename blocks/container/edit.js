@@ -7,10 +7,10 @@ import {
 import { useSelect } from '@wordpress/data';
 
 /**
- * An empty wrapper for other blocks. It has no colors or typography of its
- * own, so it follows the theme; spacing comes from the responsive spacing
- * support. While empty it shows a "+" button instead of the default
- * paragraph prompt, like core's Group.
+ * A layout block for other blocks. Layout (flow / constrained / flex / grid)
+ * and colors come from core supports, spacing from the responsive spacing
+ * support; with none set it follows the theme. While empty it shows a "+"
+ * button instead of the default paragraph prompt, like core's Group.
  *
  * @param {Object} props
  * @param {string} props.clientId

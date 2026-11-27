@@ -6,7 +6,7 @@ Package-specific guidance for Claude Code. Package `nathanmal/supe-editor`, whic
 
 This file only adds what's specific to `supe-editor`. When core changes a shared API, the ecosystem file is updated, not this one. Only add something here if it's editor-specific.
 
-Before non-trivial work, read this package's `PROGRESS.md` (current state, open items) and `ROADMAP.md`, plus the relevant plan in `docs/` (`responsive-supports.md`, `slides.md`, `fader.md`). Log meaningful changes in `PROGRESS.md` (newest first, terse).
+Before non-trivial work, read this package's `PROGRESS.md` (current state, open items) and `ROADMAP.md`, plus the relevant plan in `docs/` (`responsive-supports.md`, `slides.md`, `fader.md`, `container.md`). Log meaningful changes in `PROGRESS.md` (newest first, terse).
 
 ## Scope
 
