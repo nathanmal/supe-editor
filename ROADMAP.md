@@ -50,7 +50,9 @@ Blocks that use the custom/responsive supports, referenced by `supe-theme`, with
 
 - [x] Slides block (`supe/slides`): image/content/post slideshows with responsive layout, control blocks, lightbox — planned in `docs/slides.md` (all planned phases, 0–9, done; ideas left under "Deferred").
 - [x] Fader block (`supe/fader`): images crossfading in place, a simpler sibling of the slider — `docs/fader.md` (2026-11-26).
-- [ ] Container as the layout block (core layout + colors, responsive gap / overrides / min height) with an optional background layer (image, video, Fader) under an overlay — `docs/container.md`.
+- [x] Container as the layout block (core layout + colors, responsive gap / overrides / min height) with an optional background layer (image, video, Fader) under an overlay — `docs/container.md` (phases 1–5, 2026-11-27).
+- [ ] Container parallax / fixed backgrounds (`docs/container.md` phase 6) — on hold until the animation work below is scoped, so parallax can be one of its effects rather than a one-off.
+- [ ] Animation controls, possibly built on GSAP (e.g. ScrollTrigger for scroll-driven effects): entrance / scroll animations set from the editor. To discuss: how parallax fits in, loading GSAP only where it's used, reduced motion, and what a headless front end would need.
 - [ ] Decide on the front-end script approach for blocks (Interactivity API vs plain JS shareable with Next.js).
 - [ ] More blocks beyond `Callout`/`Container`, including a dynamic (server-rendered) example using `render.php`, per the pattern in this module's `README.md`.
 

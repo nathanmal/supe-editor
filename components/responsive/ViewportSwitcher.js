@@ -1,5 +1,7 @@
 import { __, sprintf } from '@wordpress/i18n';
 import { Button, Flex } from '@wordpress/components';
+import { monitor, smartphone, tablet } from './icons';
+import './viewport-switcher.scss';
 
 export const VIEWPORT_LABELS = {
     desktop: __( 'Desktop', 'supe-editor' ),
@@ -8,9 +10,9 @@ export const VIEWPORT_LABELS = {
 };
 
 const ICONS = {
-    desktop: 'desktop',
-    tablet: 'tablet',
-    mobile: 'smartphone',
+    desktop: monitor,
+    tablet,
+    mobile: smartphone,
 };
 
 /**
@@ -43,8 +45,9 @@ function buttonLabel( viewport, breakpoints, isOverridden ) {
 }
 
 /**
- * Desktop / tablet / mobile buttons. Viewports in `overridden` are marked so
- * it's visible at a glance which ones have their own value.
+ * Desktop / tablet / mobile buttons in one outlined group, right-aligned.
+ * Viewports in `overridden` get a dot in the corner, so it's visible at a
+ * glance which ones have their own value. Styles: viewport-switcher.scss.
  *
  * @param {Object}   props
  * @param {string}   props.viewport      Current viewport.
@@ -65,25 +68,33 @@ export default function ViewportSwitcher( {
             expanded={ false }
             className="supe-viewport-switcher"
         >
-            { Object.keys( VIEWPORT_LABELS ).map( ( option ) => {
-                const isOverridden = overridden.includes( option );
+            <div
+                role="group"
+                aria-label={ __( 'Viewport', 'supe-editor' ) }
+                className="supe-viewport-switcher__group"
+            >
+                { Object.keys( VIEWPORT_LABELS ).map( ( option ) => {
+                    const isOverridden = overridden.includes( option );
 
-                return (
-                    <Button
-                        key={ option }
-                        size="small"
-                        icon={ ICONS[ option ] }
-                        isPressed={ viewport === option }
-                        onClick={ () => onChange( option ) }
-                        label={ buttonLabel(
-                            option,
-                            breakpoints,
-                            isOverridden
-                        ) }
-                        className={ isOverridden ? 'is-overridden' : undefined }
-                    />
-                );
-            } ) }
+                    return (
+                        <Button
+                            key={ option }
+                            size="small"
+                            icon={ ICONS[ option ] }
+                            isPressed={ viewport === option }
+                            onClick={ () => onChange( option ) }
+                            label={ buttonLabel(
+                                option,
+                                breakpoints,
+                                isOverridden
+                            ) }
+                            className={
+                                isOverridden ? 'is-overridden' : undefined
+                            }
+                        />
+                    );
+                } ) }
+            </div>
         </Flex>
     );
 }

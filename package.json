@@ -8,7 +8,7 @@
         "start": "wp-scripts start --webpack-src-dir=blocks --blocks-manifest --experimental-modules",
         "format": "wp-scripts format",
         "lint:js": "wp-scripts lint-js",
-        "lint:css": "wp-scripts lint-style \"blocks/**/*.scss\" \"editor/**/*.scss\"",
+        "lint:css": "wp-scripts lint-style \"blocks/**/*.scss\" \"components/**/*.scss\" \"editor/**/*.scss\"",
         "test:js": "wp-scripts test-unit-js",
         "packages-update": "wp-scripts packages-update"
     },

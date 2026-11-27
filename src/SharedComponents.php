@@ -13,12 +13,17 @@ namespace Supe\Editor;
  * `@supe-editor/components`; webpack.config.js turns that import into a
  * dependency on this handle, so every bundle shares one copy. Registered
  * only: WordPress loads it when something that depends on it is enqueued.
+ *
+ * The components' own styles (build/components/index.css, editor UI) load
+ * on every block editor screen under the same handle: the script may be
+ * pulled in by any block, support or editor modification.
  */
 class SharedComponents {
 
     public const HANDLE = 'supe-editor-components';
 
     private const SCRIPT = 'components/index.js';
+    private const STYLE  = 'components/index.css';
     private const ASSET  = 'components/index.asset.php';
 
     /**
@@ -32,6 +37,7 @@ class SharedComponents {
 
     public function register(): void {
         add_action( 'init', [ $this, 'registerScript' ] );
+        add_action( 'enqueue_block_editor_assets', [ $this, 'enqueueStyle' ] );
     }
 
     public function registerScript(): void {
@@ -51,5 +57,22 @@ class SharedComponents {
             [ 'in_footer' => true ]
         );
         wp_set_script_translations( self::HANDLE, 'supe-editor' );
+    }
+
+    public function enqueueStyle(): void {
+        $assetFile = $this->buildDir . self::ASSET;
+
+        if ( ! is_readable( $this->buildDir . self::STYLE ) || ! is_readable( $assetFile ) ) {
+            return;
+        }
+
+        $asset = require $assetFile;
+
+        wp_enqueue_style(
+            self::HANDLE,
+            plugins_url( 'build/' . self::STYLE, $this->pluginFile ),
+            [ 'wp-components' ],
+            $asset['version'] ?? false
+        );
     }
 }

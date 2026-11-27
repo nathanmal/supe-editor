@@ -24,6 +24,9 @@ final class SharedComponentsTest extends TestCase {
     }
 
     protected function tear_down(): void {
+        if ( file_exists( $this->buildDir . 'components/index.css' ) ) {
+            unlink( $this->buildDir . 'components/index.css' );
+        }
         unlink( $this->buildDir . 'components/index.asset.php' );
         rmdir( $this->buildDir . 'components' );
         rmdir( $this->buildDir );
@@ -36,6 +39,32 @@ final class SharedComponentsTest extends TestCase {
         $components->register();
 
         self::assertNotFalse( has_action( 'init', [ $components, 'registerScript' ] ) );
+        self::assertNotFalse( has_action( 'enqueue_block_editor_assets', [ $components, 'enqueueStyle' ] ) );
+    }
+
+    public function test_enqueues_the_styles_in_the_editor(): void {
+        file_put_contents( $this->buildDir . 'components/index.css', '' );
+
+        Functions\expect( 'plugins_url' )
+            ->once()
+            ->with( 'build/components/index.css', '/plugin/bootstrap.php' )
+            ->andReturn( 'https://example.test/build/components/index.css' );
+        Functions\expect( 'wp_enqueue_style' )
+            ->once()
+            ->with(
+                SharedComponents::HANDLE,
+                'https://example.test/build/components/index.css',
+                [ 'wp-components' ],
+                'abc123'
+            );
+
+        ( new SharedComponents( $this->buildDir, '/plugin/bootstrap.php' ) )->enqueueStyle();
+    }
+
+    public function test_enqueues_no_styles_before_they_are_built(): void {
+        Functions\expect( 'wp_enqueue_style' )->never();
+
+        ( new SharedComponents( $this->buildDir, '/plugin/bootstrap.php' ) )->enqueueStyle();
     }
 
     public function test_registers_the_script_without_enqueueing_it(): void {

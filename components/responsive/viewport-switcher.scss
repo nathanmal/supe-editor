@@ -1,0 +1,59 @@
+/**
+ * ViewportSwitcher: an outlined group of icon buttons; the current viewport
+ * on a light tile, the others gray, a dot on viewports with their own value.
+ * Editor UI, so admin colors (the dot follows the admin color scheme).
+ */
+.supe-viewport-switcher__group {
+    border: 1px solid #e0e0e0;
+    border-radius: 5px;
+    display: flex;
+    gap: 2px;
+    padding: 1px;
+}
+
+// A panel's switcher sits above its first control: room between them, so it
+// doesn't crowd a control's own buttons (e.g. the spacing link toggle).
+.components-panel__body > .supe-viewport-switcher {
+    margin-bottom: 12px;
+}
+
+// Beats core's small icon button (`.is-small.has-icon:not(.has-text)`, 24px).
+.supe-viewport-switcher__group .components-button.has-icon:not(.has-text) {
+    border-radius: 4px;
+    color: #949494;
+    height: 20px;
+    justify-content: center;
+    min-width: 22px;
+    padding: 0;
+    position: relative;
+    width: 22px;
+
+    // Outline icons: core's buttons fill every icon with currentcolor.
+    svg {
+        fill: none;
+        height: 13px;
+        width: 13px;
+    }
+
+    &:hover:not(:disabled) {
+        color: #1e1e1e;
+    }
+
+    &.is-pressed,
+    &.is-pressed:hover:not(:disabled),
+    &.is-pressed:focus:not(:disabled) {
+        background: #f0f0f0;
+        color: #1e1e1e;
+    }
+
+    &.is-overridden::after {
+        background: var(--wp-admin-theme-color, #3858e9);
+        border-radius: 50%;
+        content: "";
+        height: 4px;
+        position: absolute;
+        right: 1px;
+        top: 1px;
+        width: 4px;
+    }
+}

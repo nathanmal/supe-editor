@@ -2,7 +2,7 @@
 
 **Status:** Phases 1–5 done 2026-11-27: layout + colors, responsive layout
 / gap / min height, image background + overlay (Hero), video background,
-Fader background. Left: phase 6 (fixed / parallax), not scheduled. Update this doc as phases land (and log them in
+Fader background. Left: phase 6 (fixed / parallax), on hold until the planned animation controls (possibly GSAP, see `ROADMAP.md`) are scoped. Update this doc as phases land (and log them in
 `PROGRESS.md`).
 
 **Depends on:** [`responsive-supports.md`](responsive-supports.md) phases 1–4

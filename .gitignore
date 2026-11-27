@@ -4,3 +4,6 @@
 .phpunit.result.cache
 tests/wp-tests-config.php
 .DS_Store
+
+# UI mockups for development (check in later if wanted)
+/mocks
